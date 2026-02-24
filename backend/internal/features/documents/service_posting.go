@@ -2,7 +2,6 @@ package documents
 
 import (
     "context"
-    "time"
 
     "github.com/jackc/pgx/v5"
 
