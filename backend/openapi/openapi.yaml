@@ -1,0 +1,180 @@
+openapi: 3.0.3
+info:
+  title: SmartERP API
+  version: 1.0.0
+servers:
+  - url: /api
+paths:
+  /admin/auth/login:
+    post:
+      summary: Admin login
+  /admin/tenants:
+    get:
+      summary: List tenants
+  /admin/tenants/{id}:
+    get:
+      summary: Tenant details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+  /admin/stats:
+    get:
+      summary: Platform stats
+  /client/auth/login:
+    post:
+      summary: Client login
+  /client/auth/register:
+    post:
+      summary: Register tenant and owner
+  /client/products:
+    get:
+      summary: List products
+    post:
+      summary: Create product with default variant
+  /client/products/{id}:
+    get:
+      summary: Product details
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+    put:
+      summary: Update product
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+    delete:
+      summary: Delete product when no ledger movements
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+  /client/variants:
+    get:
+      summary: List variants
+    post:
+      summary: Create variant
+  /client/variants/{id}:
+    get:
+      summary: Variant details
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+    put:
+      summary: Update variant
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+    delete:
+      summary: Delete variant when no ledger movements
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+  /client/variants/{id}/components:
+    get:
+      summary: List variant components
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+    put:
+      summary: Replace variant components
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+  /client/variants/{id}/stock:
+    get:
+      summary: Variant stock global and by warehouses
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+  /client/warehouses:
+    get:
+      summary: List warehouses
+    post:
+      summary: Create warehouse
+  /client/warehouses/{id}:
+    put:
+      summary: Update warehouse
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+    delete:
+      summary: Delete warehouse when no movements
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+  /client/documents:
+    get:
+      summary: List documents
+    post:
+      summary: Create draft document
+  /client/documents/{id}:
+    get:
+      summary: Document card with line profit
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+    put:
+      summary: Update draft or retro-update posted document
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+    delete:
+      summary: Delete draft document
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+  /client/documents/{id}/post:
+    post:
+      summary: Post document
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+  /client/documents/{id}/cancel:
+    post:
+      summary: Cancel posted document
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+  /client/reports/profit:
+    get:
+      summary: Profit report
+  /client/reports/stock:
+    get:
+      summary: Stock report
+  /client/reports/top-products:
+    get:
+      summary: Top products by profit
+  /client/reports/movements:
+    get:
+      summary: Variant movements
+components:
+  parameters:
+    PathID:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        data:
+          nullable: true
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    ErrorBody:
+      type: object
+      nullable: true
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          nullable: true
+    Meta:
+      type: object
+      nullable: true
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+    TokenPair:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
