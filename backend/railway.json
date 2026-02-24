@@ -5,7 +5,7 @@
     "buildCommand": "go mod tidy && go build -o app ./cmd/api && go build -o app-migrate ./cmd/migrate"
   },
   "deploy": {
-    "preDeployCommand": "./app-migrate",
-    "startCommand": "./app"
+    "preDeployCommand": "MIGRATIONS_DIR=/app/migrations /app/app-migrate",
+    "startCommand": "/app/app"
   }
 }
