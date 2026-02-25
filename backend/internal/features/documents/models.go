@@ -6,7 +6,6 @@ type ItemInput struct {
 	VariantID string          `json:"variant_id"`
 	Qty       decimal.Decimal `json:"qty"`
 	UnitPrice decimal.Decimal `json:"unit_price"`
-	Direction string          `json:"direction"`
 }
 
 type CreateRequest struct {
