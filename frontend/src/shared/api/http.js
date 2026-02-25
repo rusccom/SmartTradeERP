@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const API_BASE_URL = normalizeBaseURL(import.meta.env.VITE_API_URL);
 
 export async function postJSON(path, payload) {
   const response = await fetch(createURL(path), createPostOptions(payload));
@@ -6,6 +6,9 @@ export async function postJSON(path, payload) {
 }
 
 function createURL(path) {
+  if (API_BASE_URL === "") {
+    throw new Error("VITE_API_URL is required");
+  }
   return `${API_BASE_URL}${path}`;
 }
 
@@ -43,4 +46,15 @@ function getErrorMessage(body, statusCode) {
     return message;
   }
   return `Request failed with status ${statusCode}`;
+}
+
+function normalizeBaseURL(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+  const trimmed = value.trim();
+  if (trimmed === "") {
+    return "";
+  }
+  return trimmed.replace(/\/+$/, "");
 }
