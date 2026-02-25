@@ -1,89 +1,105 @@
+import { motion } from "framer-motion";
+import { Package, PenLine, MapPin } from "lucide-react";
+
 const ROWS = [
   {
+    icon: Package,
     title: "Bundle products with automatic cost distribution",
-    text: "Create composite products \u2014 bundles, kits, or recipes \u2014 and sell them as a single item. SmartTrade automatically distributes revenue proportionally across components based on their weighted average cost, giving you accurate per-component profit without manual math.",
-    visual: "composite",
+    text: "Create composite products — bundles, kits, or recipes — and sell them as a single item. SmartTrade distributes revenue across components based on weighted average cost automatically.",
+    imgHint: "Place a screenshot of the bundle/composite product editor here",
   },
   {
+    icon: PenLine,
     title: "Edit posted documents without breaking your books",
-    text: "Made a mistake in last week\u2019s receipt? Edit it directly. SmartTrade recalculates every affected ledger entry, cost figure, and downstream transaction automatically within a single atomic operation. Your books stay accurate without manual corrections or reversal documents.",
-    visual: "retroactive",
+    text: "Made a mistake in last week's receipt? Edit it directly. SmartTrade recalculates every affected ledger entry and downstream transaction within a single atomic operation.",
+    imgHint: "Place a screenshot of the document editing interface here",
   },
   {
+    icon: MapPin,
     title: "Manage stock across every location from one screen",
-    text: "Track inventory in unlimited warehouses. Transfer stock between locations with full audit trails. Run physical inventory counts per warehouse and reconcile discrepancies instantly. See consolidated or per-location stock levels and average costs in real time.",
-    visual: "warehouse",
+    text: "Track inventory in unlimited warehouses. Transfer stock with full audit trails. Run physical counts per warehouse and reconcile discrepancies instantly.",
+    imgHint: "Place a screenshot of the multi-warehouse stock view here",
   },
 ];
 
-function ShowcaseVisual({ type }) {
-  if (type === "composite") return <CompositeVisual />;
-  if (type === "retroactive") return <RetroactiveVisual />;
-  return <WarehouseVisual />;
-}
-
-function CompositeVisual() {
-  return (
-    <div className="showcase-visual showcase-composite">
-      <div className="sc-parent">Bundle</div>
-      <div className="sc-arrows">
-        <span className="sc-line" />
-        <span className="sc-line" />
-        <span className="sc-line" />
-      </div>
-      <div className="sc-children">
-        <span className="sc-child">Item A<em>40%</em></span>
-        <span className="sc-child">Item B<em>35%</em></span>
-        <span className="sc-child">Item C<em>25%</em></span>
-      </div>
-    </div>
-  );
-}
-
-function RetroactiveVisual() {
-  return (
-    <div className="showcase-visual showcase-retro">
-      <span className="sr-node sr-doc">DOC</span>
-      <span className="sr-arrow">\u21BA</span>
-      <span className="sr-node sr-edit">EDIT</span>
-      <span className="sr-arrow">\u2192</span>
-      <span className="sr-node sr-ledger">RECALC</span>
-    </div>
-  );
-}
-
-function WarehouseVisual() {
-  return (
-    <div className="showcase-visual showcase-wh">
-      <span className="sw-box">WH-1<em>124</em></span>
-      <span className="sw-link">\u21C4</span>
-      <span className="sw-box">WH-2<em>87</em></span>
-      <span className="sw-link">\u21C4</span>
-      <span className="sw-box">WH-3<em>53</em></span>
-    </div>
-  );
-}
-
 function LandingShowcase() {
   return (
-    <section className="landing-section landing-showcase">
-      <div className="landing-section-inner">
-        <h2 className="landing-section-title">Built for real trade complexity</h2>
-        <p className="landing-section-subtitle">
-          Features designed for how retail and distribution actually works.
-        </p>
-        <div className="showcase-rows">
+    <section className="py-24 px-6">
+      <div className="max-w-5xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <h2
+            className="text-3xl md:text-5xl font-extrabold
+              text-text-primary tracking-tight mb-4"
+          >
+            Built for real trade complexity
+          </h2>
+          <p className="text-text-secondary text-lg max-w-xl mx-auto">
+            Features designed for how retail and distribution actually
+            works.
+          </p>
+        </motion.div>
+
+        <div className="flex flex-col gap-20">
           {ROWS.map((row, i) => (
-            <div
-              key={row.visual}
-              className={`showcase-row ${i % 2 === 1 ? "showcase-row--reversed" : ""}`}
+            <motion.div
+              key={row.title}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className={`grid md:grid-cols-2 gap-10 items-center
+                ${i % 2 === 1 ? "md:direction-rtl" : ""}`}
             >
-              <div className="showcase-text">
-                <h3>{row.title}</h3>
-                <p>{row.text}</p>
+              <div className={i % 2 === 1 ? "md:order-2" : ""}>
+                <div
+                  className="w-10 h-10 rounded-xl bg-accent/10
+                    flex items-center justify-center mb-4"
+                >
+                  <row.icon size={20} className="text-accent" />
+                </div>
+                <h3
+                  className="text-xl md:text-2xl font-bold
+                    text-text-primary mb-3"
+                >
+                  {row.title}
+                </h3>
+                <p
+                  className="text-text-secondary leading-relaxed"
+                >
+                  {row.text}
+                </p>
               </div>
-              <ShowcaseVisual type={row.visual} />
-            </div>
+
+              {/*
+                СКРИНШОТ ФИЧИ — замените этот блок на:
+                <img src="/screenshots/feature-name.png"
+                  alt={row.title}
+                  className="w-full rounded-2xl" />
+              */}
+              <div
+                className={`rounded-2xl border border-border bg-bg-card
+                  overflow-hidden ${i % 2 === 1 ? "md:order-1" : ""}`}
+              >
+                <div
+                  className="aspect-[4/3] bg-gradient-to-br
+                    from-bg-secondary to-bg-card flex items-center
+                    justify-center text-text-muted"
+                >
+                  <div className="text-center px-6">
+                    <row.icon
+                      size={32}
+                      className="mx-auto mb-3 text-border"
+                    />
+                    <p className="text-xs">{row.imgHint}</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </div>
       </div>

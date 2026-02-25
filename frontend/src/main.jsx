@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import AppRoutes from "./shared/router/AppRoutes";
+import "./app/tailwind.css";
 import "./app/styles.css";
 
 createRoot(document.getElementById("root")).render(

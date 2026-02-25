@@ -3,28 +3,25 @@ import LandingStats from "../components/LandingStats";
 import LandingFeatures from "../components/LandingFeatures";
 import LandingHowItWorks from "../components/LandingHowItWorks";
 import LandingShowcase from "../components/LandingShowcase";
-import LandingValue from "../components/LandingValue";
+import LandingTestimonials from "../components/LandingTestimonials";
+import LandingPricing from "../components/LandingPricing";
+import LandingFAQ from "../components/LandingFAQ";
 import LandingFinalCTA from "../components/LandingFinalCTA";
-
-import "../styles/landing-base.css";
-import "../styles/landing-hero.css";
-import "../styles/landing-stats.css";
-import "../styles/landing-features.css";
-import "../styles/landing-how.css";
-import "../styles/landing-showcase.css";
-import "../styles/landing-value.css";
-import "../styles/landing-cta.css";
+import LandingFooter from "../components/LandingFooter";
 
 function LandingPage() {
   return (
-    <div className="landing-stack">
+    <div>
       <LandingHero />
       <LandingStats />
       <LandingFeatures />
       <LandingHowItWorks />
       <LandingShowcase />
-      <LandingValue />
+      <LandingTestimonials />
+      <LandingPricing />
+      <LandingFAQ />
       <LandingFinalCTA />
+      <LandingFooter />
     </div>
   );
 }

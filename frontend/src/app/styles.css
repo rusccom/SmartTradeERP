@@ -1,13 +1,13 @@
 :root {
-  --bg-a: #f2f6ff;
-  --bg-b: #fef9f2;
-  --panel: rgba(255, 255, 255, 0.78);
-  --panel-solid: #ffffff;
-  --line: rgba(13, 44, 90, 0.15);
-  --text: #0d2c5a;
-  --muted: #4c5f77;
-  --accent: #ff6a3d;
-  --danger: #b3261e;
+  --bg-a: #09090b;
+  --bg-b: #18181b;
+  --panel: rgba(39, 39, 42, 0.78);
+  --panel-solid: #27272a;
+  --line: #3f3f46;
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --accent: #6366f1;
+  --danger: #ef4444;
 }
 
 * {
@@ -17,12 +17,9 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Space Grotesk", sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   color: var(--text);
-  background:
-    radial-gradient(circle at 12% 8%, rgba(255, 106, 61, 0.16), transparent 36%),
-    radial-gradient(circle at 90% 86%, rgba(43, 85, 199, 0.16), transparent 34%),
-    linear-gradient(130deg, var(--bg-a), var(--bg-b));
+  background: var(--bg-a);
 }
 
 .page {
@@ -114,12 +111,12 @@ nav {
   min-height: 42px;
   padding: 0 12px;
   color: var(--text);
-  background: var(--panel-solid);
+  background: var(--bg-b);
 }
 
 .auth-input:focus {
-  outline: 2px solid rgba(43, 85, 199, 0.2);
-  border-color: rgba(43, 85, 199, 0.5);
+  outline: 2px solid rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.6);
 }
 
 .primary-button,
@@ -141,6 +138,7 @@ nav {
 .primary-button {
   color: #fff;
   background: var(--accent);
+  border-color: var(--accent);
 }
 
 .primary-button:disabled {
