@@ -2,10 +2,12 @@
   --bg-a: #f2f6ff;
   --bg-b: #fef9f2;
   --panel: rgba(255, 255, 255, 0.78);
+  --panel-solid: #ffffff;
   --line: rgba(13, 44, 90, 0.15);
   --text: #0d2c5a;
   --muted: #4c5f77;
   --accent: #ff6a3d;
+  --danger: #b3261e;
 }
 
 * {
@@ -66,6 +68,120 @@ nav {
   margin-top: 14px;
 }
 
+.auth-shell {
+  min-height: calc(100vh - 210px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  width: min(460px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 28px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+  animation: rise 220ms ease-out;
+}
+
+.auth-card h2 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-text {
+  margin: 0 0 4px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.auth-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.auth-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  min-height: 42px;
+  padding: 0 12px;
+  color: var(--text);
+  background: var(--panel-solid);
+}
+
+.auth-input:focus {
+  outline: 2px solid rgba(43, 85, 199, 0.2);
+  border-color: rgba(43, 85, 199, 0.5);
+}
+
+.primary-button,
+.secondary-button {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: 150ms ease;
+}
+
+.primary-button {
+  color: #fff;
+  background: var(--accent);
+}
+
+.primary-button:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.primary-button:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+.secondary-button {
+  color: var(--text);
+  border-color: var(--line);
+  background: transparent;
+}
+
+.secondary-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.text-link {
+  color: var(--text);
+  text-decoration: none;
+  text-align: center;
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.text-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.error-text {
+  margin: 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
 .placeholder {
   border: 1px solid var(--line);
   border-radius: 20px;
@@ -82,6 +198,19 @@ nav {
 .placeholder p {
   margin: 0;
   color: var(--muted);
+}
+
+.dashboard-stub {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.dashboard-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 @keyframes rise {
@@ -101,6 +230,18 @@ nav {
   }
 
   .topbar h1 {
+    font-size: 22px;
+  }
+
+  .auth-shell {
+    min-height: calc(100vh - 180px);
+  }
+
+  .auth-card {
+    padding: 20px;
+  }
+
+  .auth-card h2 {
     font-size: 22px;
   }
 

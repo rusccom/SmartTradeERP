@@ -15,6 +15,8 @@ import DocumentsPage from "../../features/dashboard/pages/DocumentsPage";
 import DocumentCardPage from "../../features/dashboard/pages/DocumentCardPage";
 import ReportsPage from "../../features/dashboard/pages/ReportsPage";
 import SettingsPage from "../../features/dashboard/pages/SettingsPage";
+import RequireAdminAuth from "./RequireAdminAuth";
+import RequireClientAuth from "./RequireClientAuth";
 
 function AppRoutes() {
   return (
@@ -24,16 +26,16 @@ function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin" element={<AdminLoginPage />} />
-        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-        <Route path="/admin/tenants" element={<AdminTenantsPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/dashboard/products" element={<ProductsPage />} />
-        <Route path="/dashboard/bundles" element={<BundlesPage />} />
-        <Route path="/dashboard/warehouses" element={<WarehousesPage />} />
-        <Route path="/dashboard/documents" element={<DocumentsPage />} />
-        <Route path="/dashboard/documents/:id" element={<DocumentCardPage />} />
-        <Route path="/dashboard/reports" element={<ReportsPage />} />
-        <Route path="/dashboard/settings" element={<SettingsPage />} />
+        <Route path="/admin/dashboard" element={<RequireAdminAuth><AdminDashboardPage /></RequireAdminAuth>} />
+        <Route path="/admin/tenants" element={<RequireAdminAuth><AdminTenantsPage /></RequireAdminAuth>} />
+        <Route path="/dashboard" element={<RequireClientAuth><DashboardPage /></RequireClientAuth>} />
+        <Route path="/dashboard/products" element={<RequireClientAuth><ProductsPage /></RequireClientAuth>} />
+        <Route path="/dashboard/bundles" element={<RequireClientAuth><BundlesPage /></RequireClientAuth>} />
+        <Route path="/dashboard/warehouses" element={<RequireClientAuth><WarehousesPage /></RequireClientAuth>} />
+        <Route path="/dashboard/documents" element={<RequireClientAuth><DocumentsPage /></RequireClientAuth>} />
+        <Route path="/dashboard/documents/:id" element={<RequireClientAuth><DocumentCardPage /></RequireClientAuth>} />
+        <Route path="/dashboard/reports" element={<RequireClientAuth><ReportsPage /></RequireClientAuth>} />
+        <Route path="/dashboard/settings" element={<RequireClientAuth><SettingsPage /></RequireClientAuth>} />
       </Route>
     </Routes>
   );

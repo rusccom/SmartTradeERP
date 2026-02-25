@@ -1,7 +1,20 @@
-import PlaceholderPage from "../../../shared/ui/PlaceholderPage";
+import { Link } from "react-router-dom";
 
 function LandingPage() {
-  return <PlaceholderPage title="Landing Page" text="Public landing placeholder. Backend is not called on this stage." />;
+  return (
+    <section className="auth-shell">
+      <div className="auth-card">
+        <h2>SmartERP</h2>
+        <p className="auth-text">Basic public page. Choose client or admin sign in.</p>
+        <Link to="/login" className="primary-button">
+          Sign in or register
+        </Link>
+        <Link to="/admin" className="text-link">
+          Admin sign in
+        </Link>
+      </div>
+    </section>
+  );
 }
 
 export default LandingPage;

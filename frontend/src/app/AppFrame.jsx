@@ -1,28 +1,22 @@
 import { Link, Outlet } from "react-router-dom";
 
+import { hasAdminSession, hasClientSession } from "../shared/auth/session";
+
 const links = [
   { to: "/", label: "Landing" },
-  { to: "/register", label: "Register" },
-  { to: "/login", label: "Login" },
-  { to: "/admin", label: "Admin" },
-  { to: "/admin/dashboard", label: "Admin Dashboard" },
-  { to: "/admin/tenants", label: "Admin Tenants" },
-  { to: "/dashboard", label: "Client Dashboard" },
-  { to: "/dashboard/products", label: "Products" },
-  { to: "/dashboard/bundles", label: "Bundles" },
-  { to: "/dashboard/warehouses", label: "Warehouses" },
-  { to: "/dashboard/documents", label: "Documents" },
-  { to: "/dashboard/reports", label: "Reports" },
-  { to: "/dashboard/settings", label: "Settings" },
+  { to: "/login", label: "Client Login" },
+  { to: "/register", label: "Client Register" },
+  { to: "/admin", label: "Admin Login" },
 ];
 
 function AppFrame() {
+  const navLinks = appendPrivateLinks(links);
   return (
     <div className="page">
       <header className="topbar">
         <h1>SmartERP</h1>
         <nav>
-          {links.map((item) => (
+          {navLinks.map((item) => (
             <Link key={item.to} to={item.to} className="nav-link">
               {item.label}
             </Link>
@@ -34,6 +28,17 @@ function AppFrame() {
       </main>
     </div>
   );
+}
+
+function appendPrivateLinks(baseLinks) {
+  const items = [...baseLinks];
+  if (hasClientSession()) {
+    items.push({ to: "/dashboard", label: "Client Dashboard" });
+  }
+  if (hasAdminSession()) {
+    items.push({ to: "/admin/dashboard", label: "Admin Dashboard" });
+  }
+  return items;
 }
 
 export default AppFrame;
