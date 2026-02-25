@@ -16,24 +16,26 @@ const POINTS = [
 function LandingValue() {
   return (
     <section className="landing-section landing-value">
-      <h2 className="landing-section-title">
-        Built for small businesses that think big
-      </h2>
-      <p className="landing-section-subtitle">
-        SmartTrade ERP gives you the inventory control, cost accuracy, and
-        financial visibility that used to require enterprise software &mdash; at
-        a fraction of the complexity.
-      </p>
-      <div className="landing-value-grid">
-        {POINTS.map((p) => (
-          <div key={p.title} className="landing-value-point">
-            <span className="landing-value-check" aria-hidden="true" />
-            <div>
-              <strong>{p.title}</strong>
-              <span>{p.desc}</span>
+      <div className="landing-section-inner">
+        <h2 className="landing-section-title">
+          Built for small businesses that think big
+        </h2>
+        <p className="landing-section-subtitle">
+          SmartTrade ERP gives you the inventory control, cost accuracy, and
+          financial visibility that used to require enterprise software &mdash; at
+          a fraction of the complexity.
+        </p>
+        <div className="landing-value-grid">
+          {POINTS.map((p) => (
+            <div key={p.title} className="landing-value-point">
+              <span className="landing-value-check" aria-hidden="true" />
+              <div>
+                <strong>{p.title}</strong>
+                <span>{p.desc}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );

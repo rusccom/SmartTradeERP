@@ -24,21 +24,23 @@ const FEATURES = [
 function LandingFeatures() {
   return (
     <section className="landing-section landing-features">
-      <h2 className="landing-section-title">
-        Everything your business needs to trade smarter
-      </h2>
-      <p className="landing-section-subtitle">
-        From receiving stock to calculating profit, SmartTrade ERP covers every
-        step of your daily trade operations.
-      </p>
-      <div className="landing-features-grid">
-        {FEATURES.map((f) => (
-          <article key={f.title} className="landing-feature-card">
-            <span className="landing-feature-icon">{f.icon}</span>
-            <h3>{f.title}</h3>
-            <p>{f.text}</p>
-          </article>
-        ))}
+      <div className="landing-section-inner">
+        <h2 className="landing-section-title">
+          Everything your business needs to trade smarter
+        </h2>
+        <p className="landing-section-subtitle">
+          From receiving stock to calculating profit, SmartTrade ERP covers every
+          step of your daily trade operations.
+        </p>
+        <div className="landing-features-grid">
+          {FEATURES.map((f) => (
+            <article key={f.title} className="landing-feature-card">
+              <span className="landing-feature-icon">{f.icon}</span>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );

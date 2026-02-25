@@ -1,7 +1,8 @@
 .landing-stack {
-  --section-radius: 24px;
-  --section-pad: clamp(32px, 5vw, 64px);
-  --section-gap: 20px;
+  --section-pad-x: clamp(20px, 4vw, 64px);
+  --section-pad-y: clamp(40px, 6vw, 80px);
+  --section-gap: 0px;
+  --content-max: 1180px;
   --glow-orange: rgba(255, 106, 61, 0.12);
   --glow-blue: rgba(43, 85, 199, 0.10);
 
@@ -11,12 +12,15 @@
 }
 
 .landing-section {
-  border: 1px solid var(--line);
-  border-radius: var(--section-radius);
-  background: rgba(255, 255, 255, 0.82);
-  padding: var(--section-pad);
+  padding: var(--section-pad-y) var(--section-pad-x);
   position: relative;
   overflow: hidden;
+  border-bottom: 1px solid rgba(13, 44, 90, 0.06);
+}
+
+.landing-section-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
 }
 
 .landing-section-title {
@@ -27,7 +31,7 @@
 }
 
 .landing-section-subtitle {
-  margin: 0 0 32px;
+  margin: 0 0 36px;
   color: var(--muted);
   font-size: clamp(15px, 1.6vw, 18px);
   line-height: 1.5;
@@ -53,10 +57,4 @@
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
-}
-
-@media (max-width: 900px) {
-  .landing-section {
-    padding: clamp(20px, 4vw, 32px);
-  }
 }

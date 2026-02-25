@@ -1,9 +1,11 @@
 .landing-stats {
+  background: rgba(13, 44, 90, 0.03);
+}
+
+.landing-stats-inner {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0;
-  padding: 0;
-  background: rgba(13, 44, 90, 0.03);
 }
 
 .landing-stat-item {
@@ -40,7 +42,7 @@
 }
 
 @media (max-width: 900px) {
-  .landing-stats {
+  .landing-stats-inner {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -55,7 +57,7 @@
 }
 
 @media (max-width: 480px) {
-  .landing-stats {
+  .landing-stats-inner {
     grid-template-columns: 1fr;
   }
 

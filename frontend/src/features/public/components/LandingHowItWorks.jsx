@@ -19,20 +19,22 @@ const STEPS = [
 function LandingHowItWorks() {
   return (
     <section className="landing-section landing-how">
-      <h2 className="landing-section-title">
-        Up and running in three steps
-      </h2>
-      <p className="landing-section-subtitle">
-        No complex setup, no consultants. Get your team productive in minutes.
-      </p>
-      <div className="landing-how-grid">
-        {STEPS.map((s) => (
-          <article key={s.num} className="landing-step">
-            <span className="landing-step-num">{s.num}</span>
-            <h3>{s.title}</h3>
-            <p>{s.text}</p>
-          </article>
-        ))}
+      <div className="landing-section-inner">
+        <h2 className="landing-section-title">
+          Up and running in three steps
+        </h2>
+        <p className="landing-section-subtitle">
+          No complex setup, no consultants. Get your team productive in minutes.
+        </p>
+        <div className="landing-how-grid">
+          {STEPS.map((s) => (
+            <article key={s.num} className="landing-step">
+              <span className="landing-step-num">{s.num}</span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );

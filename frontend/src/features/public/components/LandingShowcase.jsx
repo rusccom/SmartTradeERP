@@ -67,23 +67,25 @@ function WarehouseVisual() {
 function LandingShowcase() {
   return (
     <section className="landing-section landing-showcase">
-      <h2 className="landing-section-title">Built for real trade complexity</h2>
-      <p className="landing-section-subtitle">
-        Features designed for how retail and distribution actually works.
-      </p>
-      <div className="showcase-rows">
-        {ROWS.map((row, i) => (
-          <div
-            key={row.visual}
-            className={`showcase-row ${i % 2 === 1 ? "showcase-row--reversed" : ""}`}
-          >
-            <div className="showcase-text">
-              <h3>{row.title}</h3>
-              <p>{row.text}</p>
+      <div className="landing-section-inner">
+        <h2 className="landing-section-title">Built for real trade complexity</h2>
+        <p className="landing-section-subtitle">
+          Features designed for how retail and distribution actually works.
+        </p>
+        <div className="showcase-rows">
+          {ROWS.map((row, i) => (
+            <div
+              key={row.visual}
+              className={`showcase-row ${i % 2 === 1 ? "showcase-row--reversed" : ""}`}
+            >
+              <div className="showcase-text">
+                <h3>{row.title}</h3>
+                <p>{row.text}</p>
+              </div>
+              <ShowcaseVisual type={row.visual} />
             </div>
-            <ShowcaseVisual type={row.visual} />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );

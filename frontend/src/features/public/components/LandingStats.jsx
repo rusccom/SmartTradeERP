@@ -24,13 +24,15 @@ const STATS = [
 function LandingStats() {
   return (
     <section className="landing-section landing-stats">
-      {STATS.map((s) => (
-        <div key={s.title} className="landing-stat-item">
-          <span className="landing-stat-icon">{s.icon}</span>
-          <strong className="landing-stat-title">{s.title}</strong>
-          <span className="landing-stat-desc">{s.desc}</span>
-        </div>
-      ))}
+      <div className="landing-section-inner landing-stats-inner">
+        {STATS.map((s) => (
+          <div key={s.title} className="landing-stat-item">
+            <span className="landing-stat-icon">{s.icon}</span>
+            <strong className="landing-stat-title">{s.title}</strong>
+            <span className="landing-stat-desc">{s.desc}</span>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
