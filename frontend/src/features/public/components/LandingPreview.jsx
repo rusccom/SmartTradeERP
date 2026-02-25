@@ -1,4 +1,8 @@
-const BARS = ["86%", "72%", "64%"];
+const BARS = [
+  { size: "86%", delay: "0s" },
+  { size: "72%", delay: "0.12s" },
+  { size: "64%", delay: "0.24s" },
+];
 
 const KPI = [
   { label: "Order throughput", value: "x2.7" },
@@ -9,10 +13,17 @@ const KPI = [
 function LandingPreview() {
   return (
     <aside className="landing-preview" aria-hidden="true">
-      <p className="landing-preview-title">Operational pulse</p>
+      <div className="landing-preview-header">
+        <span className="landing-live-dot" />
+        <p className="landing-preview-title">Operational pulse</p>
+      </div>
       <div className="landing-bars">
-        {BARS.map((size) => (
-          <span key={size} className="landing-bar" style={{ "--bar-size": size }} />
+        {BARS.map((bar) => (
+          <span
+            key={bar.size}
+            className="landing-bar"
+            style={{ "--bar-size": bar.size, "--bar-delay": bar.delay }}
+          />
         ))}
       </div>
       <div className="landing-kpi">

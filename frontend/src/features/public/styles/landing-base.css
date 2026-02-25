@@ -1,0 +1,62 @@
+.landing-stack {
+  --section-radius: 24px;
+  --section-pad: clamp(32px, 5vw, 64px);
+  --section-gap: 20px;
+  --glow-orange: rgba(255, 106, 61, 0.12);
+  --glow-blue: rgba(43, 85, 199, 0.10);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+.landing-section {
+  border: 1px solid var(--line);
+  border-radius: var(--section-radius);
+  background: rgba(255, 255, 255, 0.82);
+  padding: var(--section-pad);
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-section-title {
+  margin: 0 0 8px;
+  font-size: clamp(26px, 3.2vw, 40px);
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.landing-section-subtitle {
+  margin: 0 0 32px;
+  color: var(--muted);
+  font-size: clamp(15px, 1.6vw, 18px);
+  line-height: 1.5;
+  max-width: 620px;
+}
+
+@keyframes bar-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@media (max-width: 900px) {
+  .landing-section {
+    padding: clamp(20px, 4vw, 32px);
+  }
+}
