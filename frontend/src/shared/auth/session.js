@@ -25,6 +25,23 @@ export function hasClientSession() {
   return hasToken(CLIENT_TOKEN_KEY);
 }
 
+export function hasAnySession() {
+  return hasAdminSession() || hasClientSession();
+}
+
+export function resolveHomeRoute(pathname = "") {
+  if (pathname.startsWith("/admin") && hasAdminSession()) {
+    return "/admin/dashboard";
+  }
+  if (hasClientSession()) {
+    return "/dashboard";
+  }
+  if (hasAdminSession()) {
+    return "/admin/dashboard";
+  }
+  return "/";
+}
+
 function hasToken(key) {
   return getToken(key) !== "";
 }

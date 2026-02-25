@@ -1,0 +1,108 @@
+.workspace-shell {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(13, 44, 90, 0.15);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+.workspace-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #0d2c5a;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.workspace-brand-mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: linear-gradient(160deg, #ff6a3d, #ff9869);
+}
+
+.workspace-brand-mark--admin {
+  background: linear-gradient(160deg, #2b55c7, #0d2c5a);
+}
+
+.workspace-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workspace-link {
+  text-decoration: none;
+  color: #0d2c5a;
+  border: 1px solid rgba(13, 44, 90, 0.15);
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 13px;
+}
+
+.workspace-link:hover {
+  border-color: rgba(255, 106, 61, 0.65);
+  color: #ff6a3d;
+}
+
+.workspace-link.is-active {
+  border-color: transparent;
+  background: #0d2c5a;
+  color: #fff;
+}
+
+.workspace-logout {
+  border: 1px solid rgba(13, 44, 90, 0.15);
+  background: #fff;
+  color: #0d2c5a;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.workspace-logout:hover {
+  border-color: rgba(255, 106, 61, 0.65);
+  color: #ff6a3d;
+}
+
+.workspace-content {
+  margin-top: 14px;
+}
+
+@media (max-width: 940px) {
+  .workspace-shell {
+    padding: 12px;
+  }
+
+  .workspace-header {
+    flex-wrap: wrap;
+  }
+
+  .workspace-nav {
+    order: 3;
+    width: 100%;
+  }
+
+  .workspace-link {
+    flex: 1;
+    text-align: center;
+    min-width: 110px;
+  }
+
+  .workspace-logout {
+    margin-left: auto;
+  }
+}
