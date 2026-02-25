@@ -1,18 +1,20 @@
 package reports
 
+import "github.com/shopspring/decimal"
+
 type ProfitReport struct {
-    Profit float64 `json:"profit"`
+	Profit decimal.Decimal `json:"profit"`
 }
 
 type StockRow struct {
-    VariantID string  `json:"variant_id"`
-    Name      string  `json:"name"`
-    Qty       float64 `json:"qty"`
-    Avg       float64 `json:"avg"`
+	VariantID string          `json:"variant_id"`
+	Name      string          `json:"name"`
+	Qty       decimal.Decimal `json:"qty"`
+	Avg       decimal.Decimal `json:"avg"`
 }
 
 type TopProduct struct {
-    ProductID string  `json:"product_id"`
-    Name      string  `json:"name"`
-    Profit    float64 `json:"profit"`
+	ProductID string          `json:"product_id"`
+	Name      string          `json:"name"`
+	Profit    decimal.Decimal `json:"profit"`
 }

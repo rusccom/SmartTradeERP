@@ -1,34 +1,40 @@
 package ledger
 
+import "github.com/shopspring/decimal"
+
 type calcState struct {
-    qty float64
-    avg float64
+	qty decimal.Decimal
+	avg decimal.Decimal
 }
 
 type calcResult struct {
-    state  calcState
-    cogs   *float64
-    profit *float64
+	state  calcState
+	cogs   *decimal.Decimal
+	profit *decimal.Decimal
 }
 
-func applyIn(state calcState, qty, unitPrice float64) calcResult {
-    totalQty := state.qty + qty
-    if totalQty <= 0 {
-        return calcResult{state: calcState{qty: 0, avg: 0}}
-    }
-    weighted := state.qty*state.avg + qty*unitPrice
-    next := calcState{qty: totalQty, avg: weighted / totalQty}
-    return calcResult{state: next}
+func zeroState() calcState {
+	return calcState{qty: decimal.Zero, avg: decimal.Zero}
 }
 
-func applyOut(state calcState, qty float64, revenue *float64) calcResult {
-    cogsValue := qty * state.avg
-    next := calcState{qty: state.qty - qty, avg: state.avg}
-    result := calcResult{state: next, cogs: &cogsValue}
-    if revenue == nil {
-        return result
-    }
-    profitValue := *revenue - cogsValue
-    result.profit = &profitValue
-    return result
+func applyIn(state calcState, qty, unitPrice decimal.Decimal) calcResult {
+	totalQty := state.qty.Add(qty)
+	if totalQty.LessThanOrEqual(decimal.Zero) {
+		return calcResult{state: zeroState()}
+	}
+	weighted := state.qty.Mul(state.avg).Add(qty.Mul(unitPrice))
+	newAvg := weighted.Div(totalQty).Round(4)
+	return calcResult{state: calcState{qty: totalQty, avg: newAvg}}
+}
+
+func applyOut(state calcState, qty decimal.Decimal, revenue *decimal.Decimal) calcResult {
+	cogsValue := qty.Mul(state.avg).Round(4)
+	next := calcState{qty: state.qty.Sub(qty), avg: state.avg}
+	result := calcResult{state: next, cogs: &cogsValue}
+	if revenue == nil {
+		return result
+	}
+	profitValue := revenue.Sub(cogsValue)
+	result.profit = &profitValue
+	return result
 }
