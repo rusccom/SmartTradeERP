@@ -19,26 +19,28 @@ function ClientLayout() {
   }
 
   return (
-    <div className="workspace-shell">
-      <header className="workspace-header">
-        <Link to="/dashboard" className="workspace-brand">
-          <span className="workspace-brand-mark" />
-          <span>SmartTrade ERP</span>
-        </Link>
-        <nav className="workspace-nav">
-          {CLIENT_LINKS.map((item) => (
-            <NavLink key={item.to} to={item.to} className={readNavClass}>
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-        <button className="workspace-logout" type="button" onClick={handleLogout}>
-          Sign out
-        </button>
-      </header>
-      <main className="workspace-content">
-        <Outlet />
-      </main>
+    <div className="workspace-zone">
+      <div className="workspace-shell">
+        <header className="workspace-header">
+          <Link to="/dashboard" className="workspace-brand">
+            <span className="workspace-brand-mark" />
+            <span>SmartTrade ERP</span>
+          </Link>
+          <nav className="workspace-nav">
+            {CLIENT_LINKS.map((item) => (
+              <NavLink key={item.to} to={item.to} className={readNavClass}>
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+          <button className="workspace-logout" type="button" onClick={handleLogout}>
+            Sign out
+          </button>
+        </header>
+        <main className="workspace-content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

@@ -18,30 +18,32 @@ function AdminLayout() {
   }
 
   return (
-    <div className="workspace-shell">
-      <header className="workspace-header">
-        <Link to={isAuthorized ? "/admin/dashboard" : "/admin"} className="workspace-brand">
-          <span className="workspace-brand-mark workspace-brand-mark--admin" />
-          <span>SmartTrade ERP Admin</span>
-        </Link>
-        {isAuthorized && (
-          <nav className="workspace-nav">
-            {ADMIN_LINKS.map((item) => (
-              <NavLink key={item.to} to={item.to} className={readNavClass}>
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        )}
-        {isAuthorized && (
-          <button className="workspace-logout" type="button" onClick={handleLogout}>
-            Sign out
-          </button>
-        )}
-      </header>
-      <main className="workspace-content">
-        <Outlet />
-      </main>
+    <div className="workspace-zone">
+      <div className="workspace-shell">
+        <header className="workspace-header">
+          <Link to={isAuthorized ? "/admin/dashboard" : "/admin"} className="workspace-brand">
+            <span className="workspace-brand-mark workspace-brand-mark--admin" />
+            <span>SmartTrade ERP Admin</span>
+          </Link>
+          {isAuthorized && (
+            <nav className="workspace-nav">
+              {ADMIN_LINKS.map((item) => (
+                <NavLink key={item.to} to={item.to} className={readNavClass}>
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          )}
+          {isAuthorized && (
+            <button className="workspace-logout" type="button" onClick={handleLogout}>
+              Sign out
+            </button>
+          )}
+        </header>
+        <main className="workspace-content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

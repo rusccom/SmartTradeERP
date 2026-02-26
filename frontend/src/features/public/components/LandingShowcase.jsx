@@ -52,8 +52,7 @@ function LandingShowcase() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className={`grid md:grid-cols-2 gap-10 items-center
-                ${i % 2 === 1 ? "md:direction-rtl" : ""}`}
+              className="grid md:grid-cols-2 gap-10 items-center"
             >
               <div className={i % 2 === 1 ? "md:order-2" : ""}>
                 <div

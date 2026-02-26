@@ -1,4 +1,16 @@
-:root {
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+/* ── Landing zone (dark theme) ── */
+
+.landing-zone {
   --bg-a: #09090b;
   --bg-b: #18181b;
   --panel: rgba(39, 39, 42, 0.78);
@@ -8,71 +20,20 @@
   --muted: #a1a1aa;
   --accent: #6366f1;
   --danger: #ef4444;
-}
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
   min-height: 100vh;
-  font-family: "Inter", system-ui, sans-serif;
   color: var(--text);
   background: var(--bg-a);
 }
 
-.page {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.topbar {
-  padding: 18px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: var(--panel);
-  backdrop-filter: blur(6px);
-}
-
-.topbar h1 {
-  margin: 0 0 12px;
-  font-size: 28px;
-}
-
-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.nav-link {
-  padding: 6px 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--text);
-  text-decoration: none;
-  font-size: 13px;
-}
-
-.nav-link:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.content {
-  margin-top: 14px;
-}
-
-.auth-shell {
+.landing-zone .auth-shell {
   min-height: calc(100vh - 210px);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.auth-card {
+.landing-zone .auth-card {
   width: min(460px, 100%);
   border: 1px solid var(--line);
   border-radius: 20px;
@@ -82,29 +43,29 @@ nav {
   animation: rise 220ms ease-out;
 }
 
-.auth-card h2 {
+.landing-zone .auth-card h2 {
   margin: 0 0 8px;
   font-size: 28px;
 }
 
-.auth-form {
+.landing-zone .auth-form {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.auth-text {
+.landing-zone .auth-text {
   margin: 0 0 4px;
   color: var(--muted);
   line-height: 1.4;
 }
 
-.auth-label {
+.landing-zone .auth-label {
   font-size: 13px;
   font-weight: 700;
 }
 
-.auth-input {
+.landing-zone .auth-input {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -114,13 +75,13 @@ nav {
   background: var(--bg-b);
 }
 
-.auth-input:focus {
+.landing-zone .auth-input:focus {
   outline: 2px solid rgba(99, 102, 241, 0.3);
   border-color: rgba(99, 102, 241, 0.6);
 }
 
-.primary-button,
-.secondary-button {
+.landing-zone .primary-button,
+.landing-zone .secondary-button {
   width: 100%;
   min-height: 42px;
   border-radius: 12px;
@@ -135,33 +96,33 @@ nav {
   transition: 150ms ease;
 }
 
-.primary-button {
+.landing-zone .primary-button {
   color: #fff;
   background: var(--accent);
   border-color: var(--accent);
 }
 
-.primary-button:disabled {
+.landing-zone .primary-button:disabled {
   opacity: 0.72;
   cursor: wait;
 }
 
-.primary-button:hover:not(:disabled) {
+.landing-zone .primary-button:hover:not(:disabled) {
   filter: brightness(0.94);
 }
 
-.secondary-button {
+.landing-zone .secondary-button {
   color: var(--text);
   border-color: var(--line);
   background: transparent;
 }
 
-.secondary-button:hover {
+.landing-zone .secondary-button:hover {
   border-color: var(--accent);
   color: var(--accent);
 }
 
-.text-link {
+.landing-zone .text-link {
   color: var(--text);
   text-decoration: none;
   text-align: center;
@@ -169,46 +130,15 @@ nav {
   font-size: 14px;
 }
 
-.text-link:hover {
+.landing-zone .text-link:hover {
   color: var(--accent);
   text-decoration: underline;
 }
 
-.error-text {
+.landing-zone .error-text {
   margin: 0;
   color: var(--danger);
   font-size: 13px;
-}
-
-.placeholder {
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 28px;
-  background: var(--panel);
-  animation: rise 220ms ease-out;
-}
-
-.placeholder h2 {
-  margin: 0 0 8px;
-  font-size: 28px;
-}
-
-.placeholder p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.dashboard-stub {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  align-items: flex-start;
-}
-
-.dashboard-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 @keyframes rise {
@@ -223,31 +153,15 @@ nav {
 }
 
 @media (max-width: 768px) {
-  .page {
-    padding: 12px;
-  }
-
-  .topbar h1 {
-    font-size: 22px;
-  }
-
-  .auth-shell {
+  .landing-zone .auth-shell {
     min-height: calc(100vh - 180px);
   }
 
-  .auth-card {
+  .landing-zone .auth-card {
     padding: 20px;
   }
 
-  .auth-card h2 {
-    font-size: 22px;
-  }
-
-  .placeholder {
-    padding: 20px;
-  }
-
-  .placeholder h2 {
+  .landing-zone .auth-card h2 {
     font-size: 22px;
   }
 }

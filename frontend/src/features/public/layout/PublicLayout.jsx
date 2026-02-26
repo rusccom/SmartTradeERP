@@ -13,10 +13,10 @@ function PublicLayout() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-bg-primary">
+    <div className="landing-zone flex flex-col bg-bg-primary">
       <header
         className={`sticky top-0 z-50 flex items-center justify-between
-          px-6 py-4 transition-all duration-300 border-b
+          px-4 sm:px-6 py-3 sm:py-4 transition-all duration-300 border-b
           ${scrolled
             ? "bg-bg-primary/90 backdrop-blur-xl border-border"
             : "bg-transparent border-transparent"
