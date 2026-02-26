@@ -39,13 +39,13 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
         httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid payload", err.Error())
         return
     }
-    tenantID := tenant.FromContext(r.Context())
-    id, err := h.service.Create(r.Context(), tenantID, req)
-    if err != nil {
-        httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to create document", err.Error())
-        return
-    }
-    httpx.WriteData(w, http.StatusCreated, map[string]string{"id": id}, nil)
+	tenantID := tenant.FromContext(r.Context())
+	id, err := h.service.Create(r.Context(), tenantID, req)
+	if err != nil {
+		h.writeDocumentError(w, err, "failed to create document")
+		return
+	}
+	httpx.WriteData(w, http.StatusCreated, map[string]string{"id": id}, nil)
 }
 
 func (h *Handler) ByID(w http.ResponseWriter, r *http.Request) {
@@ -106,6 +106,22 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) writeDocumentError(w http.ResponseWriter, err error, message string) {
     if errors.Is(err, pgx.ErrNoRows) {
         httpx.WriteError(w, http.StatusNotFound, "not_found", "document not found", nil)
+        return
+    }
+    if errors.Is(err, ErrPaymentsRequired) {
+        httpx.WriteError(w, http.StatusBadRequest, "payments_required", "payments are required for this document type", nil)
+        return
+    }
+    if errors.Is(err, ErrInvalidPaymentMethod) {
+        httpx.WriteError(w, http.StatusBadRequest, "invalid_payment_method", "payment method must be cash, card or transfer", nil)
+        return
+    }
+    if errors.Is(err, ErrInvalidPaymentAmount) {
+        httpx.WriteError(w, http.StatusBadRequest, "invalid_payment_amount", "payment amount must be greater than zero", nil)
+        return
+    }
+    if errors.Is(err, ErrPaymentTotalMismatch) {
+        httpx.WriteError(w, http.StatusBadRequest, "payment_total_mismatch", "payments total must match document total", nil)
         return
     }
     if errors.Is(err, ErrDraftOnly) {

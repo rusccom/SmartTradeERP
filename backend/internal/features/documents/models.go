@@ -8,6 +8,17 @@ type ItemInput struct {
 	UnitPrice decimal.Decimal `json:"unit_price"`
 }
 
+type PaymentInput struct {
+	Method string          `json:"method"`
+	Amount decimal.Decimal `json:"amount"`
+}
+
+type Payment struct {
+	ID     string          `json:"id"`
+	Method string          `json:"method"`
+	Amount decimal.Decimal `json:"amount"`
+}
+
 type CreateRequest struct {
 	Type              string      `json:"type"`
 	Date              string      `json:"date"`
@@ -15,8 +26,10 @@ type CreateRequest struct {
 	WarehouseID       string      `json:"warehouse_id"`
 	SourceWarehouseID string      `json:"source_warehouse_id"`
 	TargetWarehouseID string      `json:"target_warehouse_id"`
+	ShiftID           string      `json:"shift_id"`
 	Note              string      `json:"note"`
 	Items             []ItemInput `json:"items"`
+	Payments          []PaymentInput `json:"payments"`
 }
 
 type UpdateRequest = CreateRequest
@@ -30,8 +43,10 @@ type Document struct {
 	WarehouseID       string          `json:"warehouse_id"`
 	SourceWarehouseID string          `json:"source_warehouse_id"`
 	TargetWarehouseID string          `json:"target_warehouse_id"`
+	ShiftID           string          `json:"shift_id"`
 	Note              string          `json:"note"`
 	Items             []DocumentItem  `json:"items"`
+	Payments          []Payment       `json:"payments"`
 	TotalProfit       decimal.Decimal `json:"total_profit"`
 }
 

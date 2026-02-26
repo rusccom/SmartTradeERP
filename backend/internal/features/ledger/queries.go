@@ -136,7 +136,7 @@ func buildProfitPeriodQuery(
 	warehouseID string,
 	variantID string,
 ) (string, []any) {
-	parts := []string{"tenant_id=$1", "date BETWEEN $2 AND $3", "type='OUT'"}
+	parts := []string{"tenant_id=$1", "date BETWEEN $2 AND $3"}
 	args := []any{tenantID, fromDate, toDate}
 	parts, args = appendWarehouseFilter(parts, args, warehouseID)
 	parts, args = appendVariantFilter(parts, args, variantID)

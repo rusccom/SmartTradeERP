@@ -185,6 +185,9 @@ func (s *Service) buildEntriesForComposite(
 	if doc.Type == "SALE" {
 		return s.buildCompositeSaleEntries(ctx, tenantID, doc, item, components)
 	}
+	if doc.Type == "RETURN" {
+		return s.buildCompositeReturnEntries(ctx, tenantID, doc, item, components)
+	}
 	return s.buildCompositeRegularEntries(ctx, tenantID, doc, item, components)
 }
 
@@ -233,6 +236,25 @@ func (s *Service) buildCompositeSaleEntries(
 	entries := make([]ledger.EntryInput, 0, len(components))
 	for _, component := range components {
 		entry := s.buildCompositeSaleEntry(doc, tenantID, item, component, shares)
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (s *Service) buildCompositeReturnEntries(
+	ctx context.Context,
+	tenantID string,
+	doc Document,
+	item postingItem,
+	components []variantComponent,
+) ([]ledger.EntryInput, error) {
+	shares, err := s.revenueShares(ctx, tenantID, item, components)
+	if err != nil {
+		return nil, err
+	}
+	entries := make([]ledger.EntryInput, 0, len(components))
+	for _, component := range components {
+		entry := s.buildCompositeReturnEntry(doc, tenantID, item, component, shares)
 		entries = append(entries, entry)
 	}
 	return entries, nil

@@ -135,7 +135,7 @@ func (s *Service) recalculateRows(ctx context.Context, tx pgx.Tx, rows pgx.Rows,
 
 func calculateRow(state calcState, row ledgerRow) calcResult {
 	if row.itemType == "IN" {
-		return applyIn(state, row.qty, row.unitPrice)
+		return applyIn(state, row.qty, row.unitPrice, row.revenue)
 	}
 	return applyOut(state, row.qty, row.revenue)
 }

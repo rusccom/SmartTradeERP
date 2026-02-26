@@ -10,6 +10,7 @@ import (
 	"smarterp/backend/internal/features/ledger"
 	"smarterp/backend/internal/features/products"
 	"smarterp/backend/internal/features/reports"
+	"smarterp/backend/internal/features/shifts"
 	"smarterp/backend/internal/features/variants"
 	"smarterp/backend/internal/features/warehouses"
 	"smarterp/backend/internal/shared/auth"
@@ -73,6 +74,9 @@ func registerDocumentsAndReports(
 	documentsRepo := documents.NewRepository(store)
 	documentsService := documents.NewService(store, documentsRepo, ledgerService)
 	documents.RegisterRoutes(mux, documentsService, tokens)
+	shiftsRepo := shifts.NewRepository(store)
+	shiftsService := shifts.NewService(store, shiftsRepo)
+	shifts.RegisterRoutes(mux, shiftsService, tokens)
 	reportsRepo := reports.NewRepository(store)
 	reportsService := reports.NewService(reportsRepo, ledgerService)
 	reports.RegisterRoutes(mux, reportsService, tokens)
