@@ -11,13 +11,13 @@ import (
 func (r *Repository) PostingDocument(ctx context.Context, tx pgx.Tx, tenantID, documentID string) (Document, error) {
 	query := `SELECT id::text, type, date::text, COALESCE(number,''), status,
         COALESCE(warehouse_id::text,''), COALESCE(source_warehouse_id::text,''),
-        COALESCE(target_warehouse_id::text,''), COALESCE(note,'')
+        COALESCE(target_warehouse_id::text,''), COALESCE(shift_id::text,''), COALESCE(note,'')
         FROM documents.documents
         WHERE tenant_id=$1 AND id=$2`
 	row := tx.QueryRow(ctx, query, tenantID, documentID)
 	doc := Document{}
 	err := row.Scan(&doc.ID, &doc.Type, &doc.Date, &doc.Number, &doc.Status,
-		&doc.WarehouseID, &doc.SourceWarehouseID, &doc.TargetWarehouseID, &doc.Note)
+		&doc.WarehouseID, &doc.SourceWarehouseID, &doc.TargetWarehouseID, &doc.ShiftID, &doc.Note)
 	return doc, err
 }
 
