@@ -19,16 +19,18 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-    tenantID := tenant.FromContext(r.Context())
-    page, perPage := httpx.ParsePagination(r)
-    filter := r.URL.Query().Get("is_composite")
-    data, total, err := h.service.List(r.Context(), tenantID, filter, page, perPage)
-    if err != nil {
-        httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to list products", err.Error())
-        return
-    }
-    meta := &httpx.Meta{Page: page, PerPage: perPage, Total: total}
-    httpx.WriteData(w, http.StatusOK, data, meta)
+	tenantID := tenant.FromContext(r.Context())
+	query := httpx.ParseListQuery(r, httpx.SortConfig{
+		Allowed: []string{"name", "created_at"},
+		Fallback: "created_at",
+	}, []string{"is_composite"})
+	data, total, err := h.service.List(r.Context(), tenantID, query)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to list products", err.Error())
+		return
+	}
+	meta := &httpx.Meta{Page: query.Page, PerPage: query.PerPage, Total: total}
+	httpx.WriteData(w, http.StatusOK, data, meta)
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {

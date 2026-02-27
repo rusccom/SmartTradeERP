@@ -1,14 +1,15 @@
 package products
 
 import (
-    "context"
-    "errors"
+	"context"
+	"errors"
 
-    "github.com/google/uuid"
-    "github.com/jackc/pgx/v5"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
-    "smarterp/backend/internal/features/ledger"
-    "smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/features/ledger"
+	"smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/httpx"
 )
 
 var ErrHasMovements = errors.New("product has movements")
@@ -23,8 +24,8 @@ func NewService(store *db.Store, repo *Repository, ledger *ledger.Service) *Serv
     return &Service{store: store, repo: repo, ledger: ledger}
 }
 
-func (s *Service) List(ctx context.Context, tenantID, isComposite string, page, perPage int) ([]Product, int, error) {
-    return s.repo.List(ctx, tenantID, isComposite, page, perPage)
+func (s *Service) List(ctx context.Context, tenantID string, query httpx.ListQuery) ([]Product, int, error) {
+	return s.repo.List(ctx, tenantID, query)
 }
 
 func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest) (string, error) {

@@ -1,8 +1,15 @@
+import { getAdminToken, getClientToken } from "../auth/session";
+
 const API_BASE_URL = normalizeBaseURL(import.meta.env.VITE_API_URL);
 
 export async function postJSON(path, payload) {
-  const response = await fetch(createURL(path), createPostOptions(payload));
+  const response = await fetch(createURL(path), createPostOptions(path, payload));
   return parseEnvelope(response);
+}
+
+export async function getJSON(path, params, signal) {
+  const response = await fetch(buildURL(path, params), createGetOptions(path, signal));
+  return parseEnvelopeWithMeta(response);
 }
 
 function createURL(path) {
@@ -12,12 +19,42 @@ function createURL(path) {
   return `${API_BASE_URL}${path}`;
 }
 
-function createPostOptions(payload) {
+function resolveToken(path) {
+  if (path.startsWith("/api/admin")) {
+    return getAdminToken() || "";
+  }
+  if (path.startsWith("/api/client")) {
+    return getClientToken() || "";
+  }
+  return getClientToken() || getAdminToken() || "";
+}
+
+function authHeaders(path) {
+  const token = resolveToken(path);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function createPostOptions(path, payload) {
   return {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders(path) },
     body: JSON.stringify(payload),
   };
+}
+
+function buildURL(path, params) {
+  const url = new URL(createURL(path));
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") {
+      return;
+    }
+    url.searchParams.set(key, String(value));
+  });
+  return url.toString();
+}
+
+function createGetOptions(path, signal) {
+  return { method: "GET", headers: authHeaders(path), signal };
 }
 
 async function parseEnvelope(response) {
@@ -26,6 +63,14 @@ async function parseEnvelope(response) {
     throw new Error(getErrorMessage(body, response.status));
   }
   return body.data ?? null;
+}
+
+async function parseEnvelopeWithMeta(response) {
+  const body = await parseBody(response);
+  if (!response.ok || body.error) {
+    throw new Error(getErrorMessage(body, response.status));
+  }
+  return { data: body.data ?? null, meta: body.meta ?? null };
 }
 
 async function parseBody(response) {

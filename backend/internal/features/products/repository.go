@@ -1,12 +1,13 @@
 package products
 
 import (
-    "context"
-    "strconv"
+	"context"
+	"strconv"
 
-    "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5"
 
-    "smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/httpx"
 )
 
 type Repository struct {
@@ -17,71 +18,101 @@ func NewRepository(store *db.Store) *Repository {
     return &Repository{store: store}
 }
 
-func (r *Repository) List(ctx context.Context, tenantID, isComposite string, page, perPage int) ([]Product, int, error) {
-    total, err := r.count(ctx, tenantID, isComposite)
-    if err != nil {
-        return nil, 0, err
-    }
-    data, err := r.load(ctx, tenantID, isComposite, page, perPage)
-    if err != nil {
-        return nil, 0, err
-    }
-    return data, total, nil
+func (r *Repository) List(ctx context.Context, tenantID string, query httpx.ListQuery) ([]Product, int, error) {
+	total, err := r.count(ctx, tenantID, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	data, err := r.load(ctx, tenantID, query)
+	if err != nil {
+		return nil, 0, err
+	}
+	return data, total, nil
 }
 
-func (r *Repository) count(ctx context.Context, tenantID, isComposite string) (int, error) {
-    query := `SELECT COUNT(*) FROM catalog.products WHERE tenant_id=$1`
-    args := []any{tenantID}
-    if isComposite != "" {
-        query += ` AND is_composite=$2`
-        args = append(args, isComposite == "true")
-    }
-    row := r.store.Pool.QueryRow(ctx, query, args...)
-    total := 0
-    return total, row.Scan(&total)
+func (r *Repository) count(ctx context.Context, tenantID string, query httpx.ListQuery) (int, error) {
+	sqlQuery := `SELECT COUNT(*) FROM catalog.products WHERE tenant_id=$1`
+	args := []any{tenantID}
+	sqlQuery, args = appendListFilters(sqlQuery, args, query)
+	row := r.store.Pool.QueryRow(ctx, sqlQuery, args...)
+	total := 0
+	return total, row.Scan(&total)
 }
 
-func (r *Repository) load(ctx context.Context, tenantID, isComposite string, page, perPage int) ([]Product, error) {
-    offset := (page - 1) * perPage
-    query := `SELECT id::text, name, is_composite, created_at::text, updated_at::text
+func (r *Repository) load(ctx context.Context, tenantID string, query httpx.ListQuery) ([]Product, error) {
+	sqlQuery := `SELECT id::text, name, is_composite, created_at::text, updated_at::text
         FROM catalog.products WHERE tenant_id=$1`
-    args := []any{tenantID}
-    query, args = addCompositeFilter(query, args, isComposite)
-    query += ` ORDER BY created_at DESC LIMIT $` + position(len(args)+1)
-    query += ` OFFSET $` + position(len(args)+2)
-    args = append(args, perPage, offset)
-    rows, err := r.store.Pool.Query(ctx, query, args...)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
-    return scanProducts(rows)
+	args := []any{tenantID}
+	sqlQuery, args = appendListFilters(sqlQuery, args, query)
+	sqlQuery, args = appendSortAndPaging(sqlQuery, args, query)
+	rows, err := r.store.Pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanProducts(rows)
+}
+
+func appendListFilters(query string, args []any, listQuery httpx.ListQuery) (string, []any) {
+	query, args = addCompositeFilter(query, args, listQuery.Filters["is_composite"])
+	query, args = addSearchFilter(query, args, listQuery.Search)
+	return query, args
+}
+
+func addSearchFilter(query string, args []any, search string) (string, []any) {
+	if search == "" {
+		return query, args
+	}
+	query += ` AND name ILIKE '%' || $` + position(len(args)+1) + ` || '%'`
+	args = append(args, search)
+	return query, args
+}
+
+func appendSortAndPaging(query string, args []any, listQuery httpx.ListQuery) (string, []any) {
+	sortBy, sortDir := readSort(listQuery)
+	query += ` ORDER BY ` + sortBy + ` ` + sortDir
+	query += ` LIMIT $` + position(len(args)+1)
+	query += ` OFFSET $` + position(len(args)+2)
+	args = append(args, listQuery.PerPage, httpx.Offset(listQuery.Page, listQuery.PerPage))
+	return query, args
+}
+
+func readSort(query httpx.ListQuery) (string, string) {
+	sortBy := query.SortBy
+	if sortBy == "" {
+		sortBy = "created_at"
+	}
+	sortDir := query.SortDir
+	if sortDir != "asc" && sortDir != "desc" {
+		sortDir = "desc"
+	}
+	return sortBy, sortDir
 }
 
 func addCompositeFilter(query string, args []any, isComposite string) (string, []any) {
-    if isComposite == "" {
-        return query, args
-    }
-    query += ` AND is_composite=$` + position(len(args)+1)
-    args = append(args, isComposite == "true")
-    return query, args
+	if isComposite == "" {
+		return query, args
+	}
+	query += ` AND is_composite=$` + position(len(args)+1)
+	args = append(args, isComposite == "true")
+	return query, args
 }
 
 func position(value int) string {
-    return strconv.Itoa(value)
+	return strconv.Itoa(value)
 }
 
 func scanProducts(rows pgx.Rows) ([]Product, error) {
-    items := make([]Product, 0)
-    for rows.Next() {
-        item := Product{}
-        err := rows.Scan(&item.ID, &item.Name, &item.IsComposite, &item.CreatedAt, &item.UpdatedAt)
-        if err != nil {
-            return nil, err
-        }
-        items = append(items, item)
-    }
-    return items, rows.Err()
+	items := make([]Product, 0)
+	for rows.Next() {
+		item := Product{}
+		err := rows.Scan(&item.ID, &item.Name, &item.IsComposite, &item.CreatedAt, &item.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
 }
 
 func (r *Repository) Create(ctx context.Context, tx pgx.Tx, tenantID, productID string, req CreateRequest) error {

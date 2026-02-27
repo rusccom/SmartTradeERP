@@ -29,6 +29,14 @@ export function hasAnySession() {
   return hasAdminSession() || hasClientSession();
 }
 
+export function getAdminToken() {
+  return getToken(ADMIN_TOKEN_KEY);
+}
+
+export function getClientToken() {
+  return getToken(CLIENT_TOKEN_KEY);
+}
+
 export function resolveHomeRoute(pathname = "") {
   if (pathname.startsWith("/admin") && hasAdminSession()) {
     return "/admin/dashboard";

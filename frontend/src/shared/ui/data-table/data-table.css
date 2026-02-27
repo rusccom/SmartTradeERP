@@ -1,0 +1,289 @@
+.dt-wrapper {
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(13, 44, 90, 0.12);
+  animation: ws-rise 220ms ease-out;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.dt-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(13, 44, 90, 0.08);
+}
+
+.dt-toolbar-left {
+  flex: 1;
+}
+
+.dt-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dt-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dt-search-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: min(360px, 100%);
+}
+
+.dt-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #5a6a80;
+}
+
+.dt-search {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(13, 44, 90, 0.15);
+  padding: 8px 12px 8px 36px;
+  min-height: 38px;
+  font-size: 13px;
+  color: #0d2c5a;
+  background: #fff;
+}
+
+.dt-search:focus {
+  outline: 2px solid rgba(255, 106, 61, 0.3);
+  border-color: rgba(255, 106, 61, 0.65);
+}
+
+.dt-count {
+  color: #5a6a80;
+  font-size: 13px;
+}
+
+.dt-table-scroll {
+  overflow-x: auto;
+}
+
+.dt-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dt-th {
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5a6a80;
+  background: #f8f9fb;
+  border-bottom: 2px solid rgba(13, 44, 90, 0.1);
+  white-space: nowrap;
+  user-select: none;
+  text-align: left;
+  vertical-align: top;
+}
+
+.dt-th-btn {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: inherit;
+  padding: 0;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+
+.dt-th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dt-th--sortable {
+  cursor: pointer;
+}
+
+.dt-th--sortable:hover {
+  color: #0d2c5a;
+}
+
+.dt-th--sorted {
+  color: #0d2c5a;
+}
+
+.dt-sort-icon {
+  margin-left: 4px;
+  width: 14px;
+  height: 14px;
+  opacity: 0.5;
+}
+
+.dt-sort-icon--active {
+  opacity: 1;
+  color: #ff6a3d;
+}
+
+.dt-filter {
+  width: 100%;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border: 1px solid rgba(13, 44, 90, 0.12);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #0d2c5a;
+  background: #fff;
+}
+
+.dt-filter-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.dt-td {
+  padding: 10px 16px;
+  font-size: 14px;
+  color: #0d2c5a;
+  border-bottom: 1px solid rgba(13, 44, 90, 0.06);
+}
+
+.dt-row:nth-child(even) {
+  background: #f8f9fb;
+}
+
+.dt-row:hover {
+  background: rgba(255, 106, 61, 0.04);
+}
+
+.dt-row--clickable {
+  cursor: pointer;
+}
+
+.dt-row--sub {
+  background: #f0f4f8;
+}
+
+.dt-sub-indent {
+  padding-left: 32px;
+}
+
+.dt-expand-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dt-expand-btn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 2px;
+  color: #5a6a80;
+}
+
+.dt-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: #5a6a80;
+}
+
+.dt-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(13, 44, 90, 0.08);
+  font-size: 13px;
+}
+
+.dt-page-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dt-page-btn {
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(13, 44, 90, 0.15);
+  background: #fff;
+  color: #0d2c5a;
+  cursor: pointer;
+}
+
+.dt-page-btn:hover {
+  border-color: rgba(255, 106, 61, 0.65);
+  color: #ff6a3d;
+}
+
+.dt-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dt-page-btn--active,
+.dt-page-btn--active:hover {
+  background: #0d2c5a;
+  color: #fff;
+  border-color: transparent;
+}
+
+.dt-page-size {
+  border: 1px solid rgba(13, 44, 90, 0.12);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #0d2c5a;
+  background: #fff;
+}
+
+.dt-page-info {
+  color: #5a6a80;
+}
+
+.dt-loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.dt-error {
+  text-align: center;
+  padding: 16px 20px;
+  color: #dc2626;
+}
+
+.dt-error-btn {
+  margin-left: 12px;
+}
+
+@media (max-width: 768px) {
+  .dt-toolbar,
+  .dt-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .dt-toolbar-right {
+    justify-content: space-between;
+  }
+
+  .dt-page-controls {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}

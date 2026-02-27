@@ -10,6 +10,7 @@
     "generate:client": "echo OpenAPI client generation placeholder"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
     "@tailwindcss/vite": "^4.2.1",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",

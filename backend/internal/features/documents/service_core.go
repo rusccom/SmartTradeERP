@@ -8,6 +8,7 @@ import (
 
 	"smarterp/backend/internal/features/ledger"
 	"smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/httpx"
 )
 
 type Service struct {
@@ -20,8 +21,8 @@ func NewService(store *db.Store, repo *Repository, ledger *ledger.Service) *Serv
 	return &Service{store: store, repo: repo, ledger: ledger}
 }
 
-func (s *Service) List(ctx context.Context, tenantID string, filters Filters, page, perPage int) ([]ListItem, int, error) {
-	return s.repo.List(ctx, tenantID, filters, page, perPage)
+func (s *Service) List(ctx context.Context, tenantID string, query httpx.ListQuery) ([]ListItem, int, error) {
+	return s.repo.List(ctx, tenantID, query)
 }
 
 func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest) (string, error) {

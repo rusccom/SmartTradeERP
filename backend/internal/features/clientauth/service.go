@@ -50,6 +50,7 @@ type registerIDs struct {
 	tenantID    string
 	userID      string
 	warehouseID string
+	customerID  string
 }
 
 func createIDs() registerIDs {
@@ -57,6 +58,7 @@ func createIDs() registerIDs {
 	ids.tenantID = uuid.NewString()
 	ids.userID = uuid.NewString()
 	ids.warehouseID = uuid.NewString()
+	ids.customerID = uuid.NewString()
 	return ids
 }
 
@@ -73,7 +75,10 @@ func (s *Service) createTenantGraph(
 	if err := insertOwner(ctx, tx, ids, req.Email, hash); err != nil {
 		return err
 	}
-	return insertDefaultWarehouse(ctx, tx, ids)
+	if err := insertDefaultWarehouse(ctx, tx, ids); err != nil {
+		return err
+	}
+	return insertDefaultCustomer(ctx, tx, ids)
 }
 
 func insertTenant(ctx context.Context, tx pgx.Tx, tenantID, name string) error {
@@ -94,5 +99,12 @@ func insertDefaultWarehouse(ctx context.Context, tx pgx.Tx, ids registerIDs) err
 	query := `INSERT INTO catalog.warehouses (id, tenant_id, name, is_default)
         VALUES ($1,$2,'Main Warehouse',true)`
 	_, err := tx.Exec(ctx, query, ids.warehouseID, ids.tenantID)
+	return err
+}
+
+func insertDefaultCustomer(ctx context.Context, tx pgx.Tx, ids registerIDs) error {
+	query := `INSERT INTO catalog.customers (id, tenant_id, name, is_default)
+        VALUES ($1,$2,'Розничный покупатель',true)`
+	_, err := tx.Exec(ctx, query, ids.customerID, ids.tenantID)
 	return err
 }

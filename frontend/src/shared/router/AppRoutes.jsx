@@ -13,6 +13,7 @@ import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import ProductsPage from "../../features/dashboard/pages/ProductsPage";
 import BundlesPage from "../../features/dashboard/pages/BundlesPage";
 import WarehousesPage from "../../features/dashboard/pages/WarehousesPage";
+import CustomersPage from "../../features/dashboard/pages/CustomersPage";
 import DocumentsPage from "../../features/dashboard/pages/DocumentsPage";
 import DocumentCardPage from "../../features/dashboard/pages/DocumentCardPage";
 import ReportsPage from "../../features/dashboard/pages/ReportsPage";
@@ -45,6 +46,7 @@ function AppRoutes() {
           <Route path="/dashboard/products" element={<ProductsPage />} />
           <Route path="/dashboard/bundles" element={<BundlesPage />} />
           <Route path="/dashboard/warehouses" element={<WarehousesPage />} />
+          <Route path="/dashboard/customers" element={<CustomersPage />} />
           <Route path="/dashboard/documents" element={<DocumentsPage />} />
           <Route path="/dashboard/documents/:id" element={<DocumentCardPage />} />
           <Route path="/dashboard/reports" element={<ReportsPage />} />

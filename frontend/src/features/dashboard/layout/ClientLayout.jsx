@@ -6,6 +6,7 @@ import "../../../shared/ui/workspace-layout.css";
 const CLIENT_LINKS = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/dashboard/products", label: "Products" },
+  { to: "/dashboard/customers", label: "Customers" },
   { to: "/dashboard/documents", label: "Documents" },
   { to: "/dashboard/reports", label: "Reports" },
 ];

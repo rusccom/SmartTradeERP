@@ -6,6 +6,7 @@ import (
 
 	"smarterp/backend/internal/features/admin"
 	"smarterp/backend/internal/features/clientauth"
+	"smarterp/backend/internal/features/customers"
 	"smarterp/backend/internal/features/documents"
 	"smarterp/backend/internal/features/ledger"
 	"smarterp/backend/internal/features/products"
@@ -63,6 +64,9 @@ func registerCatalog(mux *http.ServeMux, store *db.Store, tokens *auth.TokenServ
 	warehouseRepo := warehouses.NewRepository(store)
 	warehouseService := warehouses.NewService(warehouseRepo, ledgerService)
 	warehouses.RegisterRoutes(mux, warehouseService, tokens)
+	customerRepo := customers.NewRepository(store)
+	customerService := customers.NewService(customerRepo)
+	customers.RegisterRoutes(mux, customerService, tokens)
 }
 
 func registerDocumentsAndReports(

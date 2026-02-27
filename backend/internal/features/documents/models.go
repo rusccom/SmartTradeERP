@@ -20,15 +20,16 @@ type Payment struct {
 }
 
 type CreateRequest struct {
-	Type              string      `json:"type"`
-	Date              string      `json:"date"`
-	Number            string      `json:"number"`
-	WarehouseID       string      `json:"warehouse_id"`
-	SourceWarehouseID string      `json:"source_warehouse_id"`
-	TargetWarehouseID string      `json:"target_warehouse_id"`
-	ShiftID           string      `json:"shift_id"`
-	Note              string      `json:"note"`
-	Items             []ItemInput `json:"items"`
+	Type              string         `json:"type"`
+	Date              string         `json:"date"`
+	Number            string         `json:"number"`
+	WarehouseID       string         `json:"warehouse_id"`
+	SourceWarehouseID string         `json:"source_warehouse_id"`
+	TargetWarehouseID string         `json:"target_warehouse_id"`
+	ShiftID           string         `json:"shift_id"`
+	CustomerID        string         `json:"customer_id"`
+	Note              string         `json:"note"`
+	Items             []ItemInput    `json:"items"`
 	Payments          []PaymentInput `json:"payments"`
 }
 
@@ -44,6 +45,7 @@ type Document struct {
 	SourceWarehouseID string          `json:"source_warehouse_id"`
 	TargetWarehouseID string          `json:"target_warehouse_id"`
 	ShiftID           string          `json:"shift_id"`
+	CustomerID        string          `json:"customer_id"`
 	Note              string          `json:"note"`
 	Items             []DocumentItem  `json:"items"`
 	Payments          []Payment       `json:"payments"`
@@ -60,12 +62,14 @@ type DocumentItem struct {
 }
 
 type ListItem struct {
-	ID     string `json:"id"`
-	Type   string `json:"type"`
-	Date   string `json:"date"`
-	Number string `json:"number"`
-	Status string `json:"status"`
-	Note   string `json:"note"`
+	ID         string `json:"id"`
+	Type       string `json:"type"`
+	Date       string `json:"date"`
+	Number     string `json:"number"`
+	Status     string `json:"status"`
+	CustomerID string `json:"customer_id"`
+	Note       string `json:"note"`
+	TotalCost  string `json:"total_cost"`
 }
 
 type Filters struct {

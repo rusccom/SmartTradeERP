@@ -19,18 +19,18 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-    tenantID := tenant.FromContext(r.Context())
-    page, perPage := httpx.ParsePagination(r)
-    filters := Filters{Type: r.URL.Query().Get("type")}
-    filters.Status = r.URL.Query().Get("status")
-    filters.Date = r.URL.Query().Get("date")
-    items, total, err := h.service.List(r.Context(), tenantID, filters, page, perPage)
-    if err != nil {
-        httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to list documents", err.Error())
-        return
-    }
-    meta := &httpx.Meta{Page: page, PerPage: perPage, Total: total}
-    httpx.WriteData(w, http.StatusOK, items, meta)
+	tenantID := tenant.FromContext(r.Context())
+	query := httpx.ParseListQuery(r, httpx.SortConfig{
+		Allowed: []string{"date", "number", "total_cost"},
+		Fallback: "date",
+	}, []string{"type", "status", "date"})
+	items, total, err := h.service.List(r.Context(), tenantID, query)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to list documents", err.Error())
+		return
+	}
+	meta := &httpx.Meta{Page: query.Page, PerPage: query.PerPage, Total: total}
+	httpx.WriteData(w, http.StatusOK, items, meta)
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
