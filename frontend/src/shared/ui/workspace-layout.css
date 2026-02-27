@@ -8,9 +8,9 @@
 }
 
 .workspace-shell {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
+  width: 100%;
+  margin: 0;
+  padding: 16px 8px;
 }
 
 .workspace-header {
@@ -18,13 +18,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 20px;
+  padding: 12px 16px;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  margin-bottom: 24px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  margin-bottom: 16px;
 }
 
 .workspace-brand {
@@ -103,16 +102,14 @@
 }
 
 .workspace-zone .placeholder {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 32px;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  animation: ws-rise 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .workspace-zone .placeholder h2 {
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   font-size: 24px;
   font-weight: 600;
   color: #0f172a;
@@ -173,12 +170,18 @@
 
 @media (max-width: 940px) {
   .workspace-shell {
-    padding: 16px;
+    padding: 12px 0;
   }
 
   .workspace-header {
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    margin: 0 12px 16px 12px;
+  }
+
+  .workspace-content {
+    padding: 0 12px;
   }
 
   .workspace-nav {
@@ -199,7 +202,7 @@
   }
 
   .workspace-zone .placeholder {
-    padding: 24px;
+    padding: 0;
   }
 
   .workspace-zone .placeholder h2 {
