@@ -10,14 +10,7 @@ import AdminDashboardPage from "../../features/admin/pages/AdminDashboardPage";
 import AdminTenantsPage from "../../features/admin/pages/AdminTenantsPage";
 import AdminLayout from "../../features/admin/layout/AdminLayout";
 import DashboardPage from "../../features/dashboard/pages/DashboardPage";
-import ProductsPage from "../../features/dashboard/pages/ProductsPage";
-import BundlesPage from "../../features/dashboard/pages/BundlesPage";
-import WarehousesPage from "../../features/dashboard/pages/WarehousesPage";
-import CustomersPage from "../../features/dashboard/pages/CustomersPage";
-import DocumentsPage from "../../features/dashboard/pages/DocumentsPage";
-import DocumentCardPage from "../../features/dashboard/pages/DocumentCardPage";
-import ReportsPage from "../../features/dashboard/pages/ReportsPage";
-import SettingsPage from "../../features/dashboard/pages/SettingsPage";
+import RegistryPage from "../../features/dashboard/pages/RegistryPage";
 import ClientLayout from "../../features/dashboard/layout/ClientLayout";
 import RequireAdminAuth from "./RequireAdminAuth";
 import RequireClientAuth from "./RequireClientAuth";
@@ -43,14 +36,17 @@ function AppRoutes() {
         </Route>
         <Route element={<RequireClientAuth><ClientLayout /></RequireClientAuth>}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/dashboard/products" element={<ProductsPage />} />
-          <Route path="/dashboard/bundles" element={<BundlesPage />} />
-          <Route path="/dashboard/warehouses" element={<WarehousesPage />} />
-          <Route path="/dashboard/customers" element={<CustomersPage />} />
-          <Route path="/dashboard/documents" element={<DocumentsPage />} />
-          <Route path="/dashboard/documents/:id" element={<DocumentCardPage />} />
-          <Route path="/dashboard/reports" element={<ReportsPage />} />
-          <Route path="/dashboard/settings" element={<SettingsPage />} />
+          {/* Catalog */}
+          <Route path="/dashboard/products" element={<RegistryPage pageKey="products" />} />
+          <Route path="/dashboard/groups" element={<RegistryPage pageKey="groups" />} />
+          <Route path="/dashboard/customers" element={<RegistryPage pageKey="customers" />} />
+          {/* Documents */}
+          <Route path="/dashboard/docs/income" element={<RegistryPage pageKey="income" />} />
+          <Route path="/dashboard/docs/expense" element={<RegistryPage pageKey="expense" />} />
+          <Route path="/dashboard/docs/transfer" element={<RegistryPage pageKey="transfer" />} />
+          <Route path="/dashboard/docs/inventory" element={<RegistryPage pageKey="inventory" />} />
+          <Route path="/dashboard/docs/receipt" element={<RegistryPage pageKey="receipt" />} />
+          <Route path="/dashboard/docs/writeoff" element={<RegistryPage pageKey="writeoff" />} />
         </Route>
         <Route path="*" element={<FallbackRoute />} />
       </Routes>
