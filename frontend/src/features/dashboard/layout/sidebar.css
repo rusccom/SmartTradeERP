@@ -4,25 +4,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  border: 1px solid rgba(13, 44, 90, 0.15);
-  border-radius: 10px;
-  background: #fff;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
   cursor: pointer;
   flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .hamburger-btn:hover {
-  border-color: rgba(255, 106, 61, 0.65);
+  border-color: #cbd5e1;
+  background: #f8fafc;
 }
 
 .hamburger-icon {
   display: block;
   width: 18px;
   height: 2px;
-  background: #0d2c5a;
+  background: #334155;
   position: relative;
+  transition: background 0.2s;
 }
 
 .hamburger-icon::before,
@@ -31,22 +34,35 @@
   display: block;
   width: 18px;
   height: 2px;
-  background: #0d2c5a;
+  background: #334155;
   position: absolute;
   left: 0;
+  transition: background 0.2s;
 }
 
-.hamburger-icon::before { top: -6px; }
-.hamburger-icon::after  { top: 6px; }
+.hamburger-icon::before {
+  top: -6px;
+}
+
+.hamburger-icon::after {
+  top: 6px;
+}
+
+.hamburger-btn:hover .hamburger-icon,
+.hamburger-btn:hover .hamburger-icon::before,
+.hamburger-btn:hover .hamburger-icon::after {
+  background: #0f172a;
+}
 
 /* ── Backdrop overlay ── */
 
 .sidebar-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
   z-index: 900;
-  animation: sidebar-fade-in 180ms ease-out;
+  animation: sidebar-fade-in 200ms ease-out;
 }
 
 /* ── Sidebar panel ── */
@@ -58,11 +74,11 @@
   bottom: 0;
   width: 280px;
   max-width: 80vw;
-  background: #fff;
+  background: #ffffff;
   z-index: 950;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
   transform: translateX(-100%);
-  transition: transform 220ms ease-out;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
   overflow-y: auto;
   padding: 0 0 24px;
 }
@@ -77,13 +93,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px 12px;
+  padding: 20px 24px 16px;
 }
 
 .sidebar-title {
-  font-weight: 700;
+  font-weight: 600;
   font-size: 16px;
-  color: #0d2c5a;
+  color: #0f172a;
+  letter-spacing: -0.01em;
 }
 
 .sidebar-close {
@@ -91,63 +108,72 @@
   border: none;
   font-size: 22px;
   cursor: pointer;
-  color: #5a6a80;
+  color: #94a3b8;
   line-height: 1;
-  padding: 4px;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .sidebar-close:hover {
-  color: #ff6a3d;
+  color: #0f172a;
+  background: #f1f5f9;
 }
 
 /* ── Sections ── */
 
 .sidebar-divider {
   border: none;
-  border-top: 1px solid rgba(13, 44, 90, 0.1);
-  margin: 8px 20px;
+  border-top: 1px solid #f1f5f9;
+  margin: 12px 24px;
 }
 
 .sidebar-section-label {
-  margin: 14px 20px 6px;
-  font-size: 11px;
-  font-weight: 700;
+  margin: 16px 24px 8px;
+  font-size: 12px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #8a96a8;
+  letter-spacing: 0.05em;
+  color: #64748b;
 }
 
 .sidebar-list {
   list-style: none;
-  margin: 0;
+  margin: 0 12px;
   padding: 0;
 }
 
 .sidebar-link {
   display: block;
-  padding: 9px 20px 9px 28px;
+  padding: 10px 16px;
+  margin: 2px 0;
+  border-radius: 8px;
   text-decoration: none;
-  color: #0d2c5a;
+  color: #475569;
   font-size: 14px;
-  transition: background 120ms;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .sidebar-link:hover {
-  background: rgba(13, 44, 90, 0.05);
-  color: #ff6a3d;
+  background: #f8fafc;
+  color: #0f172a;
 }
 
 .sidebar-link.is-active {
-  background: rgba(13, 44, 90, 0.08);
+  background: #e0e7ff;
+  color: #4338ca;
   font-weight: 600;
-  color: #0d2c5a;
-  border-left: 3px solid #ff6a3d;
-  padding-left: 25px;
 }
 
 /* ── Animations ── */
 
 @keyframes sidebar-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }

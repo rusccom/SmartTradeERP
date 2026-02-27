@@ -2,46 +2,53 @@
 
 .workspace-zone {
   min-height: 100vh;
-  background: #f4f6f9;
-  color: #0d2c5a;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: "Inter", system-ui, sans-serif;
 }
 
 .workspace-shell {
-  max-width: 1260px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
 }
 
 .workspace-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid rgba(13, 44, 90, 0.15);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(6px);
+  gap: 16px;
+  padding: 12px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  margin-bottom: 24px;
 }
 
 .workspace-brand {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  color: #0d2c5a;
+  gap: 12px;
+  color: #0f172a;
   text-decoration: none;
   font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
 }
 
 .workspace-brand-mark {
-  width: 24px;
-  height: 24px;
-  border-radius: 7px;
-  background: linear-gradient(160deg, #ff6a3d, #ff9869);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #4f46e5, #3b82f6);
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
 }
 
 .workspace-brand-mark--admin {
-  background: linear-gradient(160deg, #2b55c7, #0d2c5a);
+  background: linear-gradient(135deg, #0f172a, #334155);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
 }
 
 .workspace-nav {
@@ -53,94 +60,111 @@
 
 .workspace-link {
   text-decoration: none;
-  color: #0d2c5a;
-  border: 1px solid rgba(13, 44, 90, 0.15);
-  border-radius: 999px;
-  padding: 6px 11px;
-  font-size: 13px;
+  color: #475569;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
 }
 
 .workspace-link:hover {
-  border-color: rgba(255, 106, 61, 0.65);
-  color: #ff6a3d;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .workspace-link.is-active {
-  border-color: transparent;
-  background: #0d2c5a;
-  color: #fff;
+  background: #6366f1;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(99, 102, 241, 0.2);
 }
 
 .workspace-logout {
-  border: 1px solid rgba(13, 44, 90, 0.15);
-  background: #fff;
-  color: #0d2c5a;
-  border-radius: 10px;
-  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 8px;
+  padding: 8px 14px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
 }
 
 .workspace-logout:hover {
-  border-color: rgba(255, 106, 61, 0.65);
-  color: #ff6a3d;
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
 }
 
 .workspace-content {
-  margin-top: 14px;
+  margin-top: 0;
 }
 
 .workspace-zone .placeholder {
-  border: 1px solid rgba(13, 44, 90, 0.12);
-  border-radius: 20px;
-  padding: 28px;
-  background: #fff;
-  animation: ws-rise 220ms ease-out;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 32px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  animation: ws-rise 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .workspace-zone .placeholder h2 {
-  margin: 0 0 8px;
-  font-size: 28px;
-  color: #0d2c5a;
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.01em;
 }
 
 .workspace-zone .placeholder p {
   margin: 0;
-  color: #5a6a80;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .workspace-zone .dashboard-stub {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   align-items: flex-start;
 }
 
 .workspace-zone .dashboard-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .workspace-zone .nav-link {
-  padding: 6px 10px;
-  border: 1px solid rgba(13, 44, 90, 0.15);
-  border-radius: 999px;
-  color: #0d2c5a;
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 8px;
+  color: #334155;
   text-decoration: none;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .workspace-zone .nav-link:hover {
-  border-color: rgba(255, 106, 61, 0.65);
-  color: #ff6a3d;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 @keyframes ws-rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -149,17 +173,19 @@
 
 @media (max-width: 940px) {
   .workspace-shell {
-    padding: 12px;
+    padding: 16px;
   }
 
   .workspace-header {
     flex-wrap: wrap;
+    margin-bottom: 20px;
   }
 
   .workspace-nav {
     order: 3;
     width: 100%;
     overflow-x: auto;
+    padding-bottom: 4px;
   }
 
   .workspace-link {
@@ -173,10 +199,10 @@
   }
 
   .workspace-zone .placeholder {
-    padding: 20px;
+    padding: 24px;
   }
 
   .workspace-zone .placeholder h2 {
-    font-size: 22px;
+    font-size: 20px;
   }
 }
