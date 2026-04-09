@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import RouteSeo from "../seo/RouteSeo";
 import LandingPage from "../../features/public/pages/LandingPage";
@@ -9,8 +9,14 @@ import AdminLoginPage from "../../features/admin/pages/AdminLoginPage";
 import AdminDashboardPage from "../../features/admin/pages/AdminDashboardPage";
 import AdminTenantsPage from "../../features/admin/pages/AdminTenantsPage";
 import AdminLayout from "../../features/admin/layout/AdminLayout";
+import BundlesPage from "../../features/dashboard/pages/BundlesPage";
+import CustomersPage from "../../features/dashboard/pages/CustomersPage";
 import DashboardPage from "../../features/dashboard/pages/DashboardPage";
-import RegistryPage from "../../features/dashboard/pages/RegistryPage";
+import DocumentsPage from "../../features/dashboard/pages/DocumentsPage";
+import ProductsPage from "../../features/dashboard/pages/ProductsPage";
+import ReportsPage from "../../features/dashboard/pages/ReportsPage";
+import SettingsPage from "../../features/dashboard/pages/SettingsPage";
+import WarehousesPage from "../../features/dashboard/pages/WarehousesPage";
 import ClientLayout from "../../features/dashboard/layout/ClientLayout";
 import RequireAdminAuth from "./RequireAdminAuth";
 import RequireClientAuth from "./RequireClientAuth";
@@ -36,17 +42,15 @@ function AppRoutes() {
         </Route>
         <Route element={<RequireClientAuth><ClientLayout /></RequireClientAuth>}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          {/* Catalog */}
-          <Route path="/dashboard/products" element={<RegistryPage pageKey="products" />} />
-          <Route path="/dashboard/groups" element={<RegistryPage pageKey="groups" />} />
-          <Route path="/dashboard/customers" element={<RegistryPage pageKey="customers" />} />
-          {/* Documents */}
-          <Route path="/dashboard/docs/income" element={<RegistryPage pageKey="income" />} />
-          <Route path="/dashboard/docs/expense" element={<RegistryPage pageKey="expense" />} />
-          <Route path="/dashboard/docs/transfer" element={<RegistryPage pageKey="transfer" />} />
-          <Route path="/dashboard/docs/inventory" element={<RegistryPage pageKey="inventory" />} />
-          <Route path="/dashboard/docs/receipt" element={<RegistryPage pageKey="receipt" />} />
-          <Route path="/dashboard/docs/writeoff" element={<RegistryPage pageKey="writeoff" />} />
+          <Route path="/dashboard/products" element={<ProductsPage />} />
+          <Route path="/dashboard/customers" element={<CustomersPage />} />
+          <Route path="/dashboard/documents" element={<DocumentsPage />} />
+          <Route path="/dashboard/warehouses" element={<WarehousesPage />} />
+          <Route path="/dashboard/bundles" element={<BundlesPage />} />
+          <Route path="/dashboard/reports" element={<ReportsPage />} />
+          <Route path="/dashboard/settings" element={<SettingsPage />} />
+          <Route path="/dashboard/groups" element={<Navigate to="/dashboard/bundles" replace />} />
+          <Route path="/dashboard/docs/:type" element={<Navigate to="/dashboard/documents" replace />} />
         </Route>
         <Route path="*" element={<FallbackRoute />} />
       </Routes>
