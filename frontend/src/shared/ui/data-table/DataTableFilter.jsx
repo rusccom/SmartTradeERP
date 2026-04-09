@@ -1,10 +1,19 @@
+import { useI18n } from "../../i18n/useI18n";
+
 function DataTableFilter({ column }) {
+  const { t } = useI18n();
   const variant = column.columnDef.meta?.filterVariant || "text";
   if (variant === "select") {
-    return <SelectFilter column={column} />;
+    return <SelectFilter column={column} allLabel={t("dataTable.filterAll")} />;
   }
   if (variant === "range") {
-    return <RangeFilter column={column} />;
+    return (
+      <RangeFilter
+        column={column}
+        minLabel={t("dataTable.filterMin")}
+        maxLabel={t("dataTable.filterMax")}
+      />
+    );
   }
   return <TextFilter column={column} />;
 }
@@ -21,12 +30,12 @@ function TextFilter({ column }) {
   );
 }
 
-function SelectFilter({ column }) {
+function SelectFilter({ column, allLabel }) {
   const value = column.getFilterValue() || "";
   const options = normalizeOptions(column.columnDef.meta?.filterOptions || []);
   return (
     <select className="dt-filter" value={value} onChange={(event) => column.setFilterValue(event.target.value)}>
-      <option value="">Все</option>
+      <option value="">{allLabel}</option>
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -36,12 +45,24 @@ function SelectFilter({ column }) {
   );
 }
 
-function RangeFilter({ column }) {
+function RangeFilter({ column, minLabel, maxLabel }) {
   const value = Array.isArray(column.getFilterValue()) ? column.getFilterValue() : ["", ""];
   return (
     <div className="dt-filter-range">
-      <input className="dt-filter" type="number" value={value[0] || ""} onChange={(event) => setRangeValue(column, event.target.value, value[1])} placeholder="Мин" />
-      <input className="dt-filter" type="number" value={value[1] || ""} onChange={(event) => setRangeValue(column, value[0], event.target.value)} placeholder="Макс" />
+      <input
+        className="dt-filter"
+        type="number"
+        value={value[0] || ""}
+        onChange={(event) => setRangeValue(column, event.target.value, value[1])}
+        placeholder={minLabel}
+      />
+      <input
+        className="dt-filter"
+        type="number"
+        value={value[1] || ""}
+        onChange={(event) => setRangeValue(column, value[0], event.target.value)}
+        placeholder={maxLabel}
+      />
     </div>
   );
 }

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { registerClient } from "../api/clientAuthApi";
 import { setClientToken } from "../../../shared/auth/session";
+import { useI18n } from "../../../shared/i18n/useI18n";
+import { registerClient } from "../api/clientAuthApi";
 
 const initialForm = { tenant_name: "", email: "", password: "" };
 
 function RegisterPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState("");
@@ -18,7 +20,7 @@ function RegisterPage() {
     setLoading(true);
     try {
       const data = await registerClient(form);
-      setClientToken(readToken(data));
+      setClientToken(readToken(data, t));
       navigate("/dashboard");
     } catch (requestError) {
       setError(requestError.message);
@@ -35,10 +37,10 @@ function RegisterPage() {
   return (
     <section className="auth-shell">
       <form className="auth-card auth-form" onSubmit={handleSubmit}>
-        <h2>Client Registration</h2>
-        <p className="auth-text">Create a company account and the client dashboard will open.</p>
+        <h2>{t("client.auth.register.title")}</h2>
+        <p className="auth-text">{t("client.auth.register.description")}</p>
         <label className="auth-label" htmlFor="tenant-name">
-          Company name
+          {t("auth.companyName")}
         </label>
         <input
           id="tenant-name"
@@ -50,7 +52,7 @@ function RegisterPage() {
           required
         />
         <label className="auth-label" htmlFor="register-email">
-          Login (email)
+          {t("auth.email")}
         </label>
         <input
           id="register-email"
@@ -62,7 +64,7 @@ function RegisterPage() {
           required
         />
         <label className="auth-label" htmlFor="register-password">
-          Password
+          {t("auth.password")}
         </label>
         <input
           id="register-password"
@@ -75,23 +77,22 @@ function RegisterPage() {
         />
         {error && <p className="error-text">{error}</p>}
         <button className="primary-button" type="submit" disabled={isLoading}>
-          {isLoading ? "Creating account..." : "Register"}
+          {isLoading ? t("client.auth.register.loading") : t("client.auth.register.button")}
         </button>
         <Link to="/login" className="text-link">
-          Already registered? Sign in
+          {t("client.auth.register.link")}
         </Link>
       </form>
     </section>
   );
 }
 
-function readToken(data) {
+function readToken(data, t) {
   const token = data?.access_token;
   if (token) {
     return token;
   }
-  throw new Error("Server did not return an access token");
+  throw new Error(t("auth.error.missingToken"));
 }
 
 export default RegisterPage;
-

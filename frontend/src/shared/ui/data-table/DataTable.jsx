@@ -1,6 +1,7 @@
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useMemo } from "react";
 
+import { useI18n } from "../../i18n/useI18n";
 import DataTableBody from "./DataTableBody";
 import DataTableError from "./DataTableError";
 import DataTableHeader from "./DataTableHeader";
@@ -9,13 +10,20 @@ import DataTableToolbar from "./DataTableToolbar";
 import "./data-table.css";
 
 function DataTable(props) {
+  const { t } = useI18n();
   const table = useDataTableInstance(props);
+  const emptyText = props.emptyText || t("dataTable.emptyText");
   const loadingClass = props.loading ? "dt-loading" : "";
   return (
     <div className="dt-wrapper">
       <ToolbarBlock props={props} />
       <ErrorBlock error={props.error} onRetry={props.onRetry} />
-      <TableBlock table={table} props={props} loadingClass={loadingClass} />
+      <TableBlock
+        table={table}
+        props={props}
+        loadingClass={loadingClass}
+        emptyText={emptyText}
+      />
       <DataTablePagination table={table} />
     </div>
   );
@@ -65,7 +73,7 @@ function ErrorBlock({ error, onRetry }) {
   return error ? <DataTableError message={error} onRetry={onRetry} /> : null;
 }
 
-function TableBlock({ table, props, loadingClass }) {
+function TableBlock({ table, props, loadingClass, emptyText }) {
   return (
     <div className={`dt-table-scroll ${loadingClass}`.trim()}>
       <table className="dt-table">
@@ -73,7 +81,7 @@ function TableBlock({ table, props, loadingClass }) {
         <DataTableBody
           table={table}
           onRowClick={props.onRowClick}
-          emptyText={props.emptyText || "Нет данных"}
+          emptyText={emptyText}
           expandable={props.expandable === true}
           getSubRows={props.getSubRows}
         />

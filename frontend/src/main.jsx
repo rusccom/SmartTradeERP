@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
+import I18nProvider from "./shared/i18n/I18nProvider";
 import AppRoutes from "./shared/router/AppRoutes";
 import "./app/tailwind.css";
 import "./app/styles.css";
@@ -9,7 +10,9 @@ import "./app/styles.css";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <AppRoutes />
+      <I18nProvider>
+        <AppRoutes />
+      </I18nProvider>
     </BrowserRouter>
   </StrictMode>,
 );

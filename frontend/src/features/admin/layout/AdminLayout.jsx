@@ -1,16 +1,16 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useMemo } from "react";
 
+import { useI18n } from "../../../shared/i18n/useI18n";
 import { clearAdminToken, hasAdminSession } from "../../../shared/auth/session";
+import LocaleSwitcher from "../../../shared/ui/LocaleSwitcher";
 import "../../../shared/ui/workspace-layout.css";
 
-const ADMIN_LINKS = [
-  { to: "/admin/dashboard", label: "Dashboard" },
-  { to: "/admin/tenants", label: "Tenants" },
-];
-
 function AdminLayout() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const isAuthorized = hasAdminSession();
+  const links = useMemo(() => createAdminLinks(t), [t]);
 
   function handleLogout() {
     clearAdminToken();
@@ -23,22 +23,25 @@ function AdminLayout() {
         <header className="workspace-header">
           <Link to={isAuthorized ? "/admin/dashboard" : "/admin"} className="workspace-brand">
             <span className="workspace-brand-mark workspace-brand-mark--admin" />
-            <span>SmartTrade ERP Admin</span>
+            <span>{t("workspace.brandAdmin")}</span>
           </Link>
           {isAuthorized && (
             <nav className="workspace-nav">
-              {ADMIN_LINKS.map((item) => (
+              {links.map((item) => (
                 <NavLink key={item.to} to={item.to} className={readNavClass}>
                   {item.label}
                 </NavLink>
               ))}
             </nav>
           )}
-          {isAuthorized && (
-            <button className="workspace-logout" type="button" onClick={handleLogout}>
-              Sign out
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <LocaleSwitcher />
+            {isAuthorized && (
+              <button className="workspace-logout" type="button" onClick={handleLogout}>
+                {t("admin.signOut")}
+              </button>
+            )}
+          </div>
         </header>
         <main className="workspace-content">
           <Outlet />
@@ -46,6 +49,13 @@ function AdminLayout() {
       </div>
     </div>
   );
+}
+
+function createAdminLinks(t) {
+  return [
+    { to: "/admin/dashboard", label: t("admin.nav.dashboard") },
+    { to: "/admin/tenants", label: t("admin.nav.tenants") },
+  ];
 }
 
 function readNavClass({ isActive }) {

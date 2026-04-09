@@ -2,7 +2,10 @@ import { flexRender } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { useI18n } from "../../i18n/useI18n";
+
 function DataTableBody({ table, onRowClick, emptyText, expandable, getSubRows }) {
+  const { t } = useI18n();
   const [expandedRows, setExpandedRows] = useState(() => new Set());
   const subRowsCache = useRef(new Map());
   const rows = table.getRowModel().rows;
@@ -21,6 +24,7 @@ function DataTableBody({ table, onRowClick, emptyText, expandable, getSubRows })
           expandedRows={expandedRows}
           setExpandedRows={setExpandedRows}
           subRowsCache={subRowsCache}
+          t={t}
         />
       ))}
     </tbody>
@@ -40,13 +44,13 @@ function DataTableEmpty({ colSpan, emptyText }) {
 }
 
 function BodyRows(props) {
-  const { row, expandedRows, subRowsCache } = props;
+  const { row, expandedRows, subRowsCache, t } = props;
   const expanded = expandedRows.has(row.id);
   const subRows = subRowsCache.current.get(row.id) || [];
   return (
     <>
       <MainRow {...props} expanded={expanded} />
-      {expanded && <SubRows row={row} subRows={subRows} />}
+      {expanded && <SubRows row={row} subRows={subRows} t={t} />}
     </>
   );
 }
@@ -86,27 +90,27 @@ function MainCell({ cell, isFirst, expanded, expandable, onExpand }) {
   );
 }
 
-function SubRows({ row, subRows }) {
+function SubRows({ row, subRows, t }) {
   return subRows.map((subRow, index) => (
     <tr key={`${row.id}-sub-${index}`} className="dt-row dt-row--sub">
       {row.getVisibleCells().map((cell, cellIndex) => (
         <td key={`${cell.id}-sub-${index}`} className="dt-td">
-          <SubCell columnDef={cell.column.columnDef} row={subRow} isFirst={cellIndex === 0} />
+          <SubCell columnDef={cell.column.columnDef} row={subRow} isFirst={cellIndex === 0} t={t} />
         </td>
       ))}
     </tr>
   ));
 }
 
-function SubCell({ columnDef, row, isFirst }) {
-  const content = resolveSubCellValue(columnDef, row);
+function SubCell({ columnDef, row, isFirst, t }) {
+  const content = resolveSubCellValue(columnDef, row, t);
   if (!isFirst) {
     return content;
   }
   return <div className="dt-sub-indent">{content}</div>;
 }
 
-function resolveSubCellValue(columnDef, row) {
+function resolveSubCellValue(columnDef, row, t) {
   const key = readAccessorKey(columnDef);
   const value = key ? row[key] : "";
   const renderer = columnDef.meta?.rawCell;
@@ -116,7 +120,10 @@ function resolveSubCellValue(columnDef, row) {
   if (value === undefined || value === null) {
     return "";
   }
-  return typeof value === "boolean" ? (value ? "Да" : "Нет") : String(value);
+  if (typeof value === "boolean") {
+    return value ? t("common.yes") : t("common.no");
+  }
+  return String(value);
 }
 
 function readAccessorKey(columnDef) {

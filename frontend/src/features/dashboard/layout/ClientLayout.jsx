@@ -1,16 +1,19 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useI18n } from "../../../shared/i18n/useI18n";
 import { clearClientToken } from "../../../shared/auth/session";
-import { MENU_SECTIONS } from "../registry";
+import LocaleSwitcher from "../../../shared/ui/LocaleSwitcher";
+import { createMenuSections } from "../registry";
 import Sidebar from "./Sidebar";
 import "../../../shared/ui/workspace-layout.css";
 import "./sidebar.css";
 
 function ClientLayout() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const sections = useMemo(() => createMenuSections(t), [t]);
   const toggleMenu = useCallback(() => setMenuOpen((v) => !v), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
@@ -34,33 +37,27 @@ function ClientLayout() {
             className="hamburger-btn"
             type="button"
             onClick={toggleMenu}
-            aria-label="Toggle menu"
+            aria-label={t("client.layout.openMenu")}
           >
             <span className="hamburger-icon" />
           </button>
           <Link to="/dashboard" className="workspace-brand">
             <span className="workspace-brand-mark" />
-            <span>SmartTrade ERP</span>
+            <span>{t("client.layout.brand")}</span>
           </Link>
-          <button
-            className="workspace-logout"
-            type="button"
-            onClick={handleLogout}
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-3">
+            <LocaleSwitcher />
+            <button className="workspace-logout" type="button" onClick={handleLogout}>
+              {t("client.signOut")}
+            </button>
+          </div>
         </header>
         <main className="workspace-content">
           <Outlet />
         </main>
       </div>
 
-      <Sidebar
-        open={menuOpen}
-        sections={MENU_SECTIONS}
-        onClose={closeMenu}
-        onLogout={handleLogout}
-      />
+      <Sidebar open={menuOpen} sections={sections} onClose={closeMenu} />
     </div>
   );
 }

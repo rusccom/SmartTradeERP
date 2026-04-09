@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { loginAdmin } from "../api/adminAuthApi";
 import { setAdminToken } from "../../../shared/auth/session";
+import { useI18n } from "../../../shared/i18n/useI18n";
+import { loginAdmin } from "../api/adminAuthApi";
 
 const DEFAULT_ADMIN = {
   email: "owner@smarterp.local",
@@ -10,6 +11,7 @@ const DEFAULT_ADMIN = {
 };
 
 function AdminLoginPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [form, setForm] = useState(DEFAULT_ADMIN);
   const [error, setError] = useState("");
@@ -21,7 +23,7 @@ function AdminLoginPage() {
     setLoading(true);
     try {
       const data = await loginAdmin(form);
-      setAdminToken(readToken(data));
+      setAdminToken(readToken(data, t));
       navigate("/admin/dashboard");
     } catch (requestError) {
       setError(requestError.message);
@@ -42,14 +44,14 @@ function AdminLoginPage() {
   return (
     <section className="auth-shell">
       <form className="auth-card auth-form" onSubmit={handleSubmit}>
-        <h2>Admin Sign In</h2>
-        <p className="auth-text">Registration is disabled. Sign in with standard admin credentials only.</p>
+        <h2>{t("admin.auth.title")}</h2>
+        <p className="auth-text">{t("admin.auth.description")}</p>
         <label className="auth-label" htmlFor="admin-email">
-          Login (email)
+          {t("auth.email")}
         </label>
         <input id="admin-email" name="email" className="auth-input" type="email" value={form.email} onChange={handleChange} required />
         <label className="auth-label" htmlFor="admin-password">
-          Password
+          {t("auth.password")}
         </label>
         <input
           id="admin-password"
@@ -61,24 +63,23 @@ function AdminLoginPage() {
           required
         />
         <button className="secondary-button" type="button" onClick={applyDefaultCredentials}>
-          Use standard credentials
+          {t("admin.auth.defaultCredentials")}
         </button>
         {error && <p className="error-text">{error}</p>}
         <button className="primary-button" type="submit" disabled={isLoading}>
-          {isLoading ? "Signing in..." : "Sign in to admin panel"}
+          {isLoading ? t("client.auth.login.loading") : t("admin.auth.button")}
         </button>
       </form>
     </section>
   );
 }
 
-function readToken(data) {
+function readToken(data, t) {
   const token = data?.access_token;
   if (token) {
     return token;
   }
-  throw new Error("Server did not return an access token");
+  throw new Error(t("auth.error.missingToken"));
 }
 
 export default AdminLoginPage;
-

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import RouteSeo from "../seo/RouteSeo";
 import LandingPage from "../../features/public/pages/LandingPage";
+import LocalizedLandingPage from "../../features/public/pages/LocalizedLandingPage";
 import RegisterPage from "../../features/public/pages/RegisterPage";
 import LoginPage from "../../features/public/pages/LoginPage";
 import PublicLayout from "../../features/public/layout/PublicLayout";
@@ -30,6 +31,7 @@ function AppRoutes() {
       <Routes>
         <Route element={<RequireNoSession><PublicLayout /></RequireNoSession>}>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/:locale" element={<LocalizedLandingPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
         </Route>

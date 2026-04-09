@@ -1,20 +1,25 @@
+import { useMemo } from "react";
+
+import { useI18n } from "../../../shared/i18n/useI18n";
 import { useServerDataTable } from "../../../shared/model/data-table/useServerDataTable";
 import DataTable from "../../../shared/ui/data-table/DataTable";
-import { customersTablePreset } from "./table/customersTablePreset";
+import { createCustomersTablePreset } from "./table/customersTablePreset";
 
 function CustomersPage() {
-  const { data, total, loading, error, retry, tableState } = useServerDataTable(customersTablePreset);
+  const { t } = useI18n();
+  const preset = useMemo(() => createCustomersTablePreset(t), [t]);
+  const { data, total, loading, error, retry, tableState } = useServerDataTable(preset);
   return (
     <DataTable
-      columns={customersTablePreset.columns}
+      columns={preset.columns}
       data={data}
-      getRowId={customersTablePreset.rowId}
-      searchable={customersTablePreset.capabilities.search === true}
+      getRowId={preset.rowId}
+      searchable={preset.capabilities.search === true}
       rowCount={total}
       loading={loading}
       error={error}
       onRetry={retry}
-      toolbar={<button className="dt-page-btn" type="button">+ Добавить клиента</button>}
+      toolbar={<button className="dt-page-btn" type="button">+ {t("customers.addButton")}</button>}
       {...tableState}
     />
   );

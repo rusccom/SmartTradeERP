@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { loginClient } from "../api/clientAuthApi";
 import { setClientToken } from "../../../shared/auth/session";
+import { useI18n } from "../../../shared/i18n/useI18n";
+import { loginClient } from "../api/clientAuthApi";
 
 const initialForm = { email: "", password: "" };
 
 function LoginPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState("");
@@ -18,7 +20,7 @@ function LoginPage() {
     setLoading(true);
     try {
       const data = await loginClient(form);
-      setClientToken(readToken(data));
+      setClientToken(readToken(data, t));
       navigate("/dashboard");
     } catch (requestError) {
       setError(requestError.message);
@@ -35,14 +37,14 @@ function LoginPage() {
   return (
     <section className="auth-shell">
       <form className="auth-card auth-form" onSubmit={handleSubmit}>
-        <h2>Client Sign In</h2>
-        <p className="auth-text">Enter login and password to open the client dashboard.</p>
+        <h2>{t("client.auth.login.title")}</h2>
+        <p className="auth-text">{t("client.auth.login.description")}</p>
         <label className="auth-label" htmlFor="client-email">
-          Login (email)
+          {t("auth.email")}
         </label>
         <input id="client-email" name="email" className="auth-input" type="email" value={form.email} onChange={handleChange} required />
         <label className="auth-label" htmlFor="client-password">
-          Password
+          {t("auth.password")}
         </label>
         <input
           id="client-password"
@@ -55,23 +57,22 @@ function LoginPage() {
         />
         {error && <p className="error-text">{error}</p>}
         <button className="primary-button" type="submit" disabled={isLoading}>
-          {isLoading ? "Signing in..." : "Sign in"}
+          {isLoading ? t("client.auth.login.loading") : t("client.auth.login.button")}
         </button>
         <Link to="/register" className="text-link">
-          No account? Register
+          {t("client.auth.login.link")}
         </Link>
       </form>
     </section>
   );
 }
 
-function readToken(data) {
+function readToken(data, t) {
   const token = data?.access_token;
   if (token) {
     return token;
   }
-  throw new Error("Server did not return an access token");
+  throw new Error(t("auth.error.missingToken"));
 }
 
 export default LoginPage;
-

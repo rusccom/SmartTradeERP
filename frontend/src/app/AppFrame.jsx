@@ -1,20 +1,17 @@
 import { Link, Outlet } from "react-router-dom";
+import { useMemo } from "react";
 
 import { hasAdminSession, hasClientSession } from "../shared/auth/session";
-
-const links = [
-  { to: "/", label: "Landing" },
-  { to: "/login", label: "Client Login" },
-  { to: "/register", label: "Client Register" },
-  { to: "/admin", label: "Admin Login" },
-];
+import { buildLandingPath } from "../shared/i18n/localeConfig";
+import { useI18n } from "../shared/i18n/useI18n";
 
 function AppFrame() {
-  const navLinks = appendPrivateLinks(links);
+  const { locale, t } = useI18n();
+  const navLinks = useMemo(() => appendPrivateLinks(createBaseLinks(t, locale), t), [locale, t]);
   return (
     <div className="page">
       <header className="topbar">
-        <h1>SmartERP</h1>
+        <h1>{t("brand.name")}</h1>
         <nav>
           {navLinks.map((item) => (
             <Link key={item.to} to={item.to} className="nav-link">
@@ -30,13 +27,22 @@ function AppFrame() {
   );
 }
 
-function appendPrivateLinks(baseLinks) {
+function createBaseLinks(t, locale) {
+  return [
+    { to: buildLandingPath(locale), label: t("app.nav.landing") },
+    { to: "/login", label: t("app.nav.clientLogin") },
+    { to: "/register", label: t("app.nav.clientRegister") },
+    { to: "/admin", label: t("app.nav.adminLogin") },
+  ];
+}
+
+function appendPrivateLinks(baseLinks, t) {
   const items = [...baseLinks];
   if (hasClientSession()) {
-    items.push({ to: "/dashboard", label: "Client Dashboard" });
+    items.push({ to: "/dashboard", label: t("app.nav.clientDashboard") });
   }
   if (hasAdminSession()) {
-    items.push({ to: "/admin/dashboard", label: "Admin Dashboard" });
+    items.push({ to: "/admin/dashboard", label: t("app.nav.adminDashboard") });
   }
   return items;
 }

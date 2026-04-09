@@ -1,24 +1,28 @@
+import { useMemo } from "react";
+
+import { useI18n } from "../../../shared/i18n/useI18n";
 import { useServerDataTable } from "../../../shared/model/data-table/useServerDataTable";
 import DataTable from "../../../shared/ui/data-table/DataTable";
-import { documentsTablePreset } from "./table/documentsTablePreset";
+import { createDocumentsTablePreset } from "./table/documentsTablePreset";
 
 function DocumentsPage() {
-  const { data, total, loading, error, retry, tableState } = useServerDataTable(documentsTablePreset);
+  const { t } = useI18n();
+  const preset = useMemo(() => createDocumentsTablePreset(t), [t]);
+  const { data, total, loading, error, retry, tableState } = useServerDataTable(preset);
   return (
     <DataTable
-      columns={documentsTablePreset.columns}
+      columns={preset.columns}
       data={data}
-      getRowId={documentsTablePreset.rowId}
-      searchable={documentsTablePreset.capabilities.search === true}
+      getRowId={preset.rowId}
+      searchable={preset.capabilities.search === true}
       rowCount={total}
       loading={loading}
       error={error}
       onRetry={retry}
-      toolbar={<button className="dt-page-btn" type="button">+ Новый документ</button>}
+      toolbar={<button className="dt-page-btn" type="button">+ {t("documents.addButton")}</button>}
       {...tableState}
     />
   );
 }
 
 export default DocumentsPage;
-

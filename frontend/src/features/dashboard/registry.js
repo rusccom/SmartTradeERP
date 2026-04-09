@@ -1,21 +1,28 @@
-const CATALOG_PAGES = [
-  { key: "products", path: "/dashboard/products", title: "Products" },
-  { key: "customers", path: "/dashboard/customers", title: "Customers" },
-  { key: "warehouses", path: "/dashboard/warehouses", title: "Warehouses" },
-  { key: "bundles", path: "/dashboard/bundles", title: "Bundles" },
-];
+export function createMenuSections(t) {
+  return [
+    {
+      label: t("dashboard.menu.catalog"),
+      items: [
+        createItem("products", "/dashboard/products", t("dashboard.menu.products")),
+        createItem("customers", "/dashboard/customers", t("dashboard.menu.customers")),
+        createItem("warehouses", "/dashboard/warehouses", t("dashboard.menu.warehouses")),
+        createItem("bundles", "/dashboard/bundles", t("dashboard.menu.bundles")),
+      ],
+    },
+    {
+      label: t("dashboard.menu.documents"),
+      items: [createItem("documents", "/dashboard/documents", t("dashboard.menu.documents"))],
+    },
+    {
+      label: t("dashboard.menu.system"),
+      items: [
+        createItem("reports", "/dashboard/reports", t("dashboard.menu.reports")),
+        createItem("settings", "/dashboard/settings", t("dashboard.menu.settings")),
+      ],
+    },
+  ];
+}
 
-const DOCUMENT_PAGES = [
-  { key: "documents", path: "/dashboard/documents", title: "Documents" },
-];
-
-const SYSTEM_PAGES = [
-  { key: "reports", path: "/dashboard/reports", title: "Reports" },
-  { key: "settings", path: "/dashboard/settings", title: "Settings" },
-];
-
-export const MENU_SECTIONS = [
-  { label: "Catalog", items: CATALOG_PAGES },
-  { label: "Documents", items: DOCUMENT_PAGES },
-  { label: "System", items: SYSTEM_PAGES },
-];
+function createItem(key, path, title) {
+  return { key, path, title };
+}

@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
 
+import { useI18n } from "../../../shared/i18n/useI18n";
+
 function AdminDashboardPage() {
+  const { t } = useI18n();
   return (
     <section className="placeholder dashboard-stub">
-      <h2>Admin Dashboard</h2>
-      <p>Admin zone is isolated from client and public areas and opens only under `/admin`.</p>
+      <h2>{t("admin.dashboard.title")}</h2>
+      <p>{t("admin.dashboard.description")}</p>
       <div className="dashboard-links">
         <Link className="nav-link" to="/admin/tenants">
-          Tenant list
+          {t("admin.dashboard.link")}
         </Link>
       </div>
     </section>
@@ -15,4 +18,3 @@ function AdminDashboardPage() {
 }
 
 export default AdminDashboardPage;
-

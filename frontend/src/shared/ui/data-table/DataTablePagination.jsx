@@ -1,15 +1,18 @@
+import { useI18n } from "../../i18n/useI18n";
+
 function DataTablePagination({ table }) {
-  const model = readPaginationModel(table);
+  const { t } = useI18n();
+  const model = readPaginationModel(table, t);
   return (
     <div className="dt-pagination">
       <span className="dt-page-info">{model.range}</span>
       <PageControls table={table} model={model} />
-      <PageSizeSelect table={table} pageSize={model.pageSize} />
+      <PageSizeSelect table={table} pageSize={model.pageSize} t={t} />
     </div>
   );
 }
 
-function readPaginationModel(table) {
+function readPaginationModel(table, t) {
   const pagination = table.getState().pagination;
   const pageIndex = pagination.pageIndex;
   const pageSize = pagination.pageSize;
@@ -19,7 +22,7 @@ function readPaginationModel(table) {
     pageIndex,
     pageSize,
     pageCount,
-    range: readRange(pageIndex, pageSize, rowCount),
+    range: readRange(pageIndex, pageSize, rowCount, t),
     pages: readVisiblePages(pageIndex, pageCount),
   };
 }
@@ -27,13 +30,13 @@ function readPaginationModel(table) {
 function PageControls({ table, model }) {
   return (
     <div className="dt-page-controls">
-      <PagerButton onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()} title="«" />
-      <PagerButton onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} title="‹" />
+      <PagerButton onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()} title="<<" />
+      <PagerButton onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} title="<" />
       {model.pages.map((page) => (
         <PageNumber key={page} table={table} page={page} pageIndex={model.pageIndex} />
       ))}
-      <PagerButton onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} title="›" />
-      <PagerButton onClick={() => table.setPageIndex(readLastPageIndex(model.pageCount))} disabled={!table.getCanNextPage()} title="»" />
+      <PagerButton onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} title=">" />
+      <PagerButton onClick={() => table.setPageIndex(readLastPageIndex(model.pageCount))} disabled={!table.getCanNextPage()} title=">>" />
     </div>
   );
 }
@@ -54,25 +57,25 @@ function PagerButton({ onClick, disabled, title }) {
   );
 }
 
-function PageSizeSelect({ table, pageSize }) {
+function PageSizeSelect({ table, pageSize, t }) {
   return (
     <select className="dt-page-size" value={pageSize} onChange={(event) => table.setPageSize(Number(event.target.value))}>
       {[10, 20, 50, 100].map((size) => (
         <option key={size} value={size}>
-          {size} / стр
+          {t("dataTable.pageSize", { size })}
         </option>
       ))}
     </select>
   );
 }
 
-function readRange(pageIndex, pageSize, rowCount) {
+function readRange(pageIndex, pageSize, rowCount, t) {
   if (rowCount <= 0) {
-    return "0 из 0";
+    return t("dataTable.rangeEmpty");
   }
   const start = pageIndex * pageSize + 1;
   const end = Math.min((pageIndex + 1) * pageSize, rowCount);
-  return `${start}–${end} из ${rowCount}`;
+  return t("dataTable.range", { start, end, count: rowCount });
 }
 
 function readVisiblePages(pageIndex, pageCount) {
