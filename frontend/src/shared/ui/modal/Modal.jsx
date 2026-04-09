@@ -2,14 +2,23 @@ import { useEffect, useId } from "react";
 
 import "./modal.css";
 
-function Modal({ children, closeLabel, description, onClose, open, title }) {
+function Modal({
+  children,
+  closeLabel,
+  closeOnBackdrop = false,
+  closeOnEscape = false,
+  description,
+  onClose,
+  open,
+  title,
+}) {
   const titleId = useId();
   const descriptionId = useId();
-  useEscapeClose(open, onClose);
+  useEscapeClose({ closeOnEscape, onClose, open });
   useBodyScrollLock(open);
   if (!open) return null;
   return (
-    <div className="ui-modal-backdrop" role="presentation" onMouseDown={createBackdropHandler(onClose)}>
+    <div className="ui-modal-backdrop" role="presentation" onMouseDown={createBackdropHandler({ closeOnBackdrop, onClose })}>
       <section className="ui-modal-surface" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={readDescriptionId(description, descriptionId)}>
         <header className="ui-modal-header">
           <div className="ui-modal-copy">
@@ -24,13 +33,13 @@ function Modal({ children, closeLabel, description, onClose, open, title }) {
   );
 }
 
-function useEscapeClose(open, onClose) {
+function useEscapeClose({ closeOnEscape, onClose, open }) {
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open || !closeOnEscape) return undefined;
     const handleKeyDown = (event) => event.key === "Escape" && onClose();
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
+  }, [closeOnEscape, onClose, open]);
 }
 
 function useBodyScrollLock(open) {
@@ -42,8 +51,8 @@ function useBodyScrollLock(open) {
   }, [open]);
 }
 
-function createBackdropHandler(onClose) {
-  return (event) => event.target === event.currentTarget && onClose();
+function createBackdropHandler({ closeOnBackdrop, onClose }) {
+  return (event) => closeOnBackdrop && event.target === event.currentTarget && onClose();
 }
 
 function readDescriptionId(description, descriptionId) {
