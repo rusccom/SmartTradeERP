@@ -1,0 +1,146 @@
+.product-mode-switch,
+.product-variants-builder {
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.product-mode-switch {
+  display: grid;
+  gap: 14px;
+}
+
+.product-mode-switch-head,
+.product-variants-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.product-mode-switch-label,
+.product-variants-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.product-mode-switch-text,
+.product-variants-text,
+.product-variant-card-note {
+  margin: 6px 0 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.product-mode-switch-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.product-mode-btn,
+.product-variants-add,
+.product-variant-remove {
+  min-height: 42px;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 160ms ease;
+}
+
+.product-mode-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.product-mode-btn.is-active {
+  border-color: #2563eb;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.product-variants-add {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.product-variant-remove {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.product-mode-btn:disabled,
+.product-variants-add:disabled,
+.product-variant-remove:disabled {
+  opacity: 0.64;
+  cursor: not-allowed;
+}
+
+.product-variants-builder {
+  display: grid;
+  gap: 16px;
+}
+
+.product-variants-list {
+  display: grid;
+  gap: 14px;
+}
+
+.product-variant-card {
+  padding: 16px;
+  border: 1px solid #dbe4f0;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.product-variant-card.is-locked {
+  background: #f8fafc;
+}
+
+.product-variant-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.product-variant-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.product-variant-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .product-mode-switch,
+  .product-variants-builder,
+  .product-variant-card {
+    padding: 14px;
+  }
+
+  .product-mode-switch-head,
+  .product-variants-head,
+  .product-variant-card-head {
+    flex-direction: column;
+  }
+
+  .product-mode-switch-actions,
+  .product-variant-grid {
+    grid-template-columns: 1fr;
+  }
+}

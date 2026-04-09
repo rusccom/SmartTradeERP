@@ -14,7 +14,7 @@ import BundlesPage from "../../features/dashboard/pages/BundlesPage";
 import CustomersPage from "../../features/dashboard/pages/CustomersPage";
 import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import DocumentsPage from "../../features/dashboard/pages/DocumentsPage";
-import ProductsPage from "../../features/dashboard/pages/ProductsPage";
+import ProductsPage from "../../features/products/pages/ProductsPage";
 import ReportsPage from "../../features/dashboard/pages/ReportsPage";
 import SettingsPage from "../../features/dashboard/pages/SettingsPage";
 import WarehousesPage from "../../features/dashboard/pages/WarehousesPage";
