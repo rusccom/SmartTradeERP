@@ -33,6 +33,11 @@ type CreateRequest struct {
 	Payments          []PaymentInput `json:"payments"`
 }
 
+type CreateResult struct {
+	ID     string `json:"id"`
+	Number string `json:"number"`
+}
+
 type UpdateRequest = CreateRequest
 
 type Document struct {

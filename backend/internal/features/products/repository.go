@@ -18,7 +18,7 @@ func NewRepository(store *db.Store) *Repository {
     return &Repository{store: store}
 }
 
-func (r *Repository) List(ctx context.Context, tenantID string, query httpx.ListQuery) ([]Product, int, error) {
+func (r *Repository) List(ctx context.Context, tenantID string, query ProductListQuery) ([]Product, int, error) {
 	total, err := r.count(ctx, tenantID, query)
 	if err != nil {
 		return nil, 0, err
@@ -30,18 +30,19 @@ func (r *Repository) List(ctx context.Context, tenantID string, query httpx.List
 	return data, total, nil
 }
 
-func (r *Repository) count(ctx context.Context, tenantID string, query httpx.ListQuery) (int, error) {
-	sqlQuery := `SELECT COUNT(*) FROM catalog.products WHERE tenant_id=$1`
+func (r *Repository) count(ctx context.Context, tenantID string, query ProductListQuery) (int, error) {
+	sqlQuery := `SELECT COUNT(*) FROM catalog.products p WHERE p.tenant_id=$1`
 	args := []any{tenantID}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
 	row := r.store.Pool.QueryRow(ctx, sqlQuery, args...)
 	total := 0
-	return total, row.Scan(&total)
+	err := row.Scan(&total)
+	return total, err
 }
 
-func (r *Repository) load(ctx context.Context, tenantID string, query httpx.ListQuery) ([]Product, error) {
-	sqlQuery := `SELECT id::text, name, is_composite, created_at::text, updated_at::text
-        FROM catalog.products WHERE tenant_id=$1`
+func (r *Repository) load(ctx context.Context, tenantID string, query ProductListQuery) ([]Product, error) {
+	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.created_at::text, p.updated_at::text
+        FROM catalog.products p WHERE p.tenant_id=$1`
 	args := []any{tenantID}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
 	sqlQuery, args = appendSortAndPaging(sqlQuery, args, query)
@@ -53,26 +54,28 @@ func (r *Repository) load(ctx context.Context, tenantID string, query httpx.List
 	return scanProducts(rows)
 }
 
-func appendListFilters(query string, args []any, listQuery httpx.ListQuery) (string, []any) {
+func appendListFilters(query string, args []any, productQuery ProductListQuery) (string, []any) {
+	listQuery := productQuery.List
 	query, args = addCompositeFilter(query, args, listQuery.Filters["is_composite"])
 	query, args = addSearchFilter(query, args, listQuery.Search)
-	return query, args
+	return appendProductStockFilter(query, args, productQuery.Stock)
 }
 
 func addSearchFilter(query string, args []any, search string) (string, []any) {
 	if search == "" {
 		return query, args
 	}
-	query += ` AND name ILIKE '%' || $` + position(len(args)+1) + ` || '%'`
+	query += ` AND p.name ILIKE '%' || $` + position(len(args)+1) + ` || '%'`
 	args = append(args, search)
 	return query, args
 }
 
-func appendSortAndPaging(query string, args []any, listQuery httpx.ListQuery) (string, []any) {
-	sortBy, sortDir := readSort(listQuery)
+func appendSortAndPaging(query string, args []any, productQuery ProductListQuery) (string, []any) {
+	sortBy, sortDir := readSort(productQuery.List)
 	query += ` ORDER BY ` + sortBy + ` ` + sortDir
 	query += ` LIMIT $` + position(len(args)+1)
 	query += ` OFFSET $` + position(len(args)+2)
+	listQuery := productQuery.List
 	args = append(args, listQuery.PerPage, httpx.Offset(listQuery.Page, listQuery.PerPage))
 	return query, args
 }
@@ -93,7 +96,7 @@ func addCompositeFilter(query string, args []any, isComposite string) (string, [
 	if isComposite == "" {
 		return query, args
 	}
-	query += ` AND is_composite=$` + position(len(args)+1)
+	query += ` AND p.is_composite=$` + position(len(args)+1)
 	args = append(args, isComposite == "true")
 	return query, args
 }
@@ -122,11 +125,12 @@ func (r *Repository) Create(ctx context.Context, tx pgx.Tx, tenantID, productID 
     return err
 }
 
-func (r *Repository) CreateDefaultVariant(ctx context.Context, tx pgx.Tx, variantID, productID string, req CreateRequest) error {
+func (r *Repository) CreateDefaultVariant(ctx context.Context, tx pgx.Tx, input createProductTx) error {
     query := `INSERT INTO catalog.product_variants
-        (id, product_id, name, sku_code, barcode, unit, price)
-        VALUES ($1,$2,'Default',$3,$4,$5,$6)`
-    _, err := tx.Exec(ctx, query, variantID, productID, req.SKUCode, req.Barcode, req.Unit, req.Price)
+        (id, tenant_id, product_id, name, sku_code, barcode, unit, price)
+        VALUES ($1,$2,$3,'Default',$4,$5,$6,$7)`
+    _, err := tx.Exec(ctx, query, input.variantID, input.tenantID, input.productID,
+        input.req.SKUCode, input.req.Barcode, input.req.Unit, input.req.Price)
     return err
 }
 
@@ -144,12 +148,18 @@ func (r *Repository) Update(ctx context.Context, tenantID, id string, req Update
     query := `UPDATE catalog.products
         SET name=$3, is_composite=$4, updated_at=now()
         WHERE tenant_id=$1 AND id=$2`
-    _, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.IsComposite)
+    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.IsComposite)
+    if err == nil && tag.RowsAffected() == 0 {
+        return pgx.ErrNoRows
+    }
     return err
 }
 
 func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {
     query := `DELETE FROM catalog.products WHERE tenant_id=$1 AND id=$2`
-    _, err := r.store.Pool.Exec(ctx, query, tenantID, id)
+    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id)
+    if err == nil && tag.RowsAffected() == 0 {
+        return pgx.ErrNoRows
+    }
     return err
 }

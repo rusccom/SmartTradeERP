@@ -10,6 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/validation"
 )
 
 type Service struct {
@@ -22,7 +23,11 @@ func NewService(store *db.Store, repo *Repository) *Service {
 }
 
 func (s *Service) Open(ctx context.Context, tenantID, userID string, req OpenRequest) (string, error) {
+	req.WarehouseID = validation.Clean(req.WarehouseID)
 	if err := validateOpenRequest(req); err != nil {
+		return "", err
+	}
+	if err := s.ensureWarehouse(ctx, tenantID, req.WarehouseID); err != nil {
 		return "", err
 	}
 	if err := s.ensureNoOpenShift(ctx, tenantID, userID); err != nil {
@@ -48,10 +53,28 @@ func makeOpenShift(userID string, req OpenRequest) Shift {
 }
 
 func validateOpenRequest(req OpenRequest) error {
+	if !validation.UUID(req.WarehouseID) {
+		return validation.ErrInvalidData
+	}
 	if !req.OpeningCash.GreaterThanOrEqual(decimal.Zero) {
 		return ErrInvalidAmount
 	}
 	return nil
+}
+
+func (s *Service) ensureWarehouse(ctx context.Context, tenantID string, id string) error {
+	exists, err := s.repo.WarehouseExists(ctx, tenantID, id)
+	if err != nil || !exists {
+		return shiftReferenceError(err)
+	}
+	return nil
+}
+
+func shiftReferenceError(err error) error {
+	if err != nil {
+		return err
+	}
+	return ErrInvalidShiftReference
 }
 
 func (s *Service) ensureNoOpenShift(ctx context.Context, tenantID, userID string) error {
@@ -89,6 +112,7 @@ func (s *Service) Current(ctx context.Context, tenantID, userID string) (Shift, 
 }
 
 func (s *Service) CashOp(ctx context.Context, tenantID, userID string, req CashOpRequest) error {
+	req = normalizeCashOp(req)
 	shift, err := s.Current(ctx, tenantID, userID)
 	if err != nil {
 		return err
@@ -108,7 +132,16 @@ func validateCashOp(req CashOpRequest) error {
 	if !req.Amount.GreaterThan(decimal.Zero) {
 		return ErrInvalidAmount
 	}
+	if !validation.Max(req.Note, 1000) {
+		return validation.ErrInvalidData
+	}
 	return nil
+}
+
+func normalizeCashOp(req CashOpRequest) CashOpRequest {
+	req.Type = validation.Clean(req.Type)
+	req.Note = validation.Clean(req.Note)
+	return req
 }
 
 func (s *Service) Close(ctx context.Context, tenantID, userID string) (ShiftReport, error) {

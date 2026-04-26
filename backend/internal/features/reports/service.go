@@ -7,6 +7,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"smarterp/backend/internal/features/ledger"
+	"smarterp/backend/internal/shared/httpx"
 )
 
 type Service struct {
@@ -31,6 +32,10 @@ func (s *Service) Profit(
 
 func (s *Service) Stock(ctx context.Context, tenantID, warehouseID string) ([]StockRow, error) {
 	return s.repo.StockRows(ctx, tenantID, warehouseID)
+}
+
+func (s *Service) FullStock(ctx context.Context, tenantID string, query httpx.ListQuery) ([]FullStockRow, int, error) {
+	return s.repo.FullStockRows(ctx, tenantID, query)
 }
 
 func (s *Service) TopProducts(ctx context.Context, tenantID string, fromDate, toDate time.Time) ([]TopProduct, error) {

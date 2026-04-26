@@ -54,12 +54,18 @@ func (r *Repository) Update(ctx context.Context, tenantID, id string, req Update
     query := `UPDATE catalog.warehouses
         SET name=$3, address=$4, is_default=$5, is_active=$6
         WHERE tenant_id=$1 AND id=$2`
-    _, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.Address, req.IsDefault, req.IsActive)
+    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.Address, req.IsDefault, req.IsActive)
+    if err == nil && tag.RowsAffected() == 0 {
+        return pgx.ErrNoRows
+    }
     return err
 }
 
 func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {
-    _, err := r.store.Pool.Exec(ctx, `DELETE FROM catalog.warehouses WHERE tenant_id=$1 AND id=$2`, tenantID, id)
+    tag, err := r.store.Pool.Exec(ctx, `DELETE FROM catalog.warehouses WHERE tenant_id=$1 AND id=$2`, tenantID, id)
+    if err == nil && tag.RowsAffected() == 0 {
+        return pgx.ErrNoRows
+    }
     return err
 }
 
@@ -67,12 +73,14 @@ func (r *Repository) CountDefaults(ctx context.Context, tenantID string) (int, e
     row := r.store.Pool.QueryRow(ctx,
         `SELECT COUNT(*) FROM catalog.warehouses WHERE tenant_id=$1 AND is_default=true`, tenantID)
     count := 0
-    return count, row.Scan(&count)
+    err := row.Scan(&count)
+    return count, err
 }
 
 func (r *Repository) IsDefault(ctx context.Context, tenantID, id string) (bool, error) {
     row := r.store.Pool.QueryRow(ctx,
         `SELECT is_default FROM catalog.warehouses WHERE tenant_id=$1 AND id=$2`, tenantID, id)
     isDefault := false
-    return isDefault, row.Scan(&isDefault)
+    err := row.Scan(&isDefault)
+    return isDefault, err
 }

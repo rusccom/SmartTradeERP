@@ -9,6 +9,14 @@ import (
 	"smarterp/backend/internal/features/ledger"
 )
 
+type compositeReturnInput struct {
+	ctx      context.Context
+	tenantID string
+	doc      Document
+	item     postingItem
+	shares   map[string]decimal.Decimal
+}
+
 func (s *Service) revenueShares(
 	ctx context.Context,
 	tenantID string,
@@ -44,8 +52,23 @@ func (s *Service) componentCost(
 
 func buildShares(costs map[string]decimal.Decimal, totalCost decimal.Decimal) map[string]decimal.Decimal {
 	shares := make(map[string]decimal.Decimal)
+	if totalCost.LessThanOrEqual(decimal.Zero) {
+		return equalShares(costs)
+	}
 	for variantID, cost := range costs {
 		shares[variantID] = normalizedShare(cost, totalCost)
+	}
+	return shares
+}
+
+func equalShares(costs map[string]decimal.Decimal) map[string]decimal.Decimal {
+	shares := make(map[string]decimal.Decimal)
+	if len(costs) == 0 {
+		return shares
+	}
+	share := decimal.NewFromInt(1).Div(decimal.NewFromInt(int64(len(costs)))).Round(8)
+	for variantID := range costs {
+		shares[variantID] = share
 	}
 	return shares
 }
@@ -71,18 +94,18 @@ func (s *Service) buildCompositeSaleEntry(
 		mustDate(doc.Date), "OUT", "SALE", qty, item.UnitPrice, qty.Mul(item.UnitPrice), &revenue)
 }
 
-func (s *Service) buildCompositeReturnEntry(
-	doc Document,
-	tenantID string,
-	item postingItem,
-	component variantComponent,
-	shares map[string]decimal.Decimal,
-) ledger.EntryInput {
-	qty := item.Qty.Mul(component.QtyPerUnit)
-	share := shares[component.ComponentVariantID]
-	revenue := item.TotalAmount.Mul(share).Round(4).Neg()
-	return makeEntry(tenantID, doc.ID, item.ID, component.ComponentVariantID, doc.WarehouseID,
-		mustDate(doc.Date), "IN", "RETURN_IN", qty, item.UnitPrice, qty.Mul(item.UnitPrice), &revenue)
+func (s *Service) buildCompositeReturnEntry(input compositeReturnInput, component variantComponent) (ledger.EntryInput, error) {
+	qty := input.item.Qty.Mul(component.QtyPerUnit)
+	_, avg, err := s.ledger.GlobalStock(input.ctx, input.tenantID, component.ComponentVariantID)
+	if err != nil {
+		return ledger.EntryInput{}, err
+	}
+	share := input.shares[component.ComponentVariantID]
+	revenue := input.item.TotalAmount.Mul(share).Round(4).Neg()
+	total := qty.Mul(avg).Round(4)
+	entry := makeEntry(input.tenantID, input.doc.ID, input.item.ID, component.ComponentVariantID,
+		input.doc.WarehouseID, mustDate(input.doc.Date), "IN", "RETURN_IN", qty, avg, total, &revenue)
+	return entry, nil
 }
 
 func (s *Service) buildDefaultEntry(doc Document, tenantID string, item postingItem) ledger.EntryInput {

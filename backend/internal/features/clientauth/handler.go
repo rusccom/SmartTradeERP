@@ -7,6 +7,7 @@ import (
     "github.com/jackc/pgx/v5"
 
     "smarterp/backend/internal/shared/httpx"
+    "smarterp/backend/internal/shared/validation"
 )
 
 type Handler struct {
@@ -46,6 +47,10 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) writeAuthError(w http.ResponseWriter, err error) {
+    if errors.Is(err, validation.ErrInvalidData) {
+        httpx.WriteError(w, http.StatusBadRequest, "invalid_data", "invalid registration data", nil)
+        return
+    }
     if errors.Is(err, ErrInvalidCredentials) {
         httpx.WriteError(w, http.StatusUnauthorized, "invalid_credentials", "invalid credentials", nil)
         return

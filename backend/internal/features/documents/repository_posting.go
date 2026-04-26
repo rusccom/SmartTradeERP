@@ -27,7 +27,7 @@ func (r *Repository) PostingItems(ctx context.Context, tx pgx.Tx, tenantID, docu
         JOIN documents.documents d ON d.id=i.document_id
         JOIN catalog.product_variants v ON v.id=i.variant_id
         JOIN catalog.products p ON p.id=v.product_id
-        WHERE d.tenant_id=$1 AND d.id=$2`
+        WHERE d.tenant_id=$1 AND v.tenant_id=$1 AND p.tenant_id=$1 AND d.id=$2`
 	rows, err := tx.Query(ctx, query, tenantID, documentID)
 	if err != nil {
 		return nil, err
@@ -49,11 +49,18 @@ func scanPostingItems(rows pgx.Rows) ([]postingItem, error) {
 	return items, rows.Err()
 }
 
-func (r *Repository) VariantComponents(ctx context.Context, tx pgx.Tx, variantID string) ([]variantComponent, error) {
-	query := `SELECT component_variant_id::text, qty
-        FROM catalog.variant_components
-        WHERE variant_id=$1`
-	rows, err := tx.Query(ctx, query, variantID)
+func (r *Repository) VariantComponents(
+	ctx context.Context,
+	tx pgx.Tx,
+	tenantID string,
+	variantID string,
+) ([]variantComponent, error) {
+	query := `SELECT vc.component_variant_id::text, vc.qty
+        FROM catalog.variant_components vc
+        JOIN catalog.product_variants parent ON parent.id=vc.variant_id
+        JOIN catalog.product_variants component ON component.id=vc.component_variant_id
+        WHERE parent.tenant_id=$1 AND component.tenant_id=$1 AND vc.variant_id=$2`
+	rows, err := tx.Query(ctx, query, tenantID, variantID)
 	if err != nil {
 		return nil, err
 	}

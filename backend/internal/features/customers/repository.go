@@ -36,7 +36,8 @@ func (r *Repository) count(ctx context.Context, tenantID string, query httpx.Lis
 	sql, args = addSearchFilter(sql, args, query.Search)
 	row := r.store.Pool.QueryRow(ctx, sql, args...)
 	total := 0
-	return total, row.Scan(&total)
+	err := row.Scan(&total)
+	return total, err
 }
 
 func (r *Repository) load(ctx context.Context, tenantID string, query httpx.ListQuery) ([]Customer, error) {
@@ -114,13 +115,19 @@ func (r *Repository) GetByID(ctx context.Context, tenantID, id string) (Customer
 func (r *Repository) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
 	sql := `UPDATE catalog.customers SET name=$3, phone=$4, email=$5, updated_at=now()
 		WHERE tenant_id=$1 AND id=$2`
-	_, err := r.store.Pool.Exec(ctx, sql, tenantID, id, req.Name, req.Phone, req.Email)
+	tag, err := r.store.Pool.Exec(ctx, sql, tenantID, id, req.Name, req.Phone, req.Email)
+	if err == nil && tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
 	return err
 }
 
 func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {
 	sql := `DELETE FROM catalog.customers WHERE tenant_id=$1 AND id=$2 AND is_default=false`
-	_, err := r.store.Pool.Exec(ctx, sql, tenantID, id)
+	tag, err := r.store.Pool.Exec(ctx, sql, tenantID, id)
+	if err == nil && tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
 	return err
 }
 
@@ -128,12 +135,14 @@ func (r *Repository) IsDefault(ctx context.Context, tenantID, id string) (bool, 
 	sql := `SELECT is_default FROM catalog.customers WHERE tenant_id=$1 AND id=$2`
 	row := r.store.Pool.QueryRow(ctx, sql, tenantID, id)
 	var isDefault bool
-	return isDefault, row.Scan(&isDefault)
+	err := row.Scan(&isDefault)
+	return isDefault, err
 }
 
 func (r *Repository) HasDocuments(ctx context.Context, tenantID, customerID string) (bool, error) {
 	sql := `SELECT EXISTS(SELECT 1 FROM documents.documents WHERE tenant_id=$1 AND customer_id=$2)`
 	row := r.store.Pool.QueryRow(ctx, sql, tenantID, customerID)
 	var exists bool
-	return exists, row.Scan(&exists)
+	err := row.Scan(&exists)
+	return exists, err
 }

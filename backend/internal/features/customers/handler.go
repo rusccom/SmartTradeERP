@@ -8,6 +8,7 @@ import (
 
 	"smarterp/backend/internal/shared/httpx"
 	"smarterp/backend/internal/shared/tenant"
+	"smarterp/backend/internal/shared/validation"
 )
 
 type Handler struct {
@@ -42,7 +43,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	tenantID := tenant.FromContext(r.Context())
 	id, err := h.service.Create(r.Context(), tenantID, req)
 	if err != nil {
-		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to create customer", err.Error())
+		h.writeMutationError(w, err, "failed to create customer")
 		return
 	}
 	httpx.WriteData(w, http.StatusCreated, map[string]string{"id": id}, nil)
@@ -67,7 +68,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	tenantID := tenant.FromContext(r.Context())
 	err := h.service.Update(r.Context(), tenantID, r.PathValue("id"), req)
 	if err != nil {
-		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to update customer", err.Error())
+		h.writeMutationError(w, err, "failed to update customer")
 		return
 	}
 	httpx.WriteData(w, http.StatusOK, map[string]string{"status": "updated"}, nil)
@@ -92,6 +93,10 @@ func (h *Handler) writeQueryError(w http.ResponseWriter, err error) {
 }
 
 func (h *Handler) writeDeleteError(w http.ResponseWriter, err error) {
+	if errors.Is(err, pgx.ErrNoRows) {
+		httpx.WriteError(w, http.StatusNotFound, "not_found", "customer not found", nil)
+		return
+	}
 	if errors.Is(err, ErrIsDefault) {
 		httpx.WriteError(w, http.StatusConflict, "is_default", "cannot delete default customer", nil)
 		return
@@ -101,4 +106,16 @@ func (h *Handler) writeDeleteError(w http.ResponseWriter, err error) {
 		return
 	}
 	httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to delete customer", err.Error())
+}
+
+func (h *Handler) writeMutationError(w http.ResponseWriter, err error, message string) {
+	if errors.Is(err, validation.ErrInvalidData) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_data", "invalid customer data", nil)
+		return
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		httpx.WriteError(w, http.StatusNotFound, "not_found", "customer not found", nil)
+		return
+	}
+	httpx.WriteError(w, http.StatusInternalServerError, "internal_error", message, err.Error())
 }

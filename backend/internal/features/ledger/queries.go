@@ -61,20 +61,22 @@ func (s *Service) HasVariantMovements(ctx context.Context, tenantID, variantID s
 	query := `SELECT EXISTS(
         SELECT 1 FROM ledger.cost_ledger
         WHERE tenant_id=$1 AND variant_id=$2
-    )`
+	)`
 	row := s.store.Pool.QueryRow(ctx, query, tenantID, variantID)
 	var exists bool
-	return exists, row.Scan(&exists)
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 func (s *Service) HasWarehouseMovements(ctx context.Context, tenantID, warehouseID string) (bool, error) {
 	query := `SELECT EXISTS(
         SELECT 1 FROM ledger.cost_ledger
         WHERE tenant_id=$1 AND warehouse_id=$2
-    )`
+	)`
 	row := s.store.Pool.QueryRow(ctx, query, tenantID, warehouseID)
 	var exists bool
-	return exists, row.Scan(&exists)
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 func (s *Service) HasProductMovements(ctx context.Context, tenantID, productID string) (bool, error) {
@@ -82,11 +84,12 @@ func (s *Service) HasProductMovements(ctx context.Context, tenantID, productID s
         SELECT 1 FROM ledger.cost_ledger l
         JOIN catalog.product_variants v ON v.id = l.variant_id
         JOIN catalog.products p ON p.id = v.product_id
-        WHERE l.tenant_id=$1 AND p.id=$2
-    )`
+        WHERE l.tenant_id=$1 AND v.tenant_id=$1 AND p.id=$2
+	)`
 	row := s.store.Pool.QueryRow(ctx, query, tenantID, productID)
 	var exists bool
-	return exists, row.Scan(&exists)
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 func (s *Service) GlobalStock(ctx context.Context, tenantID, variantID string) (decimal.Decimal, decimal.Decimal, error) {
@@ -112,7 +115,8 @@ func (s *Service) WarehouseStock(ctx context.Context, tenantID, variantID, wareh
         WHERE tenant_id=$1 AND variant_id=$2 AND warehouse_id=$3`
 	row := s.store.Pool.QueryRow(ctx, query, tenantID, variantID, warehouseID)
 	qty := decimal.Zero
-	return qty, row.Scan(&qty)
+	err := row.Scan(&qty)
+	return qty, err
 }
 
 func (s *Service) ProfitByPeriod(
@@ -126,7 +130,8 @@ func (s *Service) ProfitByPeriod(
 	query, args := buildProfitPeriodQuery(tenantID, fromDate, toDate, warehouseID, variantID)
 	row := s.store.Pool.QueryRow(ctx, query, args...)
 	profit := decimal.Zero
-	return profit, row.Scan(&profit)
+	err := row.Scan(&profit)
+	return profit, err
 }
 
 func buildProfitPeriodQuery(
@@ -175,7 +180,8 @@ func (s *Service) ProfitByDocumentItem(ctx context.Context, tenantID, documentIt
         WHERE tenant_id=$1 AND document_item_id=$2`
 	row := s.store.Pool.QueryRow(ctx, query, tenantID, documentItemID)
 	profit := decimal.Zero
-	return profit, row.Scan(&profit)
+	err := row.Scan(&profit)
+	return profit, err
 }
 
 func (s *Service) ProfitByDocument(ctx context.Context, tenantID, documentID string) (decimal.Decimal, error) {
@@ -184,7 +190,8 @@ func (s *Service) ProfitByDocument(ctx context.Context, tenantID, documentID str
         WHERE tenant_id=$1 AND document_id=$2`
 	row := s.store.Pool.QueryRow(ctx, query, tenantID, documentID)
 	profit := decimal.Zero
-	return profit, row.Scan(&profit)
+	err := row.Scan(&profit)
+	return profit, err
 }
 
 func (s *Service) Movements(ctx context.Context, tenantID, variantID string) ([]Movement, error) {

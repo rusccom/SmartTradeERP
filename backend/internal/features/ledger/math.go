@@ -19,17 +19,30 @@ func zeroState() calcState {
 
 func applyIn(state calcState, qty, unitPrice decimal.Decimal, revenue *decimal.Decimal) calcResult {
 	totalQty := state.qty.Add(qty)
+	newAvg := nextAverage(state, qty, unitPrice, totalQty)
+	cost := qty.Mul(unitPrice).Round(4)
+	result := calcResult{state: calcState{qty: totalQty, avg: newAvg}}
+	result.profit = inProfit(revenue, cost)
+	return result
+}
+
+func inProfit(revenue *decimal.Decimal, cost decimal.Decimal) *decimal.Decimal {
+	if revenue == nil {
+		return nil
+	}
+	value := revenue.Add(cost).Round(4)
+	return &value
+}
+
+func nextAverage(state calcState, qty, unitPrice, totalQty decimal.Decimal) decimal.Decimal {
+	if state.qty.LessThanOrEqual(decimal.Zero) {
+		return unitPrice.Round(4)
+	}
 	if totalQty.LessThanOrEqual(decimal.Zero) {
-		return calcResult{state: zeroState()}
+		return state.avg
 	}
 	weighted := state.qty.Mul(state.avg).Add(qty.Mul(unitPrice))
-	newAvg := weighted.Div(totalQty).Round(4)
-	result := calcResult{state: calcState{qty: totalQty, avg: newAvg}}
-	if revenue != nil {
-		value := revenue.Round(4)
-		result.profit = &value
-	}
-	return result
+	return weighted.Div(totalQty).Round(4)
 }
 
 func applyOut(state calcState, qty decimal.Decimal, revenue *decimal.Decimal) calcResult {
@@ -39,7 +52,7 @@ func applyOut(state calcState, qty decimal.Decimal, revenue *decimal.Decimal) ca
 	if revenue == nil {
 		return result
 	}
-	profitValue := revenue.Sub(cogsValue)
+	profitValue := revenue.Sub(cogsValue).Round(4)
 	result.profit = &profitValue
 	return result
 }

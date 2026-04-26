@@ -25,18 +25,22 @@ func (s *Service) List(ctx context.Context, tenantID string, query httpx.ListQue
 	return s.repo.List(ctx, tenantID, query)
 }
 
-func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest) (string, error) {
+func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest) (CreateResult, error) {
+	req = normalizeRequest(req)
 	if err := s.validateRequest(req); err != nil {
-		return "", err
+		return CreateResult{}, err
 	}
 	id := uuid.NewString()
+	result := CreateResult{ID: id}
 	err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
-		return s.createDraftTx(ctx, tx, tenantID, id, req)
+		numbered, err := s.createDraftTx(ctx, tx, tenantID, id, req)
+		result.Number = numbered.Number
+		return err
 	})
 	if err != nil {
-		return "", err
+		return CreateResult{}, mapDocumentWriteError(err)
 	}
-	return id, nil
+	return result, nil
 }
 
 func (s *Service) createDraftTx(
@@ -45,14 +49,21 @@ func (s *Service) createDraftTx(
 	tenantID string,
 	documentID string,
 	req CreateRequest,
-) error {
+) (CreateRequest, error) {
+	if err := s.validateReferences(ctx, tx, tenantID, req); err != nil {
+		return req, err
+	}
+	req, err := s.withDocumentNumber(ctx, tx, tenantID, req)
+	if err != nil {
+		return req, err
+	}
 	if err := s.repo.InsertDocument(ctx, tx, tenantID, documentID, req); err != nil {
-		return err
+		return req, err
 	}
 	if err := s.repo.ReplaceItems(ctx, tx, documentID, req.Items); err != nil {
-		return err
+		return req, err
 	}
-	return s.repo.ReplacePayments(ctx, tx, documentID, req.Payments)
+	return req, s.repo.ReplacePayments(ctx, tx, documentID, req.Payments)
 }
 
 func (s *Service) ByID(ctx context.Context, tenantID, id string) (Document, error) {
@@ -75,6 +86,7 @@ func (s *Service) ByID(ctx context.Context, tenantID, id string) (Document, erro
 }
 
 func (s *Service) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
+	req = normalizeRequest(req)
 	if err := s.validateRequest(req); err != nil {
 		return err
 	}
@@ -83,10 +95,10 @@ func (s *Service) Update(ctx context.Context, tenantID, id string, req UpdateReq
 		return err
 	}
 	if status == "draft" {
-		return s.updateDraft(ctx, tenantID, id, req)
+		return mapDocumentWriteError(s.updateDraft(ctx, tenantID, id, req))
 	}
 	if status == "posted" {
-		return s.retroUpdate(ctx, tenantID, id, req)
+		return mapDocumentWriteError(s.retroUpdate(ctx, tenantID, id, req))
 	}
 	return ErrStatusConflict
 }
@@ -98,6 +110,13 @@ func (s *Service) updateDraft(ctx context.Context, tenantID, id string, req Upda
 }
 
 func (s *Service) updateDraftTx(ctx context.Context, tx pgx.Tx, tenantID, id string, req UpdateRequest) error {
+	if err := s.validateReferences(ctx, tx, tenantID, req); err != nil {
+		return err
+	}
+	req, err := s.withUpdateNumber(ctx, tx, tenantID, id, req)
+	if err != nil {
+		return err
+	}
 	if err := s.repo.UpdateDocument(ctx, tx, tenantID, id, req); err != nil {
 		return err
 	}

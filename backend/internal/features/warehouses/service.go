@@ -6,6 +6,7 @@ import (
     "github.com/google/uuid"
 
     "smarterp/backend/internal/features/ledger"
+    "smarterp/backend/internal/shared/validation"
 )
 
 type Service struct {
@@ -21,7 +22,19 @@ func (s *Service) List(ctx context.Context, tenantID string) ([]Warehouse, error
     return s.repo.List(ctx, tenantID)
 }
 
+func (s *Service) ListWithIncludes(
+	ctx context.Context,
+	tenantID string,
+	include WarehouseListInclude,
+) ([]WarehouseListItem, error) {
+	return s.repo.ListWithIncludes(ctx, tenantID, include)
+}
+
 func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest) (string, error) {
+    req = normalizeCreate(req)
+    if err := validateWarehouse(req.Name); err != nil {
+        return "", err
+    }
     id := uuid.NewString()
     req = applyDefaultActive(req)
     req, err := s.ensureDefaultOnCreate(ctx, tenantID, req)
@@ -53,6 +66,10 @@ func (s *Service) ensureDefaultOnCreate(ctx context.Context, tenantID string, re
 }
 
 func (s *Service) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
+    req = normalizeUpdate(req)
+    if err := validateWarehouse(req.Name); err != nil {
+        return err
+    }
     if err := s.ensureDefaultOnUpdate(ctx, tenantID, id, req.IsDefault); err != nil {
         return err
     }
@@ -73,6 +90,25 @@ func (s *Service) ensureDefaultOnUpdate(ctx context.Context, tenantID, id string
     }
     if defaults <= 1 {
         return ErrMustKeepDefault
+    }
+    return nil
+}
+
+func normalizeCreate(req CreateRequest) CreateRequest {
+    req.Name = validation.Clean(req.Name)
+    req.Address = validation.Clean(req.Address)
+    return req
+}
+
+func normalizeUpdate(req UpdateRequest) UpdateRequest {
+    req.Name = validation.Clean(req.Name)
+    req.Address = validation.Clean(req.Address)
+    return req
+}
+
+func validateWarehouse(name string) error {
+    if !validation.Required(name) || !validation.Max(name, 200) {
+        return validation.ErrInvalidData
     }
     return nil
 }

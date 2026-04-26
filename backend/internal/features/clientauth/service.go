@@ -8,6 +8,7 @@ import (
 
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/validation"
 )
 
 type Service struct {
@@ -21,6 +22,10 @@ func NewService(store *db.Store, repo *Repository, tokens *auth.TokenService) *S
 }
 
 func (s *Service) Login(ctx context.Context, req LoginRequest) (auth.TokenResponse, error) {
+	req = normalizeLogin(req)
+	if err := validateLogin(req); err != nil {
+		return auth.TokenResponse{}, err
+	}
 	user, err := s.repo.FindByEmail(ctx, s.store.Pool, req.Email)
 	if err != nil {
 		return auth.TokenResponse{}, err
@@ -32,6 +37,10 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (auth.TokenRespon
 }
 
 func (s *Service) Register(ctx context.Context, req RegisterRequest) (auth.TokenResponse, error) {
+	req = normalizeRegister(req)
+	if err := validateRegister(req); err != nil {
+		return auth.TokenResponse{}, err
+	}
 	ids := createIDs()
 	hash, err := auth.HashPassword(req.Password)
 	if err != nil {
@@ -107,4 +116,32 @@ func insertDefaultCustomer(ctx context.Context, tx pgx.Tx, ids registerIDs) erro
         VALUES ($1,$2,'Розничный покупатель',true)`
 	_, err := tx.Exec(ctx, query, ids.customerID, ids.tenantID)
 	return err
+}
+
+func normalizeLogin(req LoginRequest) LoginRequest {
+	req.Email = validation.Clean(req.Email)
+	return req
+}
+
+func normalizeRegister(req RegisterRequest) RegisterRequest {
+	req.TenantName = validation.Clean(req.TenantName)
+	req.Email = validation.Clean(req.Email)
+	return req
+}
+
+func validateLogin(req LoginRequest) error {
+	if !validation.Required(req.Email) || !validation.Email(req.Email) || !validation.Required(req.Password) {
+		return ErrInvalidCredentials
+	}
+	return nil
+}
+
+func validateRegister(req RegisterRequest) error {
+	if !validation.Required(req.TenantName) || !validation.Required(req.Email) || !validation.Email(req.Email) {
+		return validation.ErrInvalidData
+	}
+	if !validation.Required(req.Password) || len([]rune(req.Password)) < 8 {
+		return validation.ErrInvalidData
+	}
+	return nil
 }

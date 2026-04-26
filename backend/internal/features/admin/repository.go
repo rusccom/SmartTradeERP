@@ -20,7 +20,8 @@ func (r *Repository) FindAdminByEmail(ctx context.Context, email string) (adminU
         WHERE email=$1`
     row := r.store.Pool.QueryRow(ctx, query, email)
     user := adminUser{}
-    return user, row.Scan(&user.ID, &user.PasswordHash)
+    err := row.Scan(&user.ID, &user.PasswordHash)
+    return user, err
 }
 
 func (r *Repository) ListTenants(ctx context.Context, page, perPage int) ([]Tenant, int, error) {
@@ -38,7 +39,8 @@ func (r *Repository) ListTenants(ctx context.Context, page, perPage int) ([]Tena
 func (r *Repository) countTenants(ctx context.Context) (int, error) {
     row := r.store.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM platform.tenants`)
     total := 0
-    return total, row.Scan(&total)
+    err := row.Scan(&total)
+    return total, err
 }
 
 func (r *Repository) loadTenants(ctx context.Context, page, perPage int) ([]Tenant, error) {

@@ -1,21 +1,21 @@
 package variants
 
 import (
-    "context"
-    "strconv"
+	"context"
+	"strconv"
 
-    "github.com/google/uuid"
-    "github.com/jackc/pgx/v5"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
-    "smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/db"
 )
 
 type Repository struct {
-    store *db.Store
+	store *db.Store
 }
 
 func NewRepository(store *db.Store) *Repository {
-    return &Repository{store: store}
+	return &Repository{store: store}
 }
 
 func (r *Repository) List(ctx context.Context, tenantID, productID string, page, perPage int) ([]Variant, int, error) {
@@ -33,13 +33,13 @@ func (r *Repository) List(ctx context.Context, tenantID, productID string, page,
 func (r *Repository) count(ctx context.Context, tenantID, productID string) (int, error) {
     query := `SELECT COUNT(*)
         FROM catalog.product_variants v
-        JOIN catalog.products p ON p.id=v.product_id
-        WHERE p.tenant_id=$1`
+        WHERE v.tenant_id=$1`
     args := []any{tenantID}
     query, args = addProductFilter(query, args, productID)
     row := r.store.Pool.QueryRow(ctx, query, args...)
     total := 0
-    return total, row.Scan(&total)
+    err := row.Scan(&total)
+    return total, err
 }
 
 func (r *Repository) load(ctx context.Context, tenantID, productID string, page, perPage int) ([]Variant, error) {
@@ -47,8 +47,7 @@ func (r *Repository) load(ctx context.Context, tenantID, productID string, page,
         COALESCE(v.sku_code,''), COALESCE(v.barcode,''), v.unit, COALESCE(v.price,0),
         COALESCE(v.option1,''), COALESCE(v.option2,''), COALESCE(v.option3,'')
         FROM catalog.product_variants v
-        JOIN catalog.products p ON p.id=v.product_id
-        WHERE p.tenant_id=$1`
+        WHERE v.tenant_id=$1`
     args := []any{tenantID}
     query, args = addProductFilter(query, args, productID)
     query, args = addLimitOffset(query, args, page, perPage)
@@ -94,12 +93,15 @@ func scanVariants(rows pgx.Rows) ([]Variant, error) {
 
 func (r *Repository) Create(ctx context.Context, tenantID, variantID string, req CreateRequest) error {
     query := `INSERT INTO catalog.product_variants
-        (id, product_id, name, sku_code, barcode, unit, price, option1, option2, option3)
-        SELECT $1, p.id, $2, $3, $4, $5, $6, $7, $8, $9
+        (id, tenant_id, product_id, name, sku_code, barcode, unit, price, option1, option2, option3)
+        SELECT $1, p.tenant_id, p.id, $2, $3, $4, $5, $6, $7, $8, $9
         FROM catalog.products p
         WHERE p.id=$10 AND p.tenant_id=$11`
-    _, err := r.store.Pool.Exec(ctx, query, variantID, req.Name, req.SKUCode, req.Barcode,
+    tag, err := r.store.Pool.Exec(ctx, query, variantID, req.Name, req.SKUCode, req.Barcode,
         req.Unit, req.Price, req.Option1, req.Option2, req.Option3, req.ProductID, tenantID)
+    if err == nil && tag.RowsAffected() == 0 {
+        return pgx.ErrNoRows
+    }
     return err
 }
 
@@ -108,8 +110,7 @@ func (r *Repository) ByID(ctx context.Context, tenantID, id string) (Variant, er
         COALESCE(v.sku_code,''), COALESCE(v.barcode,''), v.unit, COALESCE(v.price,0),
         COALESCE(v.option1,''), COALESCE(v.option2,''), COALESCE(v.option3,'')
         FROM catalog.product_variants v
-        JOIN catalog.products p ON p.id=v.product_id
-        WHERE p.tenant_id=$1 AND v.id=$2`
+        WHERE v.tenant_id=$1 AND v.id=$2`
     row := r.store.Pool.QueryRow(ctx, query, tenantID, id)
     item := Variant{}
     err := row.Scan(&item.ID, &item.ProductID, &item.Name, &item.SKUCode,
@@ -121,48 +122,63 @@ func (r *Repository) Update(ctx context.Context, tenantID, id string, req Update
     query := `UPDATE catalog.product_variants v
         SET name=$3, sku_code=$4, barcode=$5, unit=$6, price=$7,
             option1=$8, option2=$9, option3=$10
-        FROM catalog.products p
-        WHERE v.product_id=p.id AND p.tenant_id=$1 AND v.id=$2`
-    _, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.SKUCode,
+        WHERE v.tenant_id=$1 AND v.id=$2`
+    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.SKUCode,
         req.Barcode, req.Unit, req.Price, req.Option1, req.Option2, req.Option3)
+    if err == nil && tag.RowsAffected() == 0 {
+        return pgx.ErrNoRows
+    }
     return err
 }
 
 func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {
-    query := `DELETE FROM catalog.product_variants v
-        USING catalog.products p
-        WHERE v.product_id=p.id AND p.tenant_id=$1 AND v.id=$2`
-    _, err := r.store.Pool.Exec(ctx, query, tenantID, id)
+    query := `DELETE FROM catalog.product_variants
+        WHERE tenant_id=$1 AND id=$2`
+    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id)
+    if err == nil && tag.RowsAffected() == 0 {
+        return pgx.ErrNoRows
+    }
     return err
 }
 
 func (r *Repository) VariantComposite(ctx context.Context, tenantID, variantID string) (bool, error) {
-    query := `SELECT p.is_composite
+	query := `SELECT p.is_composite
         FROM catalog.product_variants v
         JOIN catalog.products p ON p.id=v.product_id
-        WHERE p.tenant_id=$1 AND v.id=$2`
-    row := r.store.Pool.QueryRow(ctx, query, tenantID, variantID)
-    value := false
-    return value, row.Scan(&value)
+        WHERE v.tenant_id=$1 AND v.id=$2`
+	row := r.store.Pool.QueryRow(ctx, query, tenantID, variantID)
+	value := false
+	err := row.Scan(&value)
+	return value, err
+}
+
+func (r *Repository) VariantExists(ctx context.Context, tenantID, variantID string) (bool, error) {
+	query := `SELECT EXISTS(
+        SELECT 1 FROM catalog.product_variants WHERE tenant_id=$1 AND id=$2
+    )`
+	row := r.store.Pool.QueryRow(ctx, query, tenantID, variantID)
+	exists := false
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 func (r *Repository) ProductVariantCount(ctx context.Context, tenantID, variantID string) (int, error) {
     query := `SELECT COUNT(*)
         FROM catalog.product_variants v
         JOIN catalog.product_variants source ON source.product_id=v.product_id
-        JOIN catalog.products p ON p.id=v.product_id
-        WHERE p.tenant_id=$1 AND source.id=$2`
+        WHERE v.tenant_id=$1 AND source.tenant_id=$1 AND source.id=$2`
     row := r.store.Pool.QueryRow(ctx, query, tenantID, variantID)
     count := 0
-    return count, row.Scan(&count)
+    err := row.Scan(&count)
+    return count, err
 }
 
 func (r *Repository) Components(ctx context.Context, tenantID, variantID string) ([]Component, error) {
     query := `SELECT vc.component_variant_id::text, vc.qty
         FROM catalog.variant_components vc
         JOIN catalog.product_variants v ON v.id = vc.variant_id
-        JOIN catalog.products p ON p.id = v.product_id
-        WHERE p.tenant_id=$1 AND vc.variant_id=$2
+        JOIN catalog.product_variants component ON component.id = vc.component_variant_id
+        WHERE v.tenant_id=$1 AND component.tenant_id=$1 AND vc.variant_id=$2
         ORDER BY vc.id`
     rows, err := r.store.Pool.Query(ctx, query, tenantID, variantID)
     if err != nil {

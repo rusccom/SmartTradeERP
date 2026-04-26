@@ -9,6 +9,7 @@ import (
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/httpx"
 	"smarterp/backend/internal/shared/tenant"
+	"smarterp/backend/internal/shared/validation"
 )
 
 type Handler struct {
@@ -86,29 +87,62 @@ func tenantAndUser(r *http.Request) (string, string) {
 }
 
 func (h *Handler) writeShiftError(w http.ResponseWriter, err error, message string) {
-	if errors.Is(err, pgx.ErrNoRows) {
-		httpx.WriteError(w, http.StatusNotFound, "not_found", "shift not found", nil)
+	if writeShiftRequestError(w, err) {
 		return
 	}
-	if errors.Is(err, ErrShiftAlreadyOpen) {
-		httpx.WriteError(w, http.StatusConflict, "shift_already_open", ErrShiftAlreadyOpen.Error(), nil)
-		return
-	}
-	if errors.Is(err, ErrNoOpenShift) {
-		httpx.WriteError(w, http.StatusConflict, "no_open_shift", ErrNoOpenShift.Error(), nil)
-		return
-	}
-	if errors.Is(err, ErrShiftAlreadyClosed) {
-		httpx.WriteError(w, http.StatusConflict, "shift_already_closed", ErrShiftAlreadyClosed.Error(), nil)
-		return
-	}
-	if errors.Is(err, ErrInvalidCashOpType) {
-		httpx.WriteError(w, http.StatusBadRequest, "invalid_cash_op_type", ErrInvalidCashOpType.Error(), nil)
-		return
-	}
-	if errors.Is(err, ErrInvalidAmount) {
-		httpx.WriteError(w, http.StatusBadRequest, "invalid_amount", ErrInvalidAmount.Error(), nil)
+	if writeShiftStateError(w, err) {
 		return
 	}
 	httpx.WriteError(w, http.StatusInternalServerError, "internal_error", message, err.Error())
+}
+
+func writeShiftRequestError(w http.ResponseWriter, err error) bool {
+	if writeShiftIdentityError(w, err) {
+		return true
+	}
+	return writeShiftCashError(w, err)
+}
+
+func writeShiftIdentityError(w http.ResponseWriter, err error) bool {
+	if errors.Is(err, validation.ErrInvalidData) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_data", "invalid shift data", nil)
+		return true
+	}
+	if errors.Is(err, ErrInvalidShiftReference) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_reference", "invalid shift reference", nil)
+		return true
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		httpx.WriteError(w, http.StatusNotFound, "not_found", "shift not found", nil)
+		return true
+	}
+	return false
+}
+
+func writeShiftCashError(w http.ResponseWriter, err error) bool {
+	if errors.Is(err, ErrInvalidCashOpType) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_cash_op_type", ErrInvalidCashOpType.Error(), nil)
+		return true
+	}
+	if errors.Is(err, ErrInvalidAmount) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_amount", ErrInvalidAmount.Error(), nil)
+		return true
+	}
+	return false
+}
+
+func writeShiftStateError(w http.ResponseWriter, err error) bool {
+	if errors.Is(err, ErrShiftAlreadyOpen) {
+		httpx.WriteError(w, http.StatusConflict, "shift_already_open", ErrShiftAlreadyOpen.Error(), nil)
+		return true
+	}
+	if errors.Is(err, ErrNoOpenShift) {
+		httpx.WriteError(w, http.StatusConflict, "no_open_shift", ErrNoOpenShift.Error(), nil)
+		return true
+	}
+	if errors.Is(err, ErrShiftAlreadyClosed) {
+		httpx.WriteError(w, http.StatusConflict, "shift_already_closed", ErrShiftAlreadyClosed.Error(), nil)
+		return true
+	}
+	return false
 }

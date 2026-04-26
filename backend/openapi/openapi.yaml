@@ -31,7 +31,30 @@ paths:
       summary: Register tenant and owner
   /client/products:
     get:
-      summary: List products
+      summary: List products with optional variants, stock and warehouses includes
+      parameters:
+        - in: query
+          name: include
+          schema:
+            type: string
+          example: variants,stock,warehouses
+        - in: query
+          name: warehouse_id
+          schema:
+            type: string
+        - in: query
+          name: min_qty
+          schema:
+            type: string
+        - in: query
+          name: max_qty
+          schema:
+            type: string
+        - in: query
+          name: qty_state
+          schema:
+            type: string
+            enum: [positive, negative, zero, nonzero]
     post:
       summary: Create product with default variant
   /client/products/{id}:
@@ -97,7 +120,7 @@ paths:
     get:
       summary: List documents
     post:
-      summary: Create draft document
+      summary: Create draft document with generated number when omitted
   /client/documents/{id}:
     get:
       summary: Document card with line profit

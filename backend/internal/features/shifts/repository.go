@@ -37,6 +37,16 @@ func (r *Repository) Insert(ctx context.Context, tx pgx.Tx, tenantID string, shi
 	return err
 }
 
+func (r *Repository) WarehouseExists(ctx context.Context, tenantID string, id string) (bool, error) {
+	query := `SELECT EXISTS(
+        SELECT 1 FROM catalog.warehouses WHERE tenant_id=$1 AND id=$2
+    )`
+	row := r.store.Pool.QueryRow(ctx, query, tenantID, id)
+	exists := false
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 func (r *Repository) FindOpen(ctx context.Context, tenantID, userID string) (Shift, error) {
 	query := `SELECT id::text, user_id::text, warehouse_id::text, opened_at::text,
         COALESCE(closed_at::text,''), opening_cash, COALESCE(closing_cash,0), status

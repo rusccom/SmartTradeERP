@@ -76,12 +76,9 @@ func (s *Service) postCompositeItem(
 	doc Document,
 	item postingItem,
 ) error {
-	components, err := s.repo.VariantComponents(ctx, tx, item.VariantID)
+	components, err := s.loadCompositeComponents(ctx, tx, tenantID, item)
 	if err != nil {
 		return err
-	}
-	if len(components) == 0 {
-		return ErrCompositeWithoutComponents
 	}
 	if err := s.repo.SaveItemComponents(ctx, tx, item.ID, components, item.Qty); err != nil {
 		return err
@@ -91,6 +88,22 @@ func (s *Service) postCompositeItem(
 		return err
 	}
 	return s.appendEntries(ctx, tx, entries)
+}
+
+func (s *Service) loadCompositeComponents(
+	ctx context.Context,
+	tx pgx.Tx,
+	tenantID string,
+	item postingItem,
+) ([]variantComponent, error) {
+	components, err := s.repo.VariantComponents(ctx, tx, tenantID, item.VariantID)
+	if err != nil {
+		return nil, err
+	}
+	if len(components) == 0 {
+		return nil, ErrCompositeWithoutComponents
+	}
+	return components, nil
 }
 
 func (s *Service) appendEntries(ctx context.Context, tx pgx.Tx, entries []ledger.EntryInput) error {
@@ -113,6 +126,8 @@ func (s *Service) buildEntriesForSimple(
 		return s.buildTransferEntries(ctx, tenantID, doc, item)
 	case "INVENTORY":
 		return s.buildInventoryEntry(ctx, tenantID, doc, item)
+	case "RETURN":
+		return s.buildReturnEntry(ctx, tenantID, doc, item)
 	default:
 		return []ledger.EntryInput{s.buildDefaultEntry(doc, tenantID, item)}, nil
 	}
@@ -143,36 +158,48 @@ func (s *Service) buildInventoryEntry(
 	doc Document,
 	item postingItem,
 ) ([]ledger.EntryInput, error) {
-	factQty := item.Qty
-	accountingQty, err := s.ledger.WarehouseStock(ctx, tenantID, item.VariantID, doc.WarehouseID)
+	diff, err := s.inventoryDiff(ctx, tenantID, doc, item)
 	if err != nil {
 		return nil, err
 	}
-	diff := factQty.Sub(accountingQty)
 	if diff.IsZero() {
 		return nil, nil
 	}
-
 	_, avg, err := s.ledger.GlobalStock(ctx, tenantID, item.VariantID)
 	if err != nil {
 		return nil, err
 	}
+	entry := inventoryEntry(doc, tenantID, item, diff, avg)
+	return []ledger.EntryInput{entry}, nil
+}
 
+func (s *Service) inventoryDiff(
+	ctx context.Context,
+	tenantID string,
+	doc Document,
+	item postingItem,
+) (decimal.Decimal, error) {
+	qty, err := s.ledger.WarehouseStock(ctx, tenantID, item.VariantID, doc.WarehouseID)
+	if err != nil {
+		return decimal.Zero, err
+	}
+	return item.Qty.Sub(qty), nil
+}
+
+func inventoryEntry(doc Document, tenantID string, item postingItem, diff, avg decimal.Decimal) ledger.EntryInput {
+	entryType, reason, absQty := inventoryMeta(diff)
+	total := absQty.Mul(avg).Round(4)
+	return makeEntry(tenantID, doc.ID, item.ID, item.VariantID, doc.WarehouseID,
+		mustDate(doc.Date), entryType, reason, absQty, avg, total, nil)
+}
+
+func inventoryMeta(diff decimal.Decimal) (string, string, decimal.Decimal) {
 	entryType := "IN"
 	reason := "SURPLUS"
-	var absQty decimal.Decimal
 	if diff.IsPositive() {
-		absQty = diff
-	} else {
-		entryType = "OUT"
-		reason = "SHORTAGE"
-		absQty = diff.Neg()
+		return entryType, reason, diff
 	}
-
-	total := absQty.Mul(avg).Round(4)
-	entry := makeEntry(tenantID, doc.ID, item.ID, item.VariantID, doc.WarehouseID,
-		mustDate(doc.Date), entryType, reason, absQty, avg, total, nil)
-	return []ledger.EntryInput{entry}, nil
+	return "OUT", "SHORTAGE", diff.Neg()
 }
 
 func (s *Service) buildEntriesForComposite(
@@ -252,9 +279,20 @@ func (s *Service) buildCompositeReturnEntries(
 	if err != nil {
 		return nil, err
 	}
+	input := compositeReturnInput{ctx: ctx, tenantID: tenantID, doc: doc, item: item, shares: shares}
+	return s.buildCompositeReturnRows(input, components)
+}
+
+func (s *Service) buildCompositeReturnRows(
+	input compositeReturnInput,
+	components []variantComponent,
+) ([]ledger.EntryInput, error) {
 	entries := make([]ledger.EntryInput, 0, len(components))
 	for _, component := range components {
-		entry := s.buildCompositeReturnEntry(doc, tenantID, item, component, shares)
+		entry, err := s.buildCompositeReturnEntry(input, component)
+		if err != nil {
+			return nil, err
+		}
 		entries = append(entries, entry)
 	}
 	return entries, nil

@@ -63,7 +63,8 @@ func (s *Service) findInsertSequence(ctx context.Context, tx pgx.Tx, tenantID, v
         WHERE tenant_id=$1 AND variant_id=$2 AND date>$3`
 	row := tx.QueryRow(ctx, query, tenantID, variantID, date)
 	var sequence int64
-	return sequence, row.Scan(&sequence)
+	err := row.Scan(&sequence)
+	return sequence, err
 }
 
 func (s *Service) findNextSequence(ctx context.Context, tx pgx.Tx, tenantID, variantID string) (int64, error) {
@@ -72,7 +73,8 @@ func (s *Service) findNextSequence(ctx context.Context, tx pgx.Tx, tenantID, var
         WHERE tenant_id=$1 AND variant_id=$2`
 	row := tx.QueryRow(ctx, query, tenantID, variantID)
 	var sequence int64
-	return sequence, row.Scan(&sequence)
+	err := row.Scan(&sequence)
+	return sequence, err
 }
 
 func (s *Service) shiftSequence(ctx context.Context, tx pgx.Tx, tenantID, variantID string, fromSeq int64) error {

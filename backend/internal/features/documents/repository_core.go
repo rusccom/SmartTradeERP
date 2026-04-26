@@ -38,7 +38,8 @@ func (r *Repository) count(ctx context.Context, tenantID string, query httpx.Lis
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
 	row := r.store.Pool.QueryRow(ctx, sqlQuery, args...)
 	total := 0
-	return total, row.Scan(&total)
+	err := row.Scan(&total)
+	return total, err
 }
 
 func (r *Repository) load(ctx context.Context, tenantID string, query httpx.ListQuery) ([]ListItem, error) {
@@ -233,17 +234,24 @@ func (r *Repository) Status(ctx context.Context, tenantID, documentID string) (s
 	row := r.store.Pool.QueryRow(ctx,
 		`SELECT status FROM documents.documents WHERE tenant_id=$1 AND id=$2`, tenantID, documentID)
 	status := ""
-	return status, row.Scan(&status)
+	err := row.Scan(&status)
+	return status, err
 }
 
 func (r *Repository) SetStatus(ctx context.Context, tx pgx.Tx, tenantID, documentID, status string) error {
 	query := `UPDATE documents.documents SET status=$3, updated_at=now() WHERE tenant_id=$1 AND id=$2`
-	_, err := tx.Exec(ctx, query, tenantID, documentID, status)
+	tag, err := tx.Exec(ctx, query, tenantID, documentID, status)
+	if err == nil && tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
 	return err
 }
 
 func (r *Repository) DeleteDraft(ctx context.Context, tenantID, id string) error {
 	query := `DELETE FROM documents.documents WHERE tenant_id=$1 AND id=$2 AND status='draft'`
-	_, err := r.store.Pool.Exec(ctx, query, tenantID, id)
+	tag, err := r.store.Pool.Exec(ctx, query, tenantID, id)
+	if err == nil && tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
 	return err
 }
