@@ -19,9 +19,14 @@ func NewHandler(service *Service) *Handler {
 func (h *Handler) Profit(w http.ResponseWriter, r *http.Request) {
 	tenantID := tenant.FromContext(r.Context())
 	fromDate, toDate := parsePeriod(r)
-	warehouseID := r.URL.Query().Get("warehouse_id")
-	variantID := r.URL.Query().Get("variant_id")
-	profit, err := h.service.Profit(r.Context(), tenantID, fromDate, toDate, warehouseID, variantID)
+	query := ProfitQuery{
+		TenantID:    tenantID,
+		FromDate:   fromDate,
+		ToDate:     toDate,
+		WarehouseID: r.URL.Query().Get("warehouse_id"),
+		VariantID:   r.URL.Query().Get("variant_id"),
+	}
+	profit, err := h.service.Profit(r.Context(), query)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to load profit", err.Error())
 		return

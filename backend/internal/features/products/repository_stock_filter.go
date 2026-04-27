@@ -53,16 +53,15 @@ func stockQtySQL(filter ProductStockFilter, args *[]any) string {
 }
 
 func globalStockQtySQL() string {
-	return `COALESCE((SELECT l.running_qty FROM ledger.cost_ledger l
-        WHERE l.tenant_id=$1 AND l.variant_id=v.id
-        ORDER BY l.sequence_num DESC LIMIT 1),0)`
+	return `COALESCE((SELECT r.running_qty FROM ledger.cost_movement_results r
+        WHERE r.tenant_id=$1 AND r.variant_id=v.id
+        ORDER BY r.sequence_num DESC LIMIT 1),0)`
 }
 
 func warehouseStockQtySQL(warehousePosition string) string {
-	return `COALESCE((SELECT SUM(CASE WHEN l.type='IN' THEN l.qty
-        WHEN l.type='OUT' THEN -l.qty ELSE 0 END) FROM ledger.cost_ledger l
-        WHERE l.tenant_id=$1 AND l.variant_id=v.id
-        AND l.warehouse_id::text=$` + warehousePosition + `),0)`
+	return `COALESCE((SELECT sb.qty FROM ledger.stock_balances sb
+        WHERE sb.tenant_id=$1 AND sb.variant_id=v.id
+        AND sb.warehouse_id::text=$` + warehousePosition + `),0)`
 }
 
 func appendMinQtyPredicate(

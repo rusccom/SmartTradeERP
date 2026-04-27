@@ -46,13 +46,21 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (auth.Token
 	if err != nil {
 		return auth.TokenResponse{}, err
 	}
-	err = s.store.WithTx(ctx, func(tx pgx.Tx) error {
-		return s.createTenantGraph(ctx, tx, ids, req, hash)
-	})
-	if err != nil {
+	if err := s.createRegistration(ctx, ids, req, hash); err != nil {
 		return auth.TokenResponse{}, err
 	}
 	return s.tokens.Issue(ids.userID, ids.tenantID, "owner", "client")
+}
+
+func (s *Service) createRegistration(
+	ctx context.Context,
+	ids registerIDs,
+	req RegisterRequest,
+	hash string,
+) error {
+	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+		return s.createTenantGraph(ctx, tx, ids, req, hash)
+	})
 }
 
 type registerIDs struct {
@@ -84,10 +92,21 @@ func (s *Service) createTenantGraph(
 	if err := insertOwner(ctx, tx, ids, req.Email, hash); err != nil {
 		return err
 	}
+	return s.createTenantDefaults(ctx, tx, ids)
+}
+
+func (s *Service) createTenantDefaults(
+	ctx context.Context,
+	tx pgx.Tx,
+	ids registerIDs,
+) error {
 	if err := insertDefaultWarehouse(ctx, tx, ids); err != nil {
 		return err
 	}
-	return insertDefaultCustomer(ctx, tx, ids)
+	if err := insertDefaultCustomer(ctx, tx, ids); err != nil {
+		return err
+	}
+	return insertTenantSettings(ctx, tx, ids.tenantID)
 }
 
 func insertTenant(ctx context.Context, tx pgx.Tx, tenantID, name string) error {
@@ -115,6 +134,13 @@ func insertDefaultCustomer(ctx context.Context, tx pgx.Tx, ids registerIDs) erro
 	query := `INSERT INTO catalog.customers (id, tenant_id, name, is_default)
         VALUES ($1,$2,'Розничный покупатель',true)`
 	_, err := tx.Exec(ctx, query, ids.customerID, ids.tenantID)
+	return err
+}
+
+func insertTenantSettings(ctx context.Context, tx pgx.Tx, tenantID string) error {
+	query := `INSERT INTO platform.tenant_settings (tenant_id, allow_negative_stock)
+        VALUES ($1,false)`
+	_, err := tx.Exec(ctx, query, tenantID)
 	return err
 }
 

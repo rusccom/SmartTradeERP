@@ -94,22 +94,22 @@ func warehouseStockRowsQuery(tenantID string, items []WarehouseListItem) (string
 func warehouseStockRowsSQL() string {
 	return `SELECT w.id::text, p.id::text, p.name, v.id::text, COALESCE(v.name,'Default'),
         COALESCE(v.sku_code,''), COALESCE(v.barcode,''), v.unit,
-        COALESCE(SUM(CASE WHEN l.type='IN' THEN l.qty WHEN l.type='OUT' THEN -l.qty ELSE 0 END),0),
-        COALESCE(latest.running_avg,0)
+        COALESCE(sb.qty,0),
+        COALESCE(latest.running_avg_cost,0)
         FROM catalog.warehouses w
         JOIN catalog.product_variants v ON v.tenant_id=$1
         JOIN catalog.products p ON p.id=v.product_id AND p.tenant_id=$1
-        LEFT JOIN ledger.cost_ledger l ON l.tenant_id=$1
-            AND l.warehouse_id=w.id AND l.variant_id=v.id
+        LEFT JOIN ledger.stock_balances sb ON sb.tenant_id=$1
+            AND sb.warehouse_id=w.id AND sb.variant_id=v.id
         LEFT JOIN LATERAL (` + latestWarehouseStockSQL() + `) latest ON true
         WHERE w.tenant_id=$1`
 }
 
 func latestWarehouseStockSQL() string {
-	return `SELECT running_avg
-            FROM ledger.cost_ledger la
-            WHERE la.tenant_id=$1 AND la.variant_id=v.id
-            ORDER BY la.sequence_num DESC
+	return `SELECT running_avg_cost
+            FROM ledger.cost_movement_results r
+            WHERE r.tenant_id=$1 AND r.variant_id=v.id
+            ORDER BY r.sequence_num DESC
             LIMIT 1`
 }
 
@@ -129,8 +129,8 @@ func appendWarehouseIDList(
 
 func warehouseStockRowsGroup() string {
 	return ` GROUP BY w.id, p.id, p.name, v.id, v.name, v.sku_code, v.barcode,
-        v.unit, latest.running_avg
-        HAVING COALESCE(SUM(CASE WHEN l.type='IN' THEN l.qty WHEN l.type='OUT' THEN -l.qty ELSE 0 END),0) <> 0
+        v.unit, latest.running_avg_cost, sb.qty
+        HAVING COALESCE(sb.qty,0) <> 0
         ORDER BY w.id, p.name, COALESCE(v.name,'Default')`
 }
 

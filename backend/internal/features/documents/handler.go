@@ -6,6 +6,7 @@ import (
 
     "github.com/jackc/pgx/v5"
 
+    "smarterp/backend/internal/features/ledger"
     "smarterp/backend/internal/shared/httpx"
     "smarterp/backend/internal/shared/tenant"
     "smarterp/backend/internal/shared/validation"
@@ -198,6 +199,14 @@ func writeDocumentStateError(w http.ResponseWriter, err error) bool {
 func writeDocumentPostingError(w http.ResponseWriter, err error) bool {
     if errors.Is(err, ErrCompositeWithoutComponents) {
         httpx.WriteError(w, http.StatusConflict, "missing_components", "composite variant has no components", nil)
+        return true
+    }
+    if errors.Is(err, ledger.ErrNegativeStock) {
+        httpx.WriteError(w, http.StatusConflict, "negative_stock", "negative stock is not allowed", nil)
+        return true
+    }
+    if errors.Is(err, ledger.ErrActiveBatchRequired) {
+        httpx.WriteError(w, http.StatusConflict, "active_batch_required", "active posting batch is required", nil)
         return true
     }
     return false

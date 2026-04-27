@@ -151,12 +151,13 @@ func (r *Repository) ByID(ctx context.Context, tenantID, id string) (Document, e
 
 func (r *Repository) LoadItemsWithProfit(ctx context.Context, tenantID, documentID string) ([]DocumentItem, decimal.Decimal, error) {
 	query := `SELECT i.id::text, i.variant_id::text, i.qty, i.unit_price, i.total_amount,
-        COALESCE(SUM(l.profit),0) AS profit
+        COALESCE(f.gross_profit,0) AS profit
         FROM documents.document_items i
         JOIN documents.documents d ON d.id=i.document_id
-        LEFT JOIN ledger.cost_ledger l ON l.document_item_id=i.id AND l.tenant_id=d.tenant_id
+        LEFT JOIN ledger.document_item_financials f
+            ON f.document_item_id=i.id AND f.tenant_id=d.tenant_id
         WHERE d.tenant_id=$1 AND d.id=$2
-        GROUP BY i.id, i.variant_id, i.qty, i.unit_price, i.total_amount
+        GROUP BY i.id, i.variant_id, i.qty, i.unit_price, i.total_amount, f.gross_profit
         ORDER BY i.id`
 	rows, err := r.store.Pool.Query(ctx, query, tenantID, documentID)
 	if err != nil {

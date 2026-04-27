@@ -146,7 +146,7 @@ func (h *Handler) writeDeleteError(w http.ResponseWriter, err error) {
         return
     }
     if errors.Is(err, ErrHasMovements) {
-        httpx.WriteError(w, http.StatusConflict, "has_movements", "product has ledger movements", nil)
+        httpx.WriteError(w, http.StatusConflict, "has_movements", "product has inventory movements", nil)
         return
     }
     httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to delete product", err.Error())

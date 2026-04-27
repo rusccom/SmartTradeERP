@@ -1,6 +1,18 @@
 package reports
 
-import "github.com/shopspring/decimal"
+import (
+	"time"
+
+	"github.com/shopspring/decimal"
+)
+
+type ProfitQuery struct {
+	TenantID    string
+	FromDate   time.Time
+	ToDate     time.Time
+	WarehouseID string
+	VariantID   string
+}
 
 type ProfitReport struct {
 	Profit decimal.Decimal `json:"profit"`

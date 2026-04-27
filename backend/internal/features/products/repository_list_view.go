@@ -107,17 +107,17 @@ func (r *Repository) loadProductVariantRows(
 func productVariantRowsSQL() string {
 	return `SELECT v.product_id::text, v.id::text, COALESCE(v.name,'Default'),
         COALESCE(v.sku_code,''), COALESCE(v.barcode,''), v.unit, COALESCE(v.price,0),
-        COALESCE(latest.running_qty,0), COALESCE(latest.running_avg,0)
+        COALESCE(latest.running_qty,0), COALESCE(latest.running_avg_cost,0)
         FROM catalog.product_variants v
         LEFT JOIN LATERAL (` + latestVariantStockSQL() + `) latest ON true
         WHERE v.tenant_id=$1`
 }
 
 func latestVariantStockSQL() string {
-	return `SELECT running_qty, running_avg
-            FROM ledger.cost_ledger l
-            WHERE l.tenant_id=$1 AND l.variant_id=v.id
-            ORDER BY l.sequence_num DESC
+	return `SELECT running_qty, running_avg_cost
+            FROM ledger.cost_movement_results r
+            WHERE r.tenant_id=$1 AND r.variant_id=v.id
+            ORDER BY r.sequence_num DESC
             LIMIT 1`
 }
 

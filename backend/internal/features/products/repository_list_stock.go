@@ -58,17 +58,17 @@ func variantWarehousesQuery(
 	args := []any{tenantID}
 	query, args = appendVariantIDList(query, args, variants)
 	query, args = appendWarehouseScope(query, args, filter)
-	query += ` GROUP BY v.id, w.id, w.name, w.created_at ORDER BY v.id, w.created_at`
+	query += ` GROUP BY v.id, w.id, w.name, w.created_at, sb.qty ORDER BY v.id, w.created_at`
 	return query, args
 }
 
 func variantWarehousesSQL() string {
 	return `SELECT v.id::text, w.id::text, w.name,
-        COALESCE(SUM(CASE WHEN l.type='IN' THEN l.qty WHEN l.type='OUT' THEN -l.qty ELSE 0 END),0)
+        COALESCE(sb.qty,0)
         FROM catalog.product_variants v
         JOIN catalog.warehouses w ON w.tenant_id=$1
-        LEFT JOIN ledger.cost_ledger l ON l.tenant_id=$1
-            AND l.variant_id=v.id AND l.warehouse_id=w.id
+        LEFT JOIN ledger.stock_balances sb ON sb.tenant_id=$1
+            AND sb.variant_id=v.id AND sb.warehouse_id=w.id
         WHERE v.tenant_id=$1`
 }
 

@@ -19,15 +19,15 @@ func NewService(repo *Repository, ledger *ledger.Service) *Service {
 	return &Service{repo: repo, ledger: ledger}
 }
 
-func (s *Service) Profit(
-	ctx context.Context,
-	tenantID string,
-	fromDate time.Time,
-	toDate time.Time,
-	warehouseID string,
-	variantID string,
-) (decimal.Decimal, error) {
-	return s.ledger.ProfitByPeriod(ctx, tenantID, fromDate, toDate, warehouseID, variantID)
+func (s *Service) Profit(ctx context.Context, query ProfitQuery) (decimal.Decimal, error) {
+	filter := ledger.ProfitFilter{
+		TenantID:    query.TenantID,
+		FromDate:   query.FromDate,
+		ToDate:     query.ToDate,
+		WarehouseID: query.WarehouseID,
+		VariantID:   query.VariantID,
+	}
+	return s.ledger.ProfitByPeriod(ctx, filter)
 }
 
 func (s *Service) Stock(ctx context.Context, tenantID, warehouseID string) ([]StockRow, error) {

@@ -67,7 +67,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/PathID'
     delete:
-      summary: Delete product when no ledger movements
+      summary: Delete product when no inventory movements exist
       parameters:
         - $ref: '#/components/parameters/PathID'
   /client/variants:
@@ -85,7 +85,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/PathID'
     delete:
-      summary: Delete variant when no ledger movements
+      summary: Delete variant when no inventory movements exist
       parameters:
         - $ref: '#/components/parameters/PathID'
   /client/variants/{id}/components:
@@ -123,11 +123,11 @@ paths:
       summary: Create draft document with generated number when omitted
   /client/documents/{id}:
     get:
-      summary: Document card with line profit
+      summary: Document card with projected line profit
       parameters:
         - $ref: '#/components/parameters/PathID'
     put:
-      summary: Update draft or retro-update posted document
+      summary: Update draft or create a new posting revision for a posted document
       parameters:
         - $ref: '#/components/parameters/PathID'
     delete:
@@ -141,21 +141,21 @@ paths:
         - $ref: '#/components/parameters/PathID'
   /client/documents/{id}/cancel:
     post:
-      summary: Cancel posted document
+      summary: Reverse active posting batch for a posted document
       parameters:
         - $ref: '#/components/parameters/PathID'
   /client/reports/profit:
     get:
-      summary: Profit report
+      summary: Profit report from active cost projections
   /client/reports/stock:
     get:
-      summary: Stock report
+      summary: Stock report from stock balance projections
   /client/reports/top-products:
     get:
       summary: Top products by profit
   /client/reports/movements:
     get:
-      summary: Variant movements
+      summary: Active variant inventory movements with cost results
 components:
   parameters:
     PathID:

@@ -227,12 +227,12 @@ func insertComponent(ctx context.Context, tx pgx.Tx, componentID, variantID stri
 
 func (r *Repository) WarehouseStock(ctx context.Context, tenantID, variantID string) ([]StockByWarehouse, error) {
     query := `SELECT w.id::text, w.name,
-        COALESCE(SUM(CASE WHEN l.type='IN' THEN l.qty ELSE -l.qty END),0)
+        COALESCE(sb.qty,0)
         FROM catalog.warehouses w
-        LEFT JOIN ledger.cost_ledger l
-            ON l.warehouse_id=w.id AND l.tenant_id=$1 AND l.variant_id=$2
+        LEFT JOIN ledger.stock_balances sb
+            ON sb.warehouse_id=w.id AND sb.tenant_id=$1 AND sb.variant_id=$2
         WHERE w.tenant_id=$1
-        GROUP BY w.id, w.name
+        GROUP BY w.id, w.name, sb.qty
         ORDER BY w.created_at`
     rows, err := r.store.Pool.Query(ctx, query, tenantID, variantID)
     if err != nil {

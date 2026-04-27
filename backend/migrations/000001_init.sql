@@ -124,38 +124,6 @@ CREATE TABLE IF NOT EXISTS documents.document_item_components (
     qty_total DECIMAL(12,3) NOT NULL CHECK (qty_total > 0)
 );
 
-CREATE TABLE IF NOT EXISTS ledger.cost_ledger (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    tenant_id UUID NOT NULL,
-    variant_id UUID NOT NULL,
-    document_id UUID NOT NULL,
-    document_item_id UUID NOT NULL,
-    warehouse_id UUID NOT NULL,
-    date DATE NOT NULL,
-    sequence_num BIGINT NOT NULL,
-    type VARCHAR(3) NOT NULL CHECK (type IN ('IN', 'OUT')),
-    reason VARCHAR NOT NULL CHECK (reason IN (
-        'PURCHASE', 'SALE', 'WRITEOFF', 'SHORTAGE', 'SURPLUS',
-        'RETURN_IN', 'RETURN_OUT', 'TRANSFER_IN', 'TRANSFER_OUT'
-    )),
-    qty DECIMAL(12,3) NOT NULL CHECK (qty > 0),
-    unit_price DECIMAL(12,4) NOT NULL,
-    total_amount DECIMAL(14,4) NOT NULL,
-    running_qty DECIMAL(12,3) NOT NULL DEFAULT 0,
-    running_avg DECIMAL(12,4) NOT NULL DEFAULT 0,
-    cogs DECIMAL(14,4),
-    revenue DECIMAL(14,4),
-    profit DECIMAL(14,4),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP NOT NULL DEFAULT now(),
-    UNIQUE (tenant_id, variant_id, sequence_num)
-);
-
-CREATE INDEX IF NOT EXISTS idx_cl_doc ON ledger.cost_ledger (document_id);
-CREATE INDEX IF NOT EXISTS idx_cl_doc_item ON ledger.cost_ledger (document_item_id);
-CREATE INDEX IF NOT EXISTS idx_cl_date ON ledger.cost_ledger (tenant_id, date, type);
-CREATE INDEX IF NOT EXISTS idx_cl_warehouse ON ledger.cost_ledger (tenant_id, variant_id, warehouse_id);
-
 CREATE OR REPLACE FUNCTION catalog.variant_component_guard()
 RETURNS trigger AS $$
 DECLARE

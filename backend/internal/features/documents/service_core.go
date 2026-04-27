@@ -153,11 +153,8 @@ func (s *Service) Cancel(ctx context.Context, tenantID, id string) error {
 }
 
 func (s *Service) cancelTx(ctx context.Context, tx pgx.Tx, tenantID, id string) error {
-	affected, err := s.ledger.DeleteForDocument(ctx, tx, tenantID, id)
+	affected, err := s.ledger.ReverseDocument(ctx, tx, tenantID, id)
 	if err != nil {
-		return err
-	}
-	if err := s.repo.DeleteItemComponentsByDocument(ctx, tx, id); err != nil {
 		return err
 	}
 	if err := s.recalculateAffected(ctx, tx, tenantID, affected); err != nil {
@@ -183,10 +180,5 @@ func (s *Service) recalculateAffected(
 	tenantID string,
 	affected []ledger.VariantSequence,
 ) error {
-	for _, item := range affected {
-		if err := s.ledger.Recalculate(ctx, tx, tenantID, item.VariantID, item.Earliest); err != nil {
-			return err
-		}
-	}
-	return nil
+	return s.ledger.RebuildAffected(ctx, tx, tenantID, affected)
 }

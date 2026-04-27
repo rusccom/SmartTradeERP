@@ -1,15 +1,20 @@
 package api
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"smarterp/backend/internal/features/ledger"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/httpx"
 )
 
+const healthDBTimeout = 2 * time.Second
+
 func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService) {
-	mux.HandleFunc("GET /health", health)
+	mux.HandleFunc("GET /health", health(store))
 	ledgerService := ledger.NewService(store)
 	registerAdmin(mux, store, tokens)
 	registerClientAuth(mux, store, tokens)
@@ -17,8 +22,16 @@ func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService) {
 	registerOperations(mux, store, tokens, ledgerService)
 }
 
-func health(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusOK)
+func health(store *db.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), healthDBTimeout)
+		defer cancel()
+		if err := store.Ping(ctx); err != nil {
+			httpx.WriteError(w, http.StatusServiceUnavailable, "db_unavailable", "database unavailable", nil)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 func handleClient(

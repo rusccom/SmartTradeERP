@@ -22,6 +22,10 @@ func NewStore(pool *pgxpool.Pool) *Store {
     return &Store{Pool: pool}
 }
 
+func (s *Store) Ping(ctx context.Context) error {
+    return s.Pool.Ping(ctx)
+}
+
 func (s *Store) WithTx(ctx context.Context, fn func(tx pgx.Tx) error) error {
     tx, err := s.Pool.BeginTx(ctx, pgx.TxOptions{})
     if err != nil {

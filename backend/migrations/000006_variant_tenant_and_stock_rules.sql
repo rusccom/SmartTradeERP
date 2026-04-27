@@ -25,21 +25,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_product_variants_barcode_per_tenant
     ON catalog.product_variants (tenant_id, lower(btrim(barcode)))
     WHERE barcode IS NOT NULL AND btrim(barcode) <> '';
 
-CREATE INDEX IF NOT EXISTS idx_cl_tenant_warehouse_variant
-    ON ledger.cost_ledger (tenant_id, warehouse_id, variant_id);
-
-ALTER TABLE ledger.cost_ledger
-    DROP CONSTRAINT IF EXISTS chk_cost_ledger_amounts;
-
-ALTER TABLE ledger.cost_ledger
-    ADD CONSTRAINT chk_cost_ledger_amounts
-    CHECK (
-        unit_price >= 0
-        AND total_amount >= 0
-        AND running_avg >= 0
-        AND (cogs IS NULL OR cogs >= 0)
-    );
-
 CREATE OR REPLACE FUNCTION public.add_constraint_if_missing(target_table regclass, constraint_name text, ddl text)
 RETURNS void AS $$
 BEGIN
@@ -65,13 +50,6 @@ SELECT public.add_constraint_if_missing(
     'fk_product_variants_tenant_product',
     'ALTER TABLE catalog.product_variants ADD CONSTRAINT fk_product_variants_tenant_product
      FOREIGN KEY (tenant_id, product_id) REFERENCES catalog.products (tenant_id, id)'
-);
-
-SELECT public.add_constraint_if_missing(
-    'ledger.cost_ledger'::regclass,
-    'fk_cost_ledger_tenant_variant',
-    'ALTER TABLE ledger.cost_ledger ADD CONSTRAINT fk_cost_ledger_tenant_variant
-     FOREIGN KEY (tenant_id, variant_id) REFERENCES catalog.product_variants (tenant_id, id)'
 );
 
 DROP FUNCTION public.add_constraint_if_missing(regclass, text, text);
@@ -115,32 +93,6 @@ BEGIN
 
     IF doc_tenant IS NULL OR component_tenant IS DISTINCT FROM doc_tenant THEN
         RAISE EXCEPTION 'item component variant must belong to document tenant';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION ledger.cost_ledger_tenant_guard()
-RETURNS trigger AS $$
-DECLARE
-    item_document UUID;
-    variant_tenant UUID;
-BEGIN
-    SELECT i.document_id INTO item_document
-    FROM documents.document_items i
-    WHERE i.id = NEW.document_item_id;
-
-    SELECT tenant_id INTO variant_tenant
-    FROM catalog.product_variants
-    WHERE id = NEW.variant_id;
-
-    IF item_document IS DISTINCT FROM NEW.document_id THEN
-        RAISE EXCEPTION 'ledger item must belong to ledger document';
-    END IF;
-
-    IF variant_tenant IS DISTINCT FROM NEW.tenant_id THEN
-        RAISE EXCEPTION 'ledger variant must belong to ledger tenant';
     END IF;
 
     RETURN NEW;

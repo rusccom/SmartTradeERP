@@ -6,6 +6,14 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type BatchInput struct {
+	TenantID          string
+	DocumentID        string
+	EffectiveDate     time.Time
+	SupersedesBatchID string
+	Reason            string
+}
+
 type EntryInput struct {
 	TenantID       string
 	VariantID      string
@@ -19,6 +27,18 @@ type EntryInput struct {
 	UnitPrice      decimal.Decimal
 	TotalAmount    decimal.Decimal
 	Revenue        *decimal.Decimal
+}
+
+type VariantSequence struct {
+	VariantID string
+}
+
+type ProfitFilter struct {
+	TenantID    string
+	FromDate   time.Time
+	ToDate     time.Time
+	WarehouseID string
+	VariantID   string
 }
 
 type Movement struct {

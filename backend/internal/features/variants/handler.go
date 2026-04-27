@@ -133,7 +133,7 @@ func (h *Handler) writeDeleteError(w http.ResponseWriter, err error) {
         return
     }
     if errors.Is(err, ErrHasMovements) {
-        httpx.WriteError(w, http.StatusConflict, "has_movements", "variant has ledger movements", nil)
+        httpx.WriteError(w, http.StatusConflict, "has_movements", "variant has inventory movements", nil)
         return
     }
     if errors.Is(err, ErrLastVariant) {

@@ -59,7 +59,7 @@ func fullStockCountSQL() string {
 func fullStockSelectSQL() string {
 	return `SELECT p.id::text, p.name, v.id::text, COALESCE(v.name,'Default'),
         COALESCE(v.sku_code,''), COALESCE(v.barcode,''), v.unit,
-        COALESCE(latest.running_qty,0), COALESCE(latest.running_avg,0)
+        COALESCE(latest.running_qty,0), COALESCE(latest.running_avg_cost,0)
         FROM catalog.product_variants v
         JOIN catalog.products p ON p.id=v.product_id
         LEFT JOIN LATERAL (` + latestStockSQL() + `) latest ON true
@@ -67,10 +67,10 @@ func fullStockSelectSQL() string {
 }
 
 func latestStockSQL() string {
-	return `SELECT running_qty, running_avg
-            FROM ledger.cost_ledger l
-            WHERE l.tenant_id=$1 AND l.variant_id=v.id
-            ORDER BY l.sequence_num DESC
+	return `SELECT running_qty, running_avg_cost
+            FROM ledger.cost_movement_results r
+            WHERE r.tenant_id=$1 AND r.variant_id=v.id
+            ORDER BY r.sequence_num DESC
             LIMIT 1`
 }
 
@@ -121,7 +121,7 @@ func fullStockOrder(list httpx.ListQuery) string {
 	case "global_qty":
 		return "COALESCE(latest.running_qty,0) " + dir + ", p.name asc"
 	case "avg":
-		return "COALESCE(latest.running_avg,0) " + dir + ", p.name asc"
+		return "COALESCE(latest.running_avg_cost,0) " + dir + ", p.name asc"
 	}
 	return "p.name " + dir + ", COALESCE(v.name,'Default') " + dir
 }
@@ -200,17 +200,17 @@ func fullStockWarehousesQuery(tenantID string, ids []string, warehouseID string)
 	args := []any{tenantID}
 	query, args = appendVariantList(query, args, ids)
 	query, args = appendTextFilter(query, args, "w.id::text", warehouseID)
-	query += ` GROUP BY v.id, w.id, w.name, w.created_at ORDER BY v.id, w.created_at`
+	query += ` GROUP BY v.id, w.id, w.name, w.created_at, sb.qty ORDER BY v.id, w.created_at`
 	return query, args
 }
 
 func fullStockWarehousesSQL() string {
 	return `SELECT v.id::text, w.id::text, w.name,
-        COALESCE(SUM(CASE WHEN l.type='IN' THEN l.qty ELSE -l.qty END),0)
+        COALESCE(sb.qty,0)
         FROM catalog.product_variants v
         JOIN catalog.warehouses w ON w.tenant_id=$1
-        LEFT JOIN ledger.cost_ledger l ON l.tenant_id=$1
-            AND l.variant_id=v.id AND l.warehouse_id=w.id
+        LEFT JOIN ledger.stock_balances sb ON sb.tenant_id=$1
+            AND sb.variant_id=v.id AND sb.warehouse_id=w.id
         WHERE v.tenant_id=$1`
 }
 

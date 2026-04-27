@@ -88,18 +88,6 @@ SELECT public.add_constraint_if_missing(
      CHECK (opening_cash >= 0 AND (closing_cash IS NULL OR closing_cash >= 0))'
 );
 
-SELECT public.add_constraint_if_missing(
-    'ledger.cost_ledger'::regclass,
-    'chk_cost_ledger_amounts',
-    'ALTER TABLE ledger.cost_ledger ADD CONSTRAINT chk_cost_ledger_amounts
-     CHECK (
-        unit_price >= 0
-        AND total_amount >= 0
-        AND running_avg >= 0
-        AND (cogs IS NULL OR cogs >= 0)
-     )'
-);
-
 DROP FUNCTION public.add_constraint_if_missing(regclass, text, text);
 
 CREATE OR REPLACE FUNCTION documents.document_posting_guard()

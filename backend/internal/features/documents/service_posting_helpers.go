@@ -1,7 +1,6 @@
 package documents
 
 import (
-	"context"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -10,23 +9,20 @@ import (
 )
 
 type compositeReturnInput struct {
-	ctx      context.Context
-	tenantID string
-	doc      Document
-	item     postingItem
-	shares   map[string]decimal.Decimal
+	run    postingRun
+	item   postingItem
+	shares map[string]decimal.Decimal
 }
 
 func (s *Service) revenueShares(
-	ctx context.Context,
-	tenantID string,
+	run postingRun,
 	item postingItem,
 	components []variantComponent,
 ) (map[string]decimal.Decimal, error) {
 	costs := make(map[string]decimal.Decimal)
 	totalCost := decimal.Zero
 	for _, component := range components {
-		cost, err := s.componentCost(ctx, tenantID, item, component)
+		cost, err := s.componentCost(run, item, component)
 		if err != nil {
 			return nil, err
 		}
@@ -37,13 +33,12 @@ func (s *Service) revenueShares(
 }
 
 func (s *Service) componentCost(
-	ctx context.Context,
-	tenantID string,
+	run postingRun,
 	item postingItem,
 	component variantComponent,
 ) (decimal.Decimal, error) {
 	qty := item.Qty.Mul(component.QtyPerUnit)
-	_, avg, err := s.ledger.GlobalStock(ctx, tenantID, component.ComponentVariantID)
+	_, avg, err := s.ledger.GlobalStockTx(run.ctx, run.tx, run.tenantID, component.ComponentVariantID)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -81,8 +76,7 @@ func normalizedShare(cost, total decimal.Decimal) decimal.Decimal {
 }
 
 func (s *Service) buildCompositeSaleEntry(
-	doc Document,
-	tenantID string,
+	run postingRun,
 	item postingItem,
 	component variantComponent,
 	shares map[string]decimal.Decimal,
@@ -90,21 +84,21 @@ func (s *Service) buildCompositeSaleEntry(
 	qty := item.Qty.Mul(component.QtyPerUnit)
 	share := shares[component.ComponentVariantID]
 	revenue := item.TotalAmount.Mul(share).Round(4)
-	return makeEntry(tenantID, doc.ID, item.ID, component.ComponentVariantID, doc.WarehouseID,
-		mustDate(doc.Date), "OUT", "SALE", qty, item.UnitPrice, qty.Mul(item.UnitPrice), &revenue)
+	return makeEntry(run.tenantID, run.doc.ID, item.ID, component.ComponentVariantID, run.doc.WarehouseID,
+		mustDate(run.doc.Date), "OUT", "SALE", qty, item.UnitPrice, qty.Mul(item.UnitPrice), &revenue)
 }
 
 func (s *Service) buildCompositeReturnEntry(input compositeReturnInput, component variantComponent) (ledger.EntryInput, error) {
 	qty := input.item.Qty.Mul(component.QtyPerUnit)
-	_, avg, err := s.ledger.GlobalStock(input.ctx, input.tenantID, component.ComponentVariantID)
+	_, avg, err := s.ledger.GlobalStockTx(input.run.ctx, input.run.tx, input.run.tenantID, component.ComponentVariantID)
 	if err != nil {
 		return ledger.EntryInput{}, err
 	}
 	share := input.shares[component.ComponentVariantID]
 	revenue := input.item.TotalAmount.Mul(share).Round(4).Neg()
 	total := qty.Mul(avg).Round(4)
-	entry := makeEntry(input.tenantID, input.doc.ID, input.item.ID, component.ComponentVariantID,
-		input.doc.WarehouseID, mustDate(input.doc.Date), "IN", "RETURN_IN", qty, avg, total, &revenue)
+	entry := makeEntry(input.run.tenantID, input.run.doc.ID, input.item.ID, component.ComponentVariantID,
+		input.run.doc.WarehouseID, mustDate(input.run.doc.Date), "IN", "RETURN_IN", qty, avg, total, &revenue)
 	return entry, nil
 }
 

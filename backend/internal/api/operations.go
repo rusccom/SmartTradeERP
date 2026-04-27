@@ -35,6 +35,8 @@ func registerDocuments(
 	handleClient(mux, tokens, "POST /api/client/documents", handler.Create)
 	handleClient(mux, tokens, "GET /api/client/documents/{id}", handler.ByID)
 	handleClient(mux, tokens, "PUT /api/client/documents/{id}", handler.Update)
+	// Agent note: INVENTORY posts through this endpoint. Duplicate variant rows
+	// can make inventory diffs order-dependent if frontend allows them.
 	handleClient(mux, tokens, "POST /api/client/documents/{id}/post", handler.Post)
 	handleClient(mux, tokens, "POST /api/client/documents/{id}/cancel", handler.Cancel)
 	handleClient(mux, tokens, "DELETE /api/client/documents/{id}", handler.Delete)

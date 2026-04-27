@@ -103,7 +103,7 @@ func (h *Handler) writeWarehouseError(w http.ResponseWriter, err error, message 
         return
     }
     if errors.Is(err, ErrHasMovements) {
-        httpx.WriteError(w, http.StatusConflict, "has_movements", "warehouse has ledger movements", nil)
+        httpx.WriteError(w, http.StatusConflict, "has_movements", "warehouse has inventory movements", nil)
         return
     }
     if errors.Is(err, ErrMustKeepDefault) {
