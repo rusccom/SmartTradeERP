@@ -56,9 +56,13 @@ func (r *Repository) load(ctx context.Context, tenantID string, query ProductLis
 
 func appendListFilters(query string, args []any, productQuery ProductListQuery) (string, []any) {
 	listQuery := productQuery.List
-	query, args = addCompositeFilter(query, args, listQuery.Filters["is_composite"])
+	query = addProductScopeFilter(query)
 	query, args = addSearchFilter(query, args, listQuery.Search)
 	return appendProductStockFilter(query, args, productQuery.Stock)
+}
+
+func addProductScopeFilter(query string) string {
+	return query + ` AND p.is_composite=false`
 }
 
 func addSearchFilter(query string, args []any, search string) (string, []any) {
@@ -90,15 +94,6 @@ func readSort(query httpx.ListQuery) (string, string) {
 		sortDir = "desc"
 	}
 	return sortBy, sortDir
-}
-
-func addCompositeFilter(query string, args []any, isComposite string) (string, []any) {
-	if isComposite == "" {
-		return query, args
-	}
-	query += ` AND p.is_composite=$` + position(len(args)+1)
-	args = append(args, isComposite == "true")
-	return query, args
 }
 
 func position(value int) string {

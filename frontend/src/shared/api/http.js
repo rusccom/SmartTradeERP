@@ -1,4 +1,5 @@
 import { getAdminToken, getClientToken } from "../auth/session";
+import { assertPublicApiPath, isAdminApiPath, isClientApiPath } from "./publicApi";
 
 const API_BASE_URL = normalizeBaseURL(import.meta.env.VITE_API_URL);
 
@@ -18,6 +19,7 @@ export async function getJSON(path, params, signal) {
 }
 
 function createURL(path) {
+  assertPublicApiPath(path);
   if (API_BASE_URL === "") {
     throw new Error("VITE_API_URL is required");
   }
@@ -25,10 +27,10 @@ function createURL(path) {
 }
 
 function resolveToken(path) {
-  if (path.startsWith("/api/admin")) {
+  if (isAdminApiPath(path)) {
     return getAdminToken() || "";
   }
-  if (path.startsWith("/api/client")) {
+  if (isClientApiPath(path)) {
     return getClientToken() || "";
   }
   return getClientToken() || getAdminToken() || "";

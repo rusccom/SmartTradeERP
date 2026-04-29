@@ -24,7 +24,6 @@ function DataTable(props) {
       <TableBlock
         table={table}
         props={props}
-        slots={slots}
         loadingClass={loadingClass}
         emptyText={emptyText}
       />
@@ -41,7 +40,6 @@ function useDataTableInstance(props) {
     getRowId: props.getRowId,
     state: readControlledState(props),
     onSortingChange: props.onSortingChange,
-    onColumnFiltersChange: props.onColumnFiltersChange,
     onGlobalFilterChange: props.onGlobalFilterChange,
     onPaginationChange: props.onPaginationChange,
     manualPagination: true,
@@ -55,7 +53,6 @@ function useDataTableInstance(props) {
 function readControlledState(props) {
   return {
     sorting: props.sorting,
-    columnFilters: props.columnFilters,
     globalFilter: props.globalFilter,
     pagination: props.pagination,
   };
@@ -78,11 +75,11 @@ function ErrorBlock({ error, onRetry }) {
   return error ? <DataTableError message={error} onRetry={onRetry} /> : null;
 }
 
-function TableBlock({ table, props, slots, loadingClass, emptyText }) {
+function TableBlock({ table, props, loadingClass, emptyText }) {
   return (
     <div className={`dt-table-scroll ${loadingClass}`.trim()}>
       <table className="dt-table">
-        <DataTableHeader table={table} showFilters={slots.filters} />
+        <DataTableHeader table={table} />
         <DataTableBody
           table={table}
           onRowClick={props.onRowClick}
@@ -105,7 +102,6 @@ function readSlots(props) {
     actions,
     count,
     toolbar: components.toolbar !== false && (search || actions || count),
-    filters: components.filters !== false,
     pagination: components.pagination !== false,
   };
 }
@@ -121,10 +117,7 @@ function mapColumn(column) {
     header: column.header,
     size: column.size,
     enableSorting: column.enableSorting !== false,
-    enableColumnFilter: Boolean(column.enableFilter || column.filterVariant),
     meta: {
-      filterVariant: column.filterVariant,
-      filterOptions: column.filterOptions,
       rawCell: column.cell,
       accessorKey: column.accessorKey,
     },

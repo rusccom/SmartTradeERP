@@ -2,10 +2,9 @@ export const FALLBACK_STATE = {
   pagination: { pageIndex: 0, pageSize: 20 },
   sorting: [],
   globalFilter: "",
-  columnFilters: [],
 };
 
-const PAGE_RESET_KEYS = ["sorting", "globalFilter", "columnFilters"];
+const PAGE_RESET_KEYS = ["sorting", "globalFilter"];
 
 export function applyStateChange(prev, patch) {
   const next = { ...prev, ...patch };

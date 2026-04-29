@@ -1,4 +1,4 @@
-import { apiPaths } from "../../../../shared/api/client";
+import { apiPaths } from "../../../../shared/api/publicApi";
 import { createApiTablePreset } from "../../../../shared/model/data-table/createApiTablePreset";
 
 export function createCustomersTablePreset(t) {

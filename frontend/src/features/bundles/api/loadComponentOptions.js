@@ -1,4 +1,4 @@
-import { apiPaths } from "../../../shared/api/client";
+import { apiPaths } from "../../../shared/api/publicApi";
 import { getJSON } from "../../../shared/api/http";
 
 export async function loadComponentOptions(query = {}) {
@@ -10,7 +10,6 @@ export async function loadComponentOptions(query = {}) {
 function componentParams(query) {
   return {
     include: "variants",
-    is_composite: "false",
     page: query.page || 1,
     per_page: query.perPage || 20,
     search: query.search || "",

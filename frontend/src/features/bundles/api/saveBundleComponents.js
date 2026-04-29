@@ -1,4 +1,4 @@
-import { apiPaths } from "../../../shared/api/client";
+import { apiPaths } from "../../../shared/api/publicApi";
 import { putJSON } from "../../../shared/api/http";
 
 export function saveBundleComponents(id, components) {

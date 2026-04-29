@@ -4,10 +4,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 7px;
   background: #ffffff;
   cursor: pointer;
   flex-shrink: 0;
@@ -21,7 +21,7 @@
 
 .hamburger-icon {
   display: block;
-  width: 18px;
+  width: 16px;
   height: 2px;
   background: #334155;
   position: relative;
@@ -32,7 +32,7 @@
 .hamburger-icon::after {
   content: "";
   display: block;
-  width: 18px;
+  width: 16px;
   height: 2px;
   background: #334155;
   position: absolute;

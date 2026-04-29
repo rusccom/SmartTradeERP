@@ -1,15 +1,13 @@
 import { flexRender } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
-import DataTableFilter from "./DataTableFilter";
-
-function DataTableHeader({ table, showFilters }) {
+function DataTableHeader({ table }) {
   return (
     <thead>
       {table.getHeaderGroups().map((group) => (
         <tr key={group.id}>
           {group.headers.map((header) => (
-            <HeaderCell key={header.id} header={header} showFilters={showFilters} />
+            <HeaderCell key={header.id} header={header} />
           ))}
         </tr>
       ))}
@@ -17,7 +15,7 @@ function DataTableHeader({ table, showFilters }) {
   );
 }
 
-function HeaderCell({ header, showFilters }) {
+function HeaderCell({ header }) {
   if (header.isPlaceholder) {
     return <th className="dt-th" colSpan={header.colSpan} />;
   }
@@ -30,7 +28,6 @@ function HeaderCell({ header, showFilters }) {
         <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
         <SortIcon direction={sorted} />
       </SortTrigger>
-      {showFilters && header.column.getCanFilter() && <DataTableFilter column={header.column} />}
     </th>
   );
 }

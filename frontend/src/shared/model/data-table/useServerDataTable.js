@@ -29,11 +29,10 @@ function useFetchState() {
 }
 
 function useRequestState(state) {
-  const debouncedFilters = useDebounce(state.columnFilters, 300);
   const debouncedGlobalFilter = useDebounce(state.globalFilter, 300);
   return useMemo(
-    () => createQueryState(state, debouncedFilters, debouncedGlobalFilter),
-    [state.pagination, state.sorting, debouncedFilters, debouncedGlobalFilter],
+    () => createQueryState(state, debouncedGlobalFilter),
+    [state.pagination, state.sorting, debouncedGlobalFilter],
   );
 }
 
@@ -51,14 +50,13 @@ function useFetchEffect(params) {
   }, [preset, requestState, retryToken, setData, setTotal, setLoading, setError]);
 }
 
-function createQueryState(state, columnFilters, globalFilter) {
-  return { ...state, columnFilters, globalFilter };
+function createQueryState(state, globalFilter) {
+  return { ...state, globalFilter };
 }
 
 function createTableHandlers(setState) {
   return {
     onSortingChange: (updater) => patchState(setState, "sorting", updater),
-    onColumnFiltersChange: (updater) => patchState(setState, "columnFilters", updater),
     onGlobalFilterChange: (updater) => patchState(setState, "globalFilter", updater),
     onPaginationChange: (updater) => patchState(setState, "pagination", updater),
   };
@@ -119,7 +117,6 @@ function buildHookResult({ data, total, loading, error, retry, state, tableHandl
     retry,
     tableState: {
       sorting: state.sorting,
-      columnFilters: state.columnFilters,
       globalFilter: state.globalFilter,
       pagination: state.pagination,
       ...tableHandlers,

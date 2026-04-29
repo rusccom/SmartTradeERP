@@ -14,7 +14,7 @@ import (
 var ErrInvalidProductFilter = errors.New("invalid product filter")
 
 func productListQuery(r *http.Request) (ProductListQuery, error) {
-	list := httpx.ParseListQuery(r, productSortConfig(), []string{"is_composite"})
+	list := httpx.ParseListQuery(r, productSortConfig(), nil)
 	stock, err := parseProductStockFilter(r.URL.Query())
 	if err != nil {
 		return ProductListQuery{}, err

@@ -5,8 +5,6 @@ export function toQueryParams(state, preset) {
   appendSorting(params, state, preset);
   appendSearch(params, state, preset);
   const custom = readCustomParams(state, preset);
-  const overrides = new Set(Object.keys(custom));
-  appendColumnFilters(params, state.columnFilters, overrides);
   return cleanParams({ ...params, ...custom });
 }
 
@@ -41,22 +39,6 @@ function readCustomParams(state, preset) {
     }
     return acc;
   }, {});
-}
-
-function appendColumnFilters(params, columnFilters, overrides) {
-  columnFilters.forEach((item) => {
-    if (!item || overrides.has(item.id)) {
-      return;
-    }
-    params[item.id] = normalizeFilterValue(item.value);
-  });
-}
-
-function normalizeFilterValue(value) {
-  if (Array.isArray(value)) {
-    return value.filter((item) => item !== "" && item != null).join(",");
-  }
-  return value;
 }
 
 function cleanParams(params) {

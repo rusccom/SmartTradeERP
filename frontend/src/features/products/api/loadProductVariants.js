@@ -1,4 +1,4 @@
-import { apiPaths } from "../../../shared/api/client";
+import { apiPaths } from "../../../shared/api/publicApi";
 import { getJSON } from "../../../shared/api/http";
 
 export function loadProductVariants(row) {
