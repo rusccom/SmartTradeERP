@@ -23,13 +23,13 @@ func CleanProductSearch(value string) string {
 }
 
 func productSearchPrefixes() []string {
-	return []string{"sku:", "barcode:", "bar code:", "штрихкод:", "баркод:"}
+	return []string{"sku:", "barcode:", "bar code:"}
 }
 
 func productPredicate(param string) string {
 	return `(p.name ILIKE '%' || $` + param + ` || '%'
         OR EXISTS (SELECT 1 FROM catalog.product_variants v
-            WHERE v.tenant_id=$1 AND v.product_id=p.id
+            WHERE v.product_id=p.id
             AND (` + productVariantPredicate(param) + `)))`
 }
 
@@ -37,7 +37,17 @@ func productVariantPredicate(param string) string {
 	return `COALESCE(v.name,'') ILIKE '%' || $` + param + ` || '%'
         OR COALESCE(v.sku_code,'') ILIKE '%' || $` + param + ` || '%'
         OR COALESCE(v.barcode,'') ILIKE '%' || $` + param + ` || '%'
+        OR ` + compactSQL("v.sku_code") + ` LIKE '%' || ` + compactParamSQL(param) + ` || '%'
+        OR ` + compactSQL("v.barcode") + ` LIKE '%' || ` + compactParamSQL(param) + ` || '%'
         OR COALESCE(v.option1,'') ILIKE '%' || $` + param + ` || '%'
         OR COALESCE(v.option2,'') ILIKE '%' || $` + param + ` || '%'
         OR COALESCE(v.option3,'') ILIKE '%' || $` + param + ` || '%'`
+}
+
+func compactSQL(field string) string {
+	return `replace(replace(lower(COALESCE(` + field + `,'')), ' ', ''), '-', '')`
+}
+
+func compactParamSQL(param string) string {
+	return `replace(replace(lower($` + param + `), ' ', ''), '-', '')`
 }
