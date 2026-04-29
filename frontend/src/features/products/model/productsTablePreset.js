@@ -1,5 +1,8 @@
+import { createElement } from "react";
+
 import { apiPaths } from "../../../shared/api/publicApi";
 import { createApiTablePreset } from "../../../shared/model/data-table/createApiTablePreset";
+import ProductTableProductCell from "../ui/ProductTableProductCell";
 
 const capabilities = { sorting: true, search: true };
 
@@ -17,13 +20,13 @@ export function createProductsTablePreset(t) {
 
 function createColumns(t) {
   return [
-    { accessorKey: "name", header: t("products.columns.name") },
-    { accessorKey: "sku_code", header: t("products.columns.sku"), enableSorting: false },
-    { accessorKey: "barcode", header: t("products.columns.barcode"), enableSorting: false },
-    { accessorKey: "unit", header: t("products.columns.unit"), enableSorting: false },
-    { accessorKey: "price", header: t("products.columns.price"), enableSorting: false },
-    { accessorKey: "global_qty", header: t("products.columns.quantity"), enableSorting: false },
-    { accessorKey: "variant_count", header: t("products.columns.variants"), enableSorting: false },
+    {
+      accessorKey: "name",
+      header: t("products.columns.name"),
+      cell: (value, row) => createElement(ProductTableProductCell, { row, value }),
+    },
+    { accessorKey: "price_label", header: t("products.columns.price"), enableSorting: false, cell: readPriceCell },
+    { accessorKey: "stock_label", header: t("products.columns.stock"), enableSorting: false, cell: readStockCell },
   ];
 }
 
@@ -38,14 +41,37 @@ function mapRows(rows) {
 function readProductDisplay(row) {
   const variants = readVariants(row);
   const single = variants.length === 1 ? variants[0] : null;
+  const unit = single?.unit || readSharedValue(variants, "unit");
   return {
     sku_code: single?.sku_code || "",
     barcode: single?.barcode || "",
-    unit: single?.unit || readSharedValue(variants, "unit"),
-    price: single ? formatDecimal(single.price) : "",
+    unit,
+    price_label: readPriceLabel(variants),
+    stock_label: formatStock(row.global_qty, unit),
     global_qty: formatDecimal(row.global_qty),
-    variant_count: variants.length,
   };
+}
+
+function readPriceCell(value, row) {
+  return value || formatDecimal(row.price);
+}
+
+function readStockCell(value, row) {
+  return value || formatStock(row.global_qty, row.unit);
+}
+
+function readPriceLabel(variants) {
+  const prices = variants.map((item) => Number(item.price)).filter(Number.isFinite);
+  if (prices.length === 0) return "";
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  return min === max ? formatDecimal(min) : `${formatDecimal(min)} - ${formatDecimal(max)}`;
+}
+
+function formatStock(quantity, unit) {
+  const amount = formatDecimal(quantity);
+  if (!amount) return "";
+  return unit ? `${amount} ${unit}` : amount;
 }
 
 function readSharedValue(variants, key) {

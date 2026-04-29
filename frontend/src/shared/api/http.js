@@ -13,6 +13,11 @@ export async function putJSON(path, payload) {
   return parseEnvelope(response);
 }
 
+export async function deleteJSON(path) {
+  const response = await fetch(createURL(path), createDeleteOptions(path));
+  return parseEnvelope(response);
+}
+
 export async function getJSON(path, params, signal) {
   const response = await fetch(buildURL(path, params), createGetOptions(path, signal));
   return parseEnvelopeWithMeta(response);
@@ -66,6 +71,10 @@ function buildURL(path, params) {
 
 function createGetOptions(path, signal) {
   return { method: "GET", headers: authHeaders(path), signal };
+}
+
+function createDeleteOptions(path) {
+  return { method: "DELETE", headers: authHeaders(path) };
 }
 
 async function parseEnvelope(response) {

@@ -18,7 +18,7 @@ function ProductCreateForm({ state, t }) {
         {readBottomSlot(state, t)}
       </ProductVariantsSection>
       {state.error && <p className="product-create-error">{state.error}</p>}
-      <ProductCreateActions isSaving={state.isSaving} onClose={state.handleClose} t={t} />
+      <ProductCreateActions isSaving={state.isSaving} onClose={state.handleClose} state={state} t={t} />
     </form>
   );
 }

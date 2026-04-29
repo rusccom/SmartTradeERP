@@ -47,6 +47,30 @@
   min-width: 0;
 }
 
+.product-table-product {
+  display: grid;
+  gap: 3px;
+  min-width: 220px;
+}
+
+.product-table-name {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.product-table-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.product-table-meta-item {
+  white-space: nowrap;
+}
+
 @media (max-width: 640px) {
   .product-catalog-tabs {
     width: 100%;

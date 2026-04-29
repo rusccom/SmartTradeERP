@@ -129,7 +129,10 @@ function syncCommonVariantFields(form, name) {
 }
 
 function toMultipleMode(form) {
-  return { ...form, variantMode: "multiple", variants: form.variants.length ? form.variants : createSeedVariants(form) };
+  if (!form.variants.length) {
+    return { ...form, variantMode: "multiple", variants: createSeedVariants(form) };
+  }
+  return { ...form, variantMode: "multiple", variants: [...form.variants, createVariantDraft(readNewVariantSeed(form))] };
 }
 
 function toSingleMode(form) {
