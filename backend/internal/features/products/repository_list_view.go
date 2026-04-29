@@ -106,7 +106,9 @@ func (r *Repository) loadProductVariantRows(
 
 func productVariantRowsSQL() string {
 	return `SELECT v.product_id::text, v.id::text, COALESCE(v.name,'Default'),
-        COALESCE(v.sku_code,''), COALESCE(v.barcode,''), v.unit, COALESCE(v.price,0),
+        COALESCE(v.sku_code,''), COALESCE(v.barcode,''),
+        COALESCE(v.option1,''), COALESCE(v.option2,''), COALESCE(v.option3,''),
+        v.unit, COALESCE(v.price,0),
         COALESCE(latest.running_qty,0), COALESCE(latest.running_avg_cost,0)
         FROM catalog.product_variants v
         LEFT JOIN LATERAL (` + latestVariantStockSQL() + `) latest ON true
@@ -150,7 +152,8 @@ func scanProductVariantRows(rows pgx.Rows, include ProductListInclude) ([]produc
 func scanProductVariantRow(rows pgx.Rows, include ProductListInclude) (productVariantRow, error) {
 	row := productVariantRow{Item: ProductVariantItem{Warehouses: []ProductWarehouseItem{}}}
 	err := rows.Scan(&row.ProductID, &row.Item.ID, &row.Item.Name, &row.Item.SKUCode,
-		&row.Item.Barcode, &row.Item.Unit, &row.Item.Price, &row.Item.GlobalQty, &row.Item.AvgCost)
+		&row.Item.Barcode, &row.Item.Option1, &row.Item.Option2, &row.Item.Option3,
+		&row.Item.Unit, &row.Item.Price, &row.Item.GlobalQty, &row.Item.AvgCost)
 	if !include.Stock {
 		row.Item.GlobalQty = row.Item.GlobalQty.Sub(row.Item.GlobalQty)
 		row.Item.AvgCost = row.Item.AvgCost.Sub(row.Item.AvgCost)

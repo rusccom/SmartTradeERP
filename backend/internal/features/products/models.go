@@ -30,6 +30,9 @@ type ProductVariantItem struct {
 	Name       string                 `json:"name"`
 	SKUCode    string                 `json:"sku_code"`
 	Barcode    string                 `json:"barcode"`
+	Option1    string                 `json:"option1"`
+	Option2    string                 `json:"option2"`
+	Option3    string                 `json:"option3"`
 	Unit       string                 `json:"unit"`
 	Price      decimal.Decimal        `json:"price"`
 	GlobalQty  decimal.Decimal        `json:"global_qty"`
