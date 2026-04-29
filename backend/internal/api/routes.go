@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/ledger"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
@@ -16,10 +17,16 @@ const healthDBTimeout = 2 * time.Second
 func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService) {
 	mux.HandleFunc("GET /health", health(store))
 	ledgerService := ledger.NewService(store)
+	bundleService := newBundleService(store)
 	registerAdmin(mux, store, tokens)
 	registerClientAuth(mux, store, tokens)
-	registerCatalog(mux, store, tokens, ledgerService)
-	registerOperations(mux, store, tokens, ledgerService)
+	registerCatalog(mux, store, tokens, ledgerService, bundleService)
+	registerOperations(mux, store, tokens, ledgerService, bundleService)
+}
+
+func newBundleService(store *db.Store) *bundles.Service {
+	repo := bundles.NewRepository(store)
+	return bundles.NewService(store, repo)
 }
 
 func health(store *db.Store) http.HandlerFunc {

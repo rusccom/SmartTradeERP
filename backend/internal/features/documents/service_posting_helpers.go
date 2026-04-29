@@ -5,6 +5,7 @@ import (
 
 	"github.com/shopspring/decimal"
 
+	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/ledger"
 )
 
@@ -17,7 +18,7 @@ type compositeReturnInput struct {
 func (s *Service) revenueShares(
 	run postingRun,
 	item postingItem,
-	components []variantComponent,
+	components []bundles.Component,
 ) (map[string]decimal.Decimal, error) {
 	costs := make(map[string]decimal.Decimal)
 	totalCost := decimal.Zero
@@ -35,9 +36,9 @@ func (s *Service) revenueShares(
 func (s *Service) componentCost(
 	run postingRun,
 	item postingItem,
-	component variantComponent,
+	component bundles.Component,
 ) (decimal.Decimal, error) {
-	qty := item.Qty.Mul(component.QtyPerUnit)
+	qty := item.Qty.Mul(component.Qty)
 	_, avg, err := s.ledger.GlobalStockTx(run.ctx, run.tx, run.tenantID, component.ComponentVariantID)
 	if err != nil {
 		return decimal.Zero, err
@@ -78,18 +79,18 @@ func normalizedShare(cost, total decimal.Decimal) decimal.Decimal {
 func (s *Service) buildCompositeSaleEntry(
 	run postingRun,
 	item postingItem,
-	component variantComponent,
+	component bundles.Component,
 	shares map[string]decimal.Decimal,
 ) ledger.EntryInput {
-	qty := item.Qty.Mul(component.QtyPerUnit)
+	qty := item.Qty.Mul(component.Qty)
 	share := shares[component.ComponentVariantID]
 	revenue := item.TotalAmount.Mul(share).Round(4)
 	return makeEntry(run.tenantID, run.doc.ID, item.ID, component.ComponentVariantID, run.doc.WarehouseID,
 		mustDate(run.doc.Date), "OUT", "SALE", qty, item.UnitPrice, qty.Mul(item.UnitPrice), &revenue)
 }
 
-func (s *Service) buildCompositeReturnEntry(input compositeReturnInput, component variantComponent) (ledger.EntryInput, error) {
-	qty := input.item.Qty.Mul(component.QtyPerUnit)
+func (s *Service) buildCompositeReturnEntry(input compositeReturnInput, component bundles.Component) (ledger.EntryInput, error) {
+	qty := input.item.Qty.Mul(component.Qty)
 	_, avg, err := s.ledger.GlobalStockTx(input.run.ctx, input.run.tx, input.run.tenantID, component.ComponentVariantID)
 	if err != nil {
 		return ledger.EntryInput{}, err

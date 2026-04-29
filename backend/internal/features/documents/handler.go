@@ -4,10 +4,11 @@ import (
     "errors"
     "net/http"
 
-    "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5"
 
-    "smarterp/backend/internal/features/ledger"
-    "smarterp/backend/internal/shared/httpx"
+	"smarterp/backend/internal/features/bundles"
+	"smarterp/backend/internal/features/ledger"
+	"smarterp/backend/internal/shared/httpx"
     "smarterp/backend/internal/shared/tenant"
     "smarterp/backend/internal/shared/validation"
 )
@@ -122,6 +123,9 @@ func writeDocumentRequestError(w http.ResponseWriter, err error) bool {
     if writeDocumentIdentityError(w, err) {
         return true
     }
+    if writeDocumentBundleError(w, err) {
+        return true
+    }
     return writeDocumentPaymentError(w, err)
 }
 
@@ -140,6 +144,14 @@ func writeDocumentIdentityError(w http.ResponseWriter, err error) bool {
     }
     if errors.Is(err, pgx.ErrNoRows) {
         httpx.WriteError(w, http.StatusNotFound, "not_found", "document not found", nil)
+        return true
+    }
+    return false
+}
+
+func writeDocumentBundleError(w http.ResponseWriter, err error) bool {
+    if errors.Is(err, ErrBundleDocumentType) {
+        httpx.WriteError(w, http.StatusBadRequest, "bundle_document_type", ErrBundleDocumentType.Error(), nil)
         return true
     }
     return false
@@ -197,7 +209,7 @@ func writeDocumentStateError(w http.ResponseWriter, err error) bool {
 }
 
 func writeDocumentPostingError(w http.ResponseWriter, err error) bool {
-    if errors.Is(err, ErrCompositeWithoutComponents) {
+    if errors.Is(err, bundles.ErrMissingComponents) {
         httpx.WriteError(w, http.StatusConflict, "missing_components", "composite variant has no components", nil)
         return true
     }

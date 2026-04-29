@@ -13,15 +13,28 @@ import (
 )
 
 var ErrHasMovements = errors.New("product has movements")
+var ErrCompositeTypeLocked = errors.New("product composite type is locked")
+var ErrUsedInBundle = errors.New("product used in bundle")
 
 type Service struct {
-    store  *db.Store
-    repo   *Repository
-    ledger *ledger.Service
+    store       *db.Store
+    repo        *Repository
+    ledger      *ledger.Service
+    bundleState ComponentStateReader
 }
 
-func NewService(store *db.Store, repo *Repository, ledger *ledger.Service) *Service {
-    return &Service{store: store, repo: repo, ledger: ledger}
+type ComponentStateReader interface {
+	ProductHasComponents(ctx context.Context, tenantID string, productID string) (bool, error)
+	ProductUsedAsComponent(ctx context.Context, tenantID string, productID string) (bool, error)
+}
+
+func NewService(
+    store *db.Store,
+    repo *Repository,
+    ledger *ledger.Service,
+    bundleState ComponentStateReader,
+) *Service {
+    return &Service{store: store, repo: repo, ledger: ledger, bundleState: bundleState}
 }
 
 func (s *Service) List(ctx context.Context, tenantID string, query ProductListQuery) ([]Product, int, error) {
@@ -81,7 +94,40 @@ func (s *Service) Update(ctx context.Context, tenantID, id string, req UpdateReq
 	if err := validateUpdate(req); err != nil {
 		return err
 	}
+	if err := s.ensureCompositeChangeAllowed(ctx, tenantID, id, req.IsComposite); err != nil {
+		return err
+	}
     return s.repo.Update(ctx, tenantID, id, req)
+}
+
+func (s *Service) ensureCompositeChangeAllowed(ctx context.Context, tenantID, id string, next bool) error {
+	current, err := s.repo.CompositeFlag(ctx, tenantID, id)
+	if err != nil {
+		return err
+	}
+	if current == next {
+		return nil
+	}
+	return s.ensureCompositeUnlocked(ctx, tenantID, id)
+}
+
+func (s *Service) ensureCompositeUnlocked(ctx context.Context, tenantID, id string) error {
+	blocked, err := s.productHasBundleState(ctx, tenantID, id)
+	if err != nil {
+		return err
+	}
+	if blocked {
+		return ErrCompositeTypeLocked
+	}
+	return nil
+}
+
+func (s *Service) productHasBundleState(ctx context.Context, tenantID, id string) (bool, error) {
+	hasMovements, err := s.ledger.HasProductMovements(ctx, tenantID, id)
+	if err != nil || hasMovements {
+		return hasMovements, err
+	}
+	return s.productLinkedToBundle(ctx, tenantID, id)
 }
 
 func (s *Service) Delete(ctx context.Context, tenantID, id string) error {
@@ -92,7 +138,29 @@ func (s *Service) Delete(ctx context.Context, tenantID, id string) error {
     if hasMovements {
         return ErrHasMovements
     }
+	if err := s.ensureProductNotInBundle(ctx, tenantID, id); err != nil {
+		return err
+	}
     return s.repo.Delete(ctx, tenantID, id)
+}
+
+func (s *Service) ensureProductNotInBundle(ctx context.Context, tenantID, id string) error {
+	linked, err := s.productLinkedToBundle(ctx, tenantID, id)
+	if err != nil {
+		return err
+	}
+	if linked {
+		return ErrUsedInBundle
+	}
+	return nil
+}
+
+func (s *Service) productLinkedToBundle(ctx context.Context, tenantID, id string) (bool, error) {
+	hasComponents, err := s.bundleState.ProductHasComponents(ctx, tenantID, id)
+	if err != nil || hasComponents {
+		return hasComponents, err
+	}
+	return s.bundleState.ProductUsedAsComponent(ctx, tenantID, id)
 }
 
 func normalizeCreate(req CreateRequest) CreateRequest {

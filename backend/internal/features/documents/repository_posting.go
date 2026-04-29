@@ -3,9 +3,7 @@ package documents
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shopspring/decimal"
 )
 
 func (r *Repository) PostingDocument(ctx context.Context, tx pgx.Tx, tenantID, documentID string) (Document, error) {
@@ -47,73 +45,4 @@ func scanPostingItems(rows pgx.Rows) ([]postingItem, error) {
 		items = append(items, item)
 	}
 	return items, rows.Err()
-}
-
-func (r *Repository) VariantComponents(
-	ctx context.Context,
-	tx pgx.Tx,
-	tenantID string,
-	variantID string,
-) ([]variantComponent, error) {
-	query := `SELECT vc.component_variant_id::text, vc.qty
-        FROM catalog.variant_components vc
-        JOIN catalog.product_variants parent ON parent.id=vc.variant_id
-        JOIN catalog.product_variants component ON component.id=vc.component_variant_id
-        WHERE parent.tenant_id=$1 AND component.tenant_id=$1 AND vc.variant_id=$2`
-	rows, err := tx.Query(ctx, query, tenantID, variantID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return scanVariantComponents(rows)
-}
-
-func scanVariantComponents(rows pgx.Rows) ([]variantComponent, error) {
-	items := make([]variantComponent, 0)
-	for rows.Next() {
-		item := variantComponent{}
-		if err := rows.Scan(&item.ComponentVariantID, &item.QtyPerUnit); err != nil {
-			return nil, err
-		}
-		items = append(items, item)
-	}
-	return items, rows.Err()
-}
-
-func (r *Repository) SaveItemComponents(
-	ctx context.Context,
-	tx pgx.Tx,
-	documentItemID string,
-	components []variantComponent,
-	documentQty decimal.Decimal,
-) error {
-	for _, item := range components {
-		qtyTotal := item.QtyPerUnit.Mul(documentQty)
-		if err := r.insertItemComponent(ctx, tx, documentItemID, item, qtyTotal); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (r *Repository) insertItemComponent(
-	ctx context.Context,
-	tx pgx.Tx,
-	documentItemID string,
-	item variantComponent,
-	qtyTotal decimal.Decimal,
-) error {
-	query := `INSERT INTO documents.document_item_components
-        (id, document_item_id, component_variant_id, qty_per_unit, qty_total)
-        VALUES ($1,$2,$3,$4,$5)`
-	_, err := tx.Exec(ctx, query, uuid.NewString(), documentItemID, item.ComponentVariantID, item.QtyPerUnit, qtyTotal)
-	return err
-}
-
-func (r *Repository) DeleteItemComponentsByDocument(ctx context.Context, tx pgx.Tx, documentID string) error {
-	query := `DELETE FROM documents.document_item_components dic
-        USING documents.document_items di
-        WHERE dic.document_item_id=di.id AND di.document_id=$1`
-	_, err := tx.Exec(ctx, query, documentID)
-	return err
 }

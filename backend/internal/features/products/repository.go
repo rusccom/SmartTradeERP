@@ -144,6 +144,13 @@ func (r *Repository) GetByID(ctx context.Context, tenantID, id string) (Product,
     return item, err
 }
 
+func (r *Repository) CompositeFlag(ctx context.Context, tenantID, id string) (bool, error) {
+	query := `SELECT is_composite FROM catalog.products WHERE tenant_id=$1 AND id=$2`
+	value := false
+	err := r.store.Pool.QueryRow(ctx, query, tenantID, id).Scan(&value)
+	return value, err
+}
+
 func (r *Repository) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
     query := `UPDATE catalog.products
         SET name=$3, is_composite=$4, updated_at=now()

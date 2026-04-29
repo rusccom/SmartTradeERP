@@ -149,6 +149,10 @@ func (h *Handler) writeDeleteError(w http.ResponseWriter, err error) {
         httpx.WriteError(w, http.StatusConflict, "has_movements", "product has inventory movements", nil)
         return
     }
+    if errors.Is(err, ErrUsedInBundle) {
+        httpx.WriteError(w, http.StatusConflict, "used_in_bundle", "product is used in bundle", nil)
+        return
+    }
     httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to delete product", err.Error())
 }
 
@@ -159,6 +163,10 @@ func (h *Handler) writeMutationError(w http.ResponseWriter, err error, message s
     }
     if errors.Is(err, pgx.ErrNoRows) {
         httpx.WriteError(w, http.StatusNotFound, "not_found", "product not found", nil)
+        return
+    }
+    if errors.Is(err, ErrCompositeTypeLocked) {
+        httpx.WriteError(w, http.StatusConflict, "composite_type_locked", "product composite type is locked", nil)
         return
     }
     httpx.WriteError(w, http.StatusInternalServerError, "internal_error", message, err.Error())

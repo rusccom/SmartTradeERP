@@ -91,8 +91,3 @@ type postingItem struct {
 	TotalAmount decimal.Decimal
 	IsComposite bool
 }
-
-type variantComponent struct {
-	ComponentVariantID string
-	QtyPerUnit         decimal.Decimal
-}

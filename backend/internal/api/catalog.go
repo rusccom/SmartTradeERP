@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/customers"
 	"smarterp/backend/internal/features/ledger"
 	"smarterp/backend/internal/features/products"
@@ -17,9 +18,11 @@ func registerCatalog(
 	store *db.Store,
 	tokens *auth.TokenService,
 	ledgerService *ledger.Service,
+	bundleService *bundles.Service,
 ) {
-	registerProducts(mux, store, tokens, ledgerService)
-	registerVariants(mux, store, tokens, ledgerService)
+	registerProducts(mux, store, tokens, ledgerService, bundleService)
+	registerVariants(mux, store, tokens, ledgerService, bundleService)
+	registerBundles(mux, tokens, bundleService)
 	registerWarehouses(mux, store, tokens, ledgerService)
 	registerCustomers(mux, store, tokens)
 }
@@ -29,9 +32,10 @@ func registerProducts(
 	store *db.Store,
 	tokens *auth.TokenService,
 	ledgerService *ledger.Service,
+	bundleService *bundles.Service,
 ) {
 	repo := products.NewRepository(store)
-	service := products.NewService(store, repo, ledgerService)
+	service := products.NewService(store, repo, ledgerService, bundleService)
 	handler := products.NewHandler(service)
 	handleClient(mux, tokens, "GET /api/client/products", handler.List)
 	handleClient(mux, tokens, "POST /api/client/products", handler.Create)
@@ -45,18 +49,29 @@ func registerVariants(
 	store *db.Store,
 	tokens *auth.TokenService,
 	ledgerService *ledger.Service,
+	bundleService *bundles.Service,
 ) {
 	repo := variants.NewRepository(store)
-	service := variants.NewService(store, repo, ledgerService)
+	service := variants.NewService(store, repo, ledgerService, bundleService)
 	handler := variants.NewHandler(service)
 	handleClient(mux, tokens, "GET /api/client/variants", handler.List)
 	handleClient(mux, tokens, "POST /api/client/variants", handler.Create)
 	handleClient(mux, tokens, "GET /api/client/variants/{id}", handler.ByID)
 	handleClient(mux, tokens, "PUT /api/client/variants/{id}", handler.Update)
 	handleClient(mux, tokens, "DELETE /api/client/variants/{id}", handler.Delete)
-	handleClient(mux, tokens, "GET /api/client/variants/{id}/components", handler.Components)
-	handleClient(mux, tokens, "PUT /api/client/variants/{id}/components", handler.SetComponents)
 	handleClient(mux, tokens, "GET /api/client/variants/{id}/stock", handler.Stock)
+}
+
+func registerBundles(
+	mux *http.ServeMux,
+	tokens *auth.TokenService,
+	service *bundles.Service,
+) {
+	handler := bundles.NewHandler(service)
+	handleClient(mux, tokens, "GET /api/client/bundles", handler.List)
+	handleClient(mux, tokens, "GET /api/client/bundles/{id}", handler.ByID)
+	handleClient(mux, tokens, "GET /api/client/bundles/{id}/components", handler.Components)
+	handleClient(mux, tokens, "PUT /api/client/bundles/{id}/components", handler.SetComponents)
 }
 
 func registerWarehouses(

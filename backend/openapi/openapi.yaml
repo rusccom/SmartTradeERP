@@ -39,6 +39,15 @@ paths:
             type: string
           example: variants,stock,warehouses
         - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: is_composite
+          schema:
+            type: string
+            enum: ["true", "false"]
+        - in: query
           name: warehouse_id
           schema:
             type: string
@@ -67,7 +76,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/PathID'
     delete:
-      summary: Delete product when no inventory movements exist
+      summary: Delete product when no inventory movements and bundle links exist
       parameters:
         - $ref: '#/components/parameters/PathID'
   /client/variants:
@@ -85,16 +94,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/PathID'
     delete:
-      summary: Delete variant when no inventory movements exist
-      parameters:
-        - $ref: '#/components/parameters/PathID'
-  /client/variants/{id}/components:
-    get:
-      summary: List variant components
-      parameters:
-        - $ref: '#/components/parameters/PathID'
-    put:
-      summary: Replace variant components
+      summary: Delete variant when no inventory movements and bundle links exist
       parameters:
         - $ref: '#/components/parameters/PathID'
   /client/variants/{id}/stock:
@@ -102,6 +102,35 @@ paths:
       summary: Variant stock global and by warehouses
       parameters:
         - $ref: '#/components/parameters/PathID'
+  /client/bundles:
+    get:
+      summary: List composite product variants
+  /client/bundles/{id}:
+    get:
+      summary: Bundle details with components
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+  /client/bundles/{id}/components:
+    get:
+      summary: List bundle components
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+    put:
+      summary: Replace bundle components
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [components]
+              properties:
+                components:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/BundleComponent'
   /client/warehouses:
     get:
       summary: List warehouses
@@ -200,4 +229,39 @@ components:
         access_token:
           type: string
         refresh_token:
+          type: string
+    Bundle:
+      type: object
+      properties:
+        product_id:
+          type: string
+        variant_id:
+          type: string
+        product_name:
+          type: string
+        variant_name:
+          type: string
+        sku_code:
+          type: string
+        unit:
+          type: string
+        price:
+          type: string
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/BundleComponent'
+    BundleComponent:
+      type: object
+      required: [component_variant_id, qty]
+      properties:
+        component_variant_id:
+          type: string
+        qty:
+          type: string
+        product_name:
+          type: string
+        variant_name:
+          type: string
+        unit:
           type: string

@@ -56,8 +56,6 @@ export const messagesByLocale = {
     "dataTable.retry": "Retry",
     "dataTable.searchPlaceholder": "Search...",
     "dataTable.totalCount": "Total: {count}",
-    "dashboard.bundles.text": "Composite products placeholder.",
-    "dashboard.bundles.title": "Bundles",
     "dashboard.documentCard.text": "Document details placeholder.",
     "dashboard.documentCard.title": "Document Card",
     "dashboard.home.description": "Welcome to SmartTrade ERP. Use the menu to navigate between catalog pages and documents.",

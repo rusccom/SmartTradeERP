@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/documents"
 	"smarterp/backend/internal/features/ledger"
 	"smarterp/backend/internal/features/reports"
@@ -16,8 +17,9 @@ func registerOperations(
 	store *db.Store,
 	tokens *auth.TokenService,
 	ledgerService *ledger.Service,
+	bundleService *bundles.Service,
 ) {
-	registerDocuments(mux, store, tokens, ledgerService)
+	registerDocuments(mux, store, tokens, ledgerService, bundleService)
 	registerShifts(mux, store, tokens)
 	registerReports(mux, store, tokens, ledgerService)
 }
@@ -27,9 +29,10 @@ func registerDocuments(
 	store *db.Store,
 	tokens *auth.TokenService,
 	ledgerService *ledger.Service,
+	bundleService *bundles.Service,
 ) {
 	repo := documents.NewRepository(store)
-	service := documents.NewService(store, repo, ledgerService)
+	service := documents.NewService(store, repo, ledgerService, bundleService)
 	handler := documents.NewHandler(service)
 	handleClient(mux, tokens, "GET /api/client/documents", handler.List)
 	handleClient(mux, tokens, "POST /api/client/documents", handler.Create)

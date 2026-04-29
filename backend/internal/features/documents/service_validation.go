@@ -131,7 +131,7 @@ func (s *Service) validateReferences(ctx context.Context, tx pgx.Tx, tenantID st
 	if err := s.validateShift(ctx, tx, tenantID, req.ShiftID, req.Type); err != nil {
 		return err
 	}
-	return s.validateVariants(ctx, tx, tenantID, req.Items)
+	return s.validateVariants(ctx, tx, tenantID, req.Type, req.Items)
 }
 
 func (s *Service) validateWarehouses(ctx context.Context, tx pgx.Tx, tenantID string, req CreateRequest) error {
@@ -177,14 +177,40 @@ func requiresOpenShift(documentType string) bool {
 	return documentType == "SALE" || documentType == "RETURN"
 }
 
-func (s *Service) validateVariants(ctx context.Context, tx pgx.Tx, tenantID string, items []ItemInput) error {
+func (s *Service) validateVariants(
+	ctx context.Context,
+	tx pgx.Tx,
+	tenantID string,
+	documentType string,
+	items []ItemInput,
+) error {
 	for _, id := range itemVariantIDs(items) {
-		exists, err := s.repo.VariantExists(ctx, tx, tenantID, id)
-		if err != nil || !exists {
-			return referenceError(err)
+		if err := s.validateVariantReference(ctx, tx, tenantID, documentType, id); err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+func (s *Service) validateVariantReference(
+	ctx context.Context,
+	tx pgx.Tx,
+	tenantID string,
+	documentType string,
+	id string,
+) error {
+	composite, exists, err := s.repo.VariantComposite(ctx, tx, tenantID, id)
+	if err != nil || !exists {
+		return referenceError(err)
+	}
+	if composite && !allowsBundleDocument(documentType) {
+		return ErrBundleDocumentType
+	}
+	return nil
+}
+
+func allowsBundleDocument(documentType string) bool {
+	return documentType == "SALE" || documentType == "RETURN"
 }
 
 func referenceError(err error) error {

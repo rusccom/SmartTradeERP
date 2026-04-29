@@ -38,11 +38,6 @@ type UpdateRequest struct {
 	Option3 string          `json:"option3"`
 }
 
-type Component struct {
-	ComponentVariantID string          `json:"component_variant_id"`
-	Qty                decimal.Decimal `json:"qty"`
-}
-
 type StockByWarehouse struct {
 	WarehouseID string          `json:"warehouse_id"`
 	Warehouse   string          `json:"warehouse"`

@@ -1,11 +1,9 @@
 package documents
 
 import (
-	"context"
-
-	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 
+	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/ledger"
 )
 
@@ -52,11 +50,14 @@ func (s *Service) postCompositeItem(
 	run postingRun,
 	item postingItem,
 ) ([]ledger.VariantSequence, error) {
-	components, err := s.loadCompositeComponents(run.ctx, run.tx, run.tenantID, item)
+	if !allowsBundleDocument(run.doc.Type) {
+		return nil, ErrBundleDocumentType
+	}
+	components, err := s.loadCompositeComponents(run, item)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.repo.SaveItemComponents(run.ctx, run.tx, item.ID, components, item.Qty); err != nil {
+	if err := s.saveComponentSnapshot(run, item, components); err != nil {
 		return nil, err
 	}
 	entries, err := s.buildEntriesForComposite(run, item, components)
@@ -67,19 +68,19 @@ func (s *Service) postCompositeItem(
 }
 
 func (s *Service) loadCompositeComponents(
-	ctx context.Context,
-	tx pgx.Tx,
-	tenantID string,
+	run postingRun,
 	item postingItem,
-) ([]variantComponent, error) {
-	components, err := s.repo.VariantComponents(ctx, tx, tenantID, item.VariantID)
-	if err != nil {
-		return nil, err
-	}
-	if len(components) == 0 {
-		return nil, ErrCompositeWithoutComponents
-	}
-	return components, nil
+) ([]bundles.Component, error) {
+	return s.bundles.ResolveComponents(run.ctx, run.tx, run.tenantID, item.VariantID)
+}
+
+func (s *Service) saveComponentSnapshot(
+	run postingRun,
+	item postingItem,
+	components []bundles.Component,
+) error {
+	input := bundles.SnapshotInput{DocumentItemID: item.ID, DocumentQty: item.Qty, Components: components}
+	return s.bundles.SaveSnapshot(run.ctx, run.tx, input)
 }
 
 func (s *Service) buildEntriesForSimple(
@@ -164,7 +165,7 @@ func inventoryMeta(diff decimal.Decimal) (string, string, decimal.Decimal) {
 func (s *Service) buildEntriesForComposite(
 	run postingRun,
 	item postingItem,
-	components []variantComponent,
+	components []bundles.Component,
 ) ([]ledger.EntryInput, error) {
 	if run.doc.Type == "SALE" {
 		return s.buildCompositeSaleEntries(run, item, components)
@@ -172,42 +173,13 @@ func (s *Service) buildEntriesForComposite(
 	if run.doc.Type == "RETURN" {
 		return s.buildCompositeReturnEntries(run, item, components)
 	}
-	return s.buildCompositeRegularEntries(run, item, components)
-}
-
-func (s *Service) buildCompositeRegularEntries(
-	run postingRun,
-	item postingItem,
-	components []variantComponent,
-) ([]ledger.EntryInput, error) {
-	entries := make([]ledger.EntryInput, 0, len(components))
-	for _, component := range components {
-		derived := deriveComponentItem(item, component)
-		rows, err := s.buildEntriesForSimple(run, derived)
-		if err != nil {
-			return nil, err
-		}
-		entries = append(entries, rows...)
-	}
-	return entries, nil
-}
-
-func deriveComponentItem(item postingItem, component variantComponent) postingItem {
-	qty := item.Qty.Mul(component.QtyPerUnit)
-	return postingItem{
-		ID:          item.ID,
-		VariantID:   component.ComponentVariantID,
-		Qty:         qty,
-		UnitPrice:   item.UnitPrice,
-		TotalAmount: qty.Mul(item.UnitPrice),
-		IsComposite: false,
-	}
+	return nil, ErrBundleDocumentType
 }
 
 func (s *Service) buildCompositeSaleEntries(
 	run postingRun,
 	item postingItem,
-	components []variantComponent,
+	components []bundles.Component,
 ) ([]ledger.EntryInput, error) {
 	shares, err := s.revenueShares(run, item, components)
 	if err != nil {
@@ -224,7 +196,7 @@ func (s *Service) buildCompositeSaleEntries(
 func (s *Service) buildCompositeReturnEntries(
 	run postingRun,
 	item postingItem,
-	components []variantComponent,
+	components []bundles.Component,
 ) ([]ledger.EntryInput, error) {
 	shares, err := s.revenueShares(run, item, components)
 	if err != nil {
@@ -236,7 +208,7 @@ func (s *Service) buildCompositeReturnEntries(
 
 func (s *Service) buildCompositeReturnRows(
 	input compositeReturnInput,
-	components []variantComponent,
+	components []bundles.Component,
 ) ([]ledger.EntryInput, error) {
 	entries := make([]ledger.EntryInput, 0, len(components))
 	for _, component := range components {

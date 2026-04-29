@@ -4,7 +4,6 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
 	"smarterp/backend/internal/shared/db"
@@ -141,27 +140,6 @@ func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {
     return err
 }
 
-func (r *Repository) VariantComposite(ctx context.Context, tenantID, variantID string) (bool, error) {
-	query := `SELECT p.is_composite
-        FROM catalog.product_variants v
-        JOIN catalog.products p ON p.id=v.product_id
-        WHERE v.tenant_id=$1 AND v.id=$2`
-	row := r.store.Pool.QueryRow(ctx, query, tenantID, variantID)
-	value := false
-	err := row.Scan(&value)
-	return value, err
-}
-
-func (r *Repository) VariantExists(ctx context.Context, tenantID, variantID string) (bool, error) {
-	query := `SELECT EXISTS(
-        SELECT 1 FROM catalog.product_variants WHERE tenant_id=$1 AND id=$2
-    )`
-	row := r.store.Pool.QueryRow(ctx, query, tenantID, variantID)
-	exists := false
-	err := row.Scan(&exists)
-	return exists, err
-}
-
 func (r *Repository) ProductVariantCount(ctx context.Context, tenantID, variantID string) (int, error) {
     query := `SELECT COUNT(*)
         FROM catalog.product_variants v
@@ -169,60 +147,8 @@ func (r *Repository) ProductVariantCount(ctx context.Context, tenantID, variantI
         WHERE v.tenant_id=$1 AND source.tenant_id=$1 AND source.id=$2`
     row := r.store.Pool.QueryRow(ctx, query, tenantID, variantID)
     count := 0
-    err := row.Scan(&count)
-    return count, err
-}
-
-func (r *Repository) Components(ctx context.Context, tenantID, variantID string) ([]Component, error) {
-    query := `SELECT vc.component_variant_id::text, vc.qty
-        FROM catalog.variant_components vc
-        JOIN catalog.product_variants v ON v.id = vc.variant_id
-        JOIN catalog.product_variants component ON component.id = vc.component_variant_id
-        WHERE v.tenant_id=$1 AND component.tenant_id=$1 AND vc.variant_id=$2
-        ORDER BY vc.id`
-    rows, err := r.store.Pool.Query(ctx, query, tenantID, variantID)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
-    return scanComponents(rows)
-}
-
-func scanComponents(rows pgx.Rows) ([]Component, error) {
-    items := make([]Component, 0)
-    for rows.Next() {
-        item := Component{}
-        if err := rows.Scan(&item.ComponentVariantID, &item.Qty); err != nil {
-            return nil, err
-        }
-        items = append(items, item)
-    }
-    return items, rows.Err()
-}
-
-func (r *Repository) ReplaceComponents(ctx context.Context, tx pgx.Tx, variantID string, components []Component) error {
-    if err := deleteComponents(ctx, tx, variantID); err != nil {
-        return err
-    }
-    for _, item := range components {
-        componentID := uuid.NewString()
-        if err := insertComponent(ctx, tx, componentID, variantID, item); err != nil {
-            return err
-        }
-    }
-    return nil
-}
-
-func deleteComponents(ctx context.Context, tx pgx.Tx, variantID string) error {
-    _, err := tx.Exec(ctx, `DELETE FROM catalog.variant_components WHERE variant_id=$1`, variantID)
-    return err
-}
-
-func insertComponent(ctx context.Context, tx pgx.Tx, componentID, variantID string, item Component) error {
-    query := `INSERT INTO catalog.variant_components (id, variant_id, component_variant_id, qty)
-        VALUES ($1, $2, $3, $4)`
-    _, err := tx.Exec(ctx, query, componentID, variantID, item.ComponentVariantID, item.Qty)
-    return err
+	err := row.Scan(&count)
+	return count, err
 }
 
 func (r *Repository) WarehouseStock(ctx context.Context, tenantID, variantID string) ([]StockByWarehouse, error) {

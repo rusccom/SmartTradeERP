@@ -6,19 +6,26 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
+	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/ledger"
 	"smarterp/backend/internal/shared/db"
 	"smarterp/backend/internal/shared/httpx"
 )
 
 type Service struct {
-	store  *db.Store
-	repo   *Repository
-	ledger *ledger.Service
+	store   *db.Store
+	repo    *Repository
+	ledger  *ledger.Service
+	bundles *bundles.Service
 }
 
-func NewService(store *db.Store, repo *Repository, ledger *ledger.Service) *Service {
-	return &Service{store: store, repo: repo, ledger: ledger}
+func NewService(
+	store *db.Store,
+	repo *Repository,
+	ledger *ledger.Service,
+	bundles *bundles.Service,
+) *Service {
+	return &Service{store: store, repo: repo, ledger: ledger, bundles: bundles}
 }
 
 func (s *Service) List(ctx context.Context, tenantID string, query httpx.ListQuery) ([]ListItem, int, error) {

@@ -10,7 +10,7 @@ import AdminLoginPage from "../../features/admin/pages/AdminLoginPage";
 import AdminDashboardPage from "../../features/admin/pages/AdminDashboardPage";
 import AdminTenantsPage from "../../features/admin/pages/AdminTenantsPage";
 import AdminLayout from "../../features/admin/layout/AdminLayout";
-import BundlesPage from "../../features/dashboard/pages/BundlesPage";
+import BundlesPage from "../../features/bundles/pages/BundlesPage";
 import CustomersPage from "../../features/dashboard/pages/CustomersPage";
 import DashboardPage from "../../features/dashboard/pages/DashboardPage";
 import DocumentsPage from "../../features/dashboard/pages/DocumentsPage";

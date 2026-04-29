@@ -7,6 +7,11 @@ export async function postJSON(path, payload) {
   return parseEnvelope(response);
 }
 
+export async function putJSON(path, payload) {
+  const response = await fetch(createURL(path), createWriteOptions(path, payload, "PUT"));
+  return parseEnvelope(response);
+}
+
 export async function getJSON(path, params, signal) {
   const response = await fetch(buildURL(path, params), createGetOptions(path, signal));
   return parseEnvelopeWithMeta(response);
@@ -35,8 +40,12 @@ function authHeaders(path) {
 }
 
 function createPostOptions(path, payload) {
+  return createWriteOptions(path, payload, "POST");
+}
+
+function createWriteOptions(path, payload, method) {
   return {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json", ...authHeaders(path) },
     body: JSON.stringify(payload),
   };

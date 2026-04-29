@@ -82,33 +82,6 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
     httpx.WriteData(w, http.StatusOK, map[string]string{"status": "deleted"}, nil)
 }
 
-func (h *Handler) Components(w http.ResponseWriter, r *http.Request) {
-    tenantID := tenant.FromContext(r.Context())
-    items, err := h.service.Components(r.Context(), tenantID, r.PathValue("id"))
-    if err != nil {
-        h.writeNotFoundAwareError(w, err, "failed to read components")
-        return
-    }
-    httpx.WriteData(w, http.StatusOK, items, nil)
-}
-
-func (h *Handler) SetComponents(w http.ResponseWriter, r *http.Request) {
-    payload := struct {
-        Components []Component `json:"components"`
-    }{}
-    if err := httpx.DecodeJSON(r, &payload); err != nil {
-        httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid payload", err.Error())
-        return
-    }
-    tenantID := tenant.FromContext(r.Context())
-    err := h.service.SetComponents(r.Context(), tenantID, r.PathValue("id"), payload.Components)
-    if err != nil {
-        h.writeComponentsError(w, err)
-        return
-    }
-    httpx.WriteData(w, http.StatusOK, map[string]string{"status": "updated"}, nil)
-}
-
 func (h *Handler) Stock(w http.ResponseWriter, r *http.Request) {
     tenantID := tenant.FromContext(r.Context())
     stock, err := h.service.Stock(r.Context(), tenantID, r.PathValue("id"))
@@ -140,19 +113,11 @@ func (h *Handler) writeDeleteError(w http.ResponseWriter, err error) {
         httpx.WriteError(w, http.StatusConflict, "last_variant", "product must keep one variant", nil)
         return
     }
+    if errors.Is(err, ErrUsedInBundle) {
+        httpx.WriteError(w, http.StatusConflict, "used_in_bundle", "variant is used in bundle", nil)
+        return
+    }
     httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to delete variant", err.Error())
-}
-
-func (h *Handler) writeComponentsError(w http.ResponseWriter, err error) {
-    if errors.Is(err, validation.ErrInvalidData) {
-        httpx.WriteError(w, http.StatusBadRequest, "invalid_components", "invalid components", nil)
-        return
-    }
-    if errors.Is(err, ErrInvalidComponentState) {
-        httpx.WriteError(w, http.StatusBadRequest, "invalid_components", "invalid component state", nil)
-        return
-    }
-    h.writeNotFoundAwareError(w, err, "failed to update components")
 }
 
 func (h *Handler) writeMutationError(w http.ResponseWriter, err error, message string) {
