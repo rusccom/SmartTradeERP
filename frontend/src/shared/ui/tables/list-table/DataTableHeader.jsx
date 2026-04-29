@@ -3,13 +3,13 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
 import DataTableFilter from "./DataTableFilter";
 
-function DataTableHeader({ table }) {
+function DataTableHeader({ table, showFilters }) {
   return (
     <thead>
       {table.getHeaderGroups().map((group) => (
         <tr key={group.id}>
           {group.headers.map((header) => (
-            <HeaderCell key={header.id} header={header} />
+            <HeaderCell key={header.id} header={header} showFilters={showFilters} />
           ))}
         </tr>
       ))}
@@ -17,7 +17,7 @@ function DataTableHeader({ table }) {
   );
 }
 
-function HeaderCell({ header }) {
+function HeaderCell({ header, showFilters }) {
   if (header.isPlaceholder) {
     return <th className="dt-th" colSpan={header.colSpan} />;
   }
@@ -30,7 +30,7 @@ function HeaderCell({ header }) {
         <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
         <SortIcon direction={sorted} />
       </SortTrigger>
-      {header.column.getCanFilter() && <DataTableFilter column={header.column} />}
+      {showFilters && header.column.getCanFilter() && <DataTableFilter column={header.column} />}
     </th>
   );
 }

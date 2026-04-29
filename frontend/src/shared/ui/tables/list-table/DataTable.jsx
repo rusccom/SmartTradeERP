@@ -1,31 +1,35 @@
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useMemo } from "react";
 
-import { useI18n } from "../../i18n/useI18n";
+import { useI18n } from "../../../i18n/useI18n";
 import DataTableBody from "./DataTableBody";
 import DataTableError from "./DataTableError";
 import DataTableHeader from "./DataTableHeader";
 import DataTablePagination from "./DataTablePagination";
 import DataTableToolbar from "./DataTableToolbar";
+import "./data-table-actions.css";
 import "./data-table.css";
+import "./data-table-state.css";
 
 function DataTable(props) {
   const { t } = useI18n();
   const table = useDataTableInstance(props);
+  const slots = readSlots(props);
   const emptyText = props.emptyText || t("dataTable.emptyText");
   const loadingClass = props.loading ? "dt-loading" : "";
   return (
-    <div className="dt-wrapper">
-      <ToolbarBlock props={props} />
+    <section className="dt-wrapper">
+      {slots.toolbar && <ToolbarBlock props={props} slots={slots} />}
       <ErrorBlock error={props.error} onRetry={props.onRetry} />
       <TableBlock
         table={table}
         props={props}
+        slots={slots}
         loadingClass={loadingClass}
         emptyText={emptyText}
       />
-      <DataTablePagination table={table} />
-    </div>
+      {slots.pagination && <DataTablePagination table={table} />}
+    </section>
   );
 }
 
@@ -57,13 +61,14 @@ function readControlledState(props) {
   };
 }
 
-function ToolbarBlock({ props }) {
+function ToolbarBlock({ props, slots }) {
   return (
     <DataTableToolbar
       globalFilter={props.globalFilter}
       onGlobalFilterChange={props.onGlobalFilterChange}
-      searchable={props.searchable !== false}
-      toolbar={props.toolbar}
+      searchable={slots.search}
+      actions={props.actions}
+      showCount={slots.count}
       rowCount={props.rowCount}
     />
   );
@@ -73,11 +78,11 @@ function ErrorBlock({ error, onRetry }) {
   return error ? <DataTableError message={error} onRetry={onRetry} /> : null;
 }
 
-function TableBlock({ table, props, loadingClass, emptyText }) {
+function TableBlock({ table, props, slots, loadingClass, emptyText }) {
   return (
     <div className={`dt-table-scroll ${loadingClass}`.trim()}>
       <table className="dt-table">
-        <DataTableHeader table={table} />
+        <DataTableHeader table={table} showFilters={slots.filters} />
         <DataTableBody
           table={table}
           onRowClick={props.onRowClick}
@@ -88,6 +93,21 @@ function TableBlock({ table, props, loadingClass, emptyText }) {
       </table>
     </div>
   );
+}
+
+function readSlots(props) {
+  const components = props.components || {};
+  const search = props.searchable !== false && components.search !== false;
+  const actions = Boolean(props.actions) && components.actions !== false;
+  const count = components.count !== false;
+  return {
+    search,
+    actions,
+    count,
+    toolbar: components.toolbar !== false && (search || actions || count),
+    filters: components.filters !== false,
+    pagination: components.pagination !== false,
+  };
 }
 
 function mapColumns(columns) {

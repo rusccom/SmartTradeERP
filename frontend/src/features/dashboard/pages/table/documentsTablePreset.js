@@ -1,45 +1,48 @@
 import { apiPaths } from "../../../../shared/api/client";
-import { getJSON } from "../../../../shared/api/http";
-import { createTablePreset } from "../../../../shared/model/data-table/createTablePreset";
+import { createApiTablePreset } from "../../../../shared/model/data-table/createApiTablePreset";
 
 export function createDocumentsTablePreset(t) {
-  return createTablePreset({
+  return createApiTablePreset({
     id: "documents",
-    rowId: (row) => row.id,
-    columns: [
-      { accessorKey: "number", header: t("documents.columns.number") },
-      {
-        accessorKey: "doc_type",
-        header: t("documents.columns.type"),
-        enableSorting: false,
-        filterVariant: "select",
-        filterOptions: createDocumentTypeOptions(t),
-        cell: (value) => readDocumentTypeLabel(value, t),
-      },
-      {
-        accessorKey: "status",
-        header: t("documents.columns.status"),
-        enableSorting: false,
-        filterVariant: "select",
-        filterOptions: createStatusOptions(t),
-        cell: (value) => readStatusLabel(value, t),
-      },
-      { accessorKey: "total_cost", header: t("documents.columns.totalCost") },
-      { accessorKey: "date", header: t("documents.columns.date") },
-    ],
+    path: apiPaths.documents,
+    rowId: readDocumentId,
+    columns: createColumns(t),
     capabilities: { sorting: true, search: true },
-    mapStateToQuery: (state) => ({
-      type: state.columnFilters.find((item) => item.id === "doc_type")?.value,
-      doc_type: undefined,
-    }),
-    fetchPage: async ({ query, signal }) => {
-      const response = await getJSON(apiPaths.documents, query, signal);
-      return {
-        rows: (response.data || []).map((row) => ({ ...row, doc_type: row.type })),
-        total: response.meta?.total || 0,
-      };
-    },
+    mapStateToQuery: mapDocumentStateToQuery,
+    mapRows: mapDocumentRows,
   });
+}
+
+function createColumns(t) {
+  return [
+    { accessorKey: "number", header: t("documents.columns.number") },
+    createTypeColumn(t),
+    createStatusColumn(t),
+    { accessorKey: "total_cost", header: t("documents.columns.totalCost") },
+    { accessorKey: "date", header: t("documents.columns.date") },
+  ];
+}
+
+function createTypeColumn(t) {
+  return {
+    accessorKey: "doc_type",
+    header: t("documents.columns.type"),
+    enableSorting: false,
+    filterVariant: "select",
+    filterOptions: createDocumentTypeOptions(t),
+    cell: (value) => readDocumentTypeLabel(value, t),
+  };
+}
+
+function createStatusColumn(t) {
+  return {
+    accessorKey: "status",
+    header: t("documents.columns.status"),
+    enableSorting: false,
+    filterVariant: "select",
+    filterOptions: createStatusOptions(t),
+    cell: (value) => readStatusLabel(value, t),
+  };
 }
 
 function createDocumentTypeOptions(t) {
@@ -78,4 +81,19 @@ function readStatusLabel(value, t) {
     posted: t("documents.status.posted"),
   };
   return labels[value] || value;
+}
+
+function mapDocumentStateToQuery(state) {
+  return {
+    type: state.columnFilters.find((item) => item.id === "doc_type")?.value,
+    doc_type: undefined,
+  };
+}
+
+function mapDocumentRows(rows) {
+  return rows.map((row) => ({ ...row, doc_type: row.type }));
+}
+
+function readDocumentId(row) {
+  return row.id;
 }
