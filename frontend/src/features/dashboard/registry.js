@@ -6,7 +6,6 @@ export function createMenuSections(t) {
         createItem("products", "/dashboard/products", t("dashboard.menu.products")),
         createItem("customers", "/dashboard/customers", t("dashboard.menu.customers")),
         createItem("warehouses", "/dashboard/warehouses", t("dashboard.menu.warehouses")),
-        createItem("bundles", "/dashboard/bundles", t("dashboard.menu.bundles")),
       ],
     },
     {

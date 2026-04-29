@@ -1,6 +1,5 @@
 const defaultForm = {
   name: "",
-  isComposite: false,
   unit: "pcs",
   price: "0",
   skuCode: "",
@@ -15,7 +14,6 @@ const productSections = [
     titleKey: "products.form.sections.product",
     fields: [
       { name: "name", labelKey: "products.form.name", type: "text", required: true, autoFocus: true },
-      { name: "isComposite", labelKey: "products.form.isComposite", type: "checkbox" },
     ],
   },
 ];
@@ -87,7 +85,6 @@ export function toCreateProductPayload(form) {
   const variant = readPrimaryVariant(form);
   return {
     name: form.name.trim(),
-    is_composite: form.isComposite,
     unit: variant.unit.trim(),
     price: Number(variant.price) || 0,
     sku_code: variant.skuCode.trim(),

@@ -1,34 +1,68 @@
-import { RefreshCw } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 
-function BundleList({ bundles, loading, onReload, onSelect, selectedID }) {
+import { useI18n } from "../../../shared/i18n/useI18n";
+
+function BundleList({ bundles, loading, onCreate, onReload, onSelect, selectedID }) {
+  const { t } = useI18n();
+  const showHeader = bundles.length > 0;
   return (
     <section className="bundles-list">
       <header className="bundles-section-head">
-        <h2>Bundles</h2>
-        <button className="bundles-icon-btn" type="button" onClick={onReload} disabled={loading} title="Reload bundles">
-          <RefreshCw size={16} />
-        </button>
+        <h2>{t("bundles.table.title")}</h2>
+        <BundleListActions loading={loading} onCreate={onCreate} onReload={onReload} t={t} />
       </header>
       <div className="bundles-table-wrap">
-        <table className="bundles-table">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Variant</th>
-              <th>SKU</th>
-              <th>Price</th>
-            </tr>
-          </thead>
-          <tbody>{renderRows({ bundles, loading, onSelect, selectedID })}</tbody>
-        </table>
+        <BundleTable
+          bundles={bundles}
+          loading={loading}
+          onSelect={onSelect}
+          selectedID={selectedID}
+          showHeader={showHeader}
+          t={t}
+        />
       </div>
     </section>
   );
 }
 
+function BundleTable(props) {
+  return (
+    <table className="bundles-table">
+      {props.showHeader && <BundleTableHead t={props.t} />}
+      <tbody>{renderRows(props)}</tbody>
+    </table>
+  );
+}
+
+function BundleTableHead({ t }) {
+  return (
+    <thead>
+      <tr>
+        <th>{t("bundles.columns.product")}</th>
+        <th>{t("bundles.columns.variant")}</th>
+        <th>{t("bundles.columns.sku")}</th>
+        <th>{t("bundles.columns.price")}</th>
+      </tr>
+    </thead>
+  );
+}
+
+function BundleListActions({ loading, onCreate, onReload, t }) {
+  return (
+    <div className="bundles-head-actions">
+      <button className="bundles-create-btn" type="button" onClick={onCreate}>
+        <Plus size={16} /> {t("bundles.addButton")}
+      </button>
+      <button className="bundles-icon-btn" type="button" onClick={onReload} disabled={loading} title={t("bundles.table.reload")}>
+        <RefreshCw size={16} />
+      </button>
+    </div>
+  );
+}
+
 function renderRows(props) {
-  if (props.loading) return renderEmptyRow("Loading bundles...");
-  if (!props.bundles.length) return renderEmptyRow("No composite products yet.");
+  if (props.loading) return renderEmptyRow(props.t("bundles.table.loading"));
+  if (!props.bundles.length) return renderEmptyRow(props.t("bundles.table.empty"));
   return props.bundles.map((bundle) => renderBundleRow(bundle, props));
 }
 

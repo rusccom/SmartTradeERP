@@ -16,7 +16,6 @@ export function createProductsTablePreset(t) {
 function createColumns(t) {
   return [
     { accessorKey: "name", header: t("products.columns.name") },
-    { accessorKey: "updated_at", header: t("products.columns.updatedAt"), enableSorting: false },
   ];
 }
 

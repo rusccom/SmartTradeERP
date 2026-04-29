@@ -76,10 +76,11 @@ function ErrorBlock({ error, onRetry }) {
 }
 
 function TableBlock({ table, props, loadingClass, emptyText }) {
+  const showHeader = table.getRowModel().rows.length > 0;
   return (
     <div className={`dt-table-scroll ${loadingClass}`.trim()}>
       <table className="dt-table">
-        <DataTableHeader table={table} />
+        {showHeader && <DataTableHeader table={table} />}
         <DataTableBody
           table={table}
           onRowClick={props.onRowClick}

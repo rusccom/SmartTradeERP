@@ -11,6 +11,7 @@ import {
   removeComponentRow,
   toComponentPayload,
 } from "../model/bundleComponents";
+import BundleCreateModal from "../ui/BundleCreateModal";
 import BundleComponentsEditor from "../ui/BundleComponentsEditor";
 import BundleList from "../ui/BundleList";
 import "../ui/bundles.css";
@@ -19,11 +20,22 @@ const OPTION_PAGE_SIZE = 20;
 
 function BundlesPage() {
   const state = useBundlePageState();
+  const [createOpen, setCreateOpen] = useState(false);
   return (
-    <main className="bundles-page">
-      <BundleList bundles={state.bundles} loading={state.loading} selectedID={state.selectedID} onSelect={state.selectBundle} onReload={state.reload} />
-      <BundleComponentsEditor {...editorProps(state)} />
-    </main>
+    <>
+      <main className="bundles-page">
+        <BundleList
+          bundles={state.bundles}
+          loading={state.loading}
+          selectedID={state.selectedID}
+          onCreate={() => setCreateOpen(true)}
+          onSelect={state.selectBundle}
+          onReload={state.reload}
+        />
+        <BundleComponentsEditor {...editorProps(state)} />
+      </main>
+      <BundleCreateModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={state.reload} />
+    </>
   );
 }
 
