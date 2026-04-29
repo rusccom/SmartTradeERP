@@ -1,20 +1,23 @@
 import { Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { useServerDataTable } from "../../../model/data-table/useServerDataTable";
 import DataTable from "./DataTable";
 
 function ServerListTable(props) {
   const table = useServerDataTable(props.preset);
-  const api = readPublicApi(table);
+  const [rowSelection, setRowSelection] = useState({});
+  useEffect(() => setRowSelection({}), [table.data]);
+  const api = readPublicApi(table, props, rowSelection, setRowSelection);
   return (
     <>
-      <DataTable {...readDataTableProps(props, table, api)} />
+      <DataTable {...readDataTableProps(props, table, api, rowSelection, setRowSelection)} />
       {renderSlot(props.children, api)}
     </>
   );
 }
 
-function readDataTableProps(props, table, api) {
+function readDataTableProps(props, table, api, rowSelection, setRowSelection) {
   return {
     columns: props.preset.columns,
     data: table.data,
@@ -26,6 +29,9 @@ function readDataTableProps(props, table, api) {
     onRetry: table.retry,
     actions: renderActions(props, api),
     components: props.components,
+    selectable: props.selectable === true,
+    rowSelection,
+    onRowSelectionChange: setRowSelection,
     ...readOptionalProps(props),
     ...table.tableState,
   };
@@ -33,10 +39,19 @@ function readDataTableProps(props, table, api) {
 
 function readOptionalProps(props) {
   return {
-    onRowClick: props.onRowClick,
+    onRowOpen: props.onRowOpen || props.onRowClick,
     emptyText: props.emptyText,
-    expandable: props.expandable,
-    getSubRows: props.getSubRows,
+    subRows: readSubRowsConfig(props),
+  };
+}
+
+function readSubRowsConfig(props) {
+  if (props.subRows) return props.subRows;
+  return {
+    enabled: props.expandable === true,
+    getRows: props.getSubRows,
+    canExpand: props.canExpandRow,
+    onRowOpen: props.onSubRowOpen,
   };
 }
 
@@ -44,15 +59,24 @@ function readSearchable(props) {
   return props.searchable ?? (props.preset.capabilities.search === true);
 }
 
-function readPublicApi(table) {
+function readPublicApi(table, props, rowSelection, setRowSelection) {
+  const selectedRows = readSelectedRows(table.data, props.preset.rowId, rowSelection);
   return {
     data: table.data,
     total: table.total,
     loading: table.loading,
     error: table.error,
+    selectedRows,
+    selectedCount: selectedRows.length,
+    selectedRow: selectedRows[0] || null,
     retry: table.retry,
     refresh: table.retry,
+    clearSelection: () => setRowSelection({}),
   };
+}
+
+function readSelectedRows(rows, getRowId, rowSelection) {
+  return rows.filter((row, index) => rowSelection[getRowId(row, index)]);
 }
 
 function renderActions(props, api) {

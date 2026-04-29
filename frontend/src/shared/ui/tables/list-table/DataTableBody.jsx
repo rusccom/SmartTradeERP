@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 
 import { useI18n } from "../../../i18n/useI18n";
 
-function DataTableBody({ table, onRowClick, emptyText, expandable, getSubRows }) {
+function DataTableBody({ table, onRowOpen, emptyText, subRows }) {
   const { t } = useI18n();
   const [expandedRows, setExpandedRows] = useState(() => new Set());
   const subRowsCache = useRef(new Map());
@@ -18,9 +18,8 @@ function DataTableBody({ table, onRowClick, emptyText, expandable, getSubRows })
         <BodyRows
           key={row.id}
           row={row}
-          onRowClick={onRowClick}
-          expandable={expandable}
-          getSubRows={getSubRows}
+          onRowOpen={onRowOpen}
+          subRows={subRows}
           expandedRows={expandedRows}
           setExpandedRows={setExpandedRows}
           subRowsCache={subRowsCache}
@@ -44,30 +43,30 @@ function DataTableEmpty({ colSpan, emptyText }) {
 }
 
 function BodyRows(props) {
-  const { row, expandedRows, subRowsCache, t } = props;
+  const { row, expandedRows, subRows, subRowsCache, t } = props;
   const expanded = expandedRows.has(row.id);
-  const subRows = subRowsCache.current.get(row.id) || [];
+  const loadedSubRows = subRowsCache.current.get(row.id) || [];
   return (
     <>
       <MainRow {...props} expanded={expanded} />
-      {expanded && <SubRows row={row} subRows={subRows} t={t} />}
+      {expanded && <SubRows row={row} rows={loadedSubRows} subRows={subRows} t={t} />}
     </>
   );
 }
 
-function MainRow({ row, onRowClick, expandable, getSubRows, expanded, expandedRows, setExpandedRows, subRowsCache }) {
-  const className = readMainRowClass(onRowClick);
-  const onClick = onRowClick ? () => onRowClick(row.original) : undefined;
+function MainRow(props) {
+  const { row, onRowOpen } = props;
+  const className = readRowClass(onRowOpen);
+  const onClick = onRowOpen ? () => onRowOpen(row.original) : undefined;
+  const firstDataColumnId = readFirstDataColumnId(row);
   return (
     <tr className={className} onClick={onClick}>
-      {row.getVisibleCells().map((cell, index) => (
+      {row.getVisibleCells().map((cell) => (
         <td key={cell.id} className="dt-td">
           <MainCell
             cell={cell}
-            isFirst={index === 0}
-            expanded={expanded}
-            expandable={expandable}
-            onExpand={(event) => handleExpand({ event, row, expandedRows, setExpandedRows, subRowsCache, getSubRows })}
+            isFirstData={cell.column.id === firstDataColumnId}
+            {...props}
           />
         </td>
       ))}
@@ -75,39 +74,57 @@ function MainRow({ row, onRowClick, expandable, getSubRows, expanded, expandedRo
   );
 }
 
-function MainCell({ cell, isFirst, expanded, expandable, onExpand }) {
+function MainCell(props) {
+  const { cell, isFirstData } = props;
   const content = renderMainCellValue(cell);
-  if (!expandable || !isFirst) {
+  if (!canShowExpand(props)) {
     return content;
   }
   return (
     <div className="dt-expand-cell">
-      <button className="dt-expand-btn" type="button" onClick={onExpand}>
-        {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+      <button className="dt-expand-btn" type="button" onClick={(event) => handleExpand(createExpandParams(props, event))}>
+        {props.expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
       </button>
       <span>{content}</span>
     </div>
   );
 }
 
-function SubRows({ row, subRows, t }) {
-  return subRows.map((subRow, index) => (
-    <tr key={`${row.id}-sub-${index}`} className="dt-row dt-row--sub">
-      {row.getVisibleCells().map((cell, cellIndex) => (
+function SubRows({ row, rows, subRows, t }) {
+  const firstDataColumnId = readFirstDataColumnId(row);
+  const onOpen = subRows?.onRowOpen;
+  return rows.map((subRow, index) => (
+    <tr key={`${row.id}-sub-${index}`} className={readSubRowClass(onOpen)} onClick={createSubRowClick(onOpen, subRow, row)}>
+      {row.getVisibleCells().map((cell) => (
         <td key={`${cell.id}-sub-${index}`} className="dt-td">
-          <SubCell columnDef={cell.column.columnDef} row={subRow} isFirst={cellIndex === 0} t={t} />
+          <SubCell columnDef={cell.column.columnDef} row={subRow} isFirstData={cell.column.id === firstDataColumnId} t={t} />
         </td>
       ))}
     </tr>
   ));
 }
 
-function SubCell({ columnDef, row, isFirst, t }) {
+function SubCell({ columnDef, row, isFirstData, t }) {
   const content = resolveSubCellValue(columnDef, row, t);
-  if (!isFirst) {
+  if (!isFirstData) {
     return content;
   }
   return <div className="dt-sub-indent">{content}</div>;
+}
+
+function canShowExpand({ isFirstData, row, subRows }) {
+  if (!subRowsEnabled(subRows) || !isFirstData) return false;
+  const canExpand = subRows?.canExpand;
+  return typeof canExpand === "function" ? canExpand(row.original) : true;
+}
+
+function createExpandParams(props, event) {
+  const { expandedRows, row, setExpandedRows, subRows, subRowsCache } = props;
+  return { event, row, expandedRows, setExpandedRows, subRowsCache, getSubRows: subRows?.getRows };
+}
+
+function readFirstDataColumnId(row) {
+  return row.getVisibleCells().find((cell) => cell.column.id !== "select")?.column.id;
 }
 
 function resolveSubCellValue(columnDef, row, t) {
@@ -163,9 +180,22 @@ async function loadSubRows(row, subRowsCache, getSubRows) {
   }
 }
 
-function readMainRowClass(onRowClick) {
-  const clickable = onRowClick ? "dt-row--clickable" : "";
+function readRowClass(onRowOpen) {
+  const clickable = onRowOpen ? "dt-row--clickable" : "";
   return `dt-row ${clickable}`.trim();
+}
+
+function readSubRowClass(onRowOpen) {
+  const clickable = onRowOpen ? "dt-row--clickable" : "";
+  return `dt-row dt-row--sub ${clickable}`.trim();
+}
+
+function createSubRowClick(onOpen, subRow, row) {
+  return onOpen ? () => onOpen(subRow, row.original) : undefined;
+}
+
+function subRowsEnabled(subRows) {
+  return subRows?.enabled === true;
 }
 
 function addToSet(set, value) {

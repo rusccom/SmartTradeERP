@@ -148,6 +148,14 @@
   vertical-align: middle;
 }
 
+.dt-select-checkbox {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: #0f172a;
+  cursor: pointer;
+}
+
 .dt-row {
   transition: background-color 0.1s;
 }

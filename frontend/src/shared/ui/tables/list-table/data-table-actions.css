@@ -1,9 +1,6 @@
 .dt-action-primary {
   min-height: 32px;
   border-radius: 6px;
-  border: 1px solid #0f172a;
-  background: #0f172a;
-  color: #ffffff;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
@@ -12,6 +9,9 @@
   justify-content: center;
   gap: 6px;
   padding: 0 12px;
+  border: 1px solid #0f172a;
+  background: #0f172a;
+  color: #ffffff;
 }
 
 .dt-action-primary:hover {

@@ -6,6 +6,7 @@ import DataTableBody from "./DataTableBody";
 import DataTableError from "./DataTableError";
 import DataTableHeader from "./DataTableHeader";
 import DataTablePagination from "./DataTablePagination";
+import DataTableSelectionCheckbox from "./DataTableSelectionCheckbox";
 import DataTableToolbar from "./DataTableToolbar";
 import "./data-table-actions.css";
 import "./data-table.css";
@@ -33,7 +34,7 @@ function DataTable(props) {
 }
 
 function useDataTableInstance(props) {
-  const mappedColumns = useMemo(() => mapColumns(props.columns), [props.columns]);
+  const mappedColumns = useMemo(() => readColumns(props), [props.columns, props.selectable]);
   return useReactTable({
     data: props.data,
     columns: mappedColumns,
@@ -42,6 +43,8 @@ function useDataTableInstance(props) {
     onSortingChange: props.onSortingChange,
     onGlobalFilterChange: props.onGlobalFilterChange,
     onPaginationChange: props.onPaginationChange,
+    onRowSelectionChange: props.onRowSelectionChange,
+    enableRowSelection: props.selectable === true,
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
@@ -55,6 +58,7 @@ function readControlledState(props) {
     sorting: props.sorting,
     globalFilter: props.globalFilter,
     pagination: props.pagination,
+    rowSelection: props.rowSelection || {},
   };
 }
 
@@ -83,10 +87,9 @@ function TableBlock({ table, props, loadingClass, emptyText }) {
         {showHeader && <DataTableHeader table={table} />}
         <DataTableBody
           table={table}
-          onRowClick={props.onRowClick}
+          onRowOpen={props.onRowOpen}
           emptyText={emptyText}
-          expandable={props.expandable === true}
-          getSubRows={props.getSubRows}
+          subRows={props.subRows}
         />
       </table>
     </div>
@@ -107,13 +110,14 @@ function readSlots(props) {
   };
 }
 
-function mapColumns(columns) {
-  return columns.map((column) => mapColumn(column));
+function readColumns(props) {
+  const columns = props.columns.map((column) => mapColumn(column));
+  return props.selectable ? [createSelectionColumn(), ...columns] : columns;
 }
 
 function mapColumn(column) {
   const mapped = {
-    id: column.accessorKey,
+    id: column.id || column.accessorKey,
     accessorKey: column.accessorKey,
     header: column.header,
     size: column.size,
@@ -127,6 +131,30 @@ function mapColumn(column) {
     mapped.cell = (info) => column.cell(info.getValue(), info.row.original);
   }
   return mapped;
+}
+
+function createSelectionColumn() {
+  return {
+    id: "select",
+    size: 42,
+    enableSorting: false,
+    header: ({ table }) => (
+      <DataTableSelectionCheckbox
+        checked={table.getIsAllPageRowsSelected()}
+        indeterminate={table.getIsSomePageRowsSelected()}
+        onChange={table.getToggleAllPageRowsSelectedHandler()}
+        label="Select all rows"
+      />
+    ),
+    cell: ({ row }) => (
+      <DataTableSelectionCheckbox
+        checked={row.getIsSelected()}
+        disabled={!row.getCanSelect()}
+        onChange={row.getToggleSelectedHandler()}
+        label="Select row"
+      />
+    ),
+  };
 }
 
 export default DataTable;
