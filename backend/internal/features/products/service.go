@@ -168,6 +168,7 @@ func normalizeCreate(req CreateRequest) CreateRequest {
 	req.Unit = validation.Clean(req.Unit)
 	req.SKUCode = validation.Clean(req.SKUCode)
 	req.Barcode = validation.Clean(req.Barcode)
+	req.VariantName = validation.Clean(req.VariantName)
 	return req
 }
 

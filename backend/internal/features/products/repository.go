@@ -123,10 +123,18 @@ func (r *Repository) Create(ctx context.Context, tx pgx.Tx, tenantID, productID 
 func (r *Repository) CreateDefaultVariant(ctx context.Context, tx pgx.Tx, input createProductTx) error {
     query := `INSERT INTO catalog.product_variants
         (id, tenant_id, product_id, name, sku_code, barcode, unit, price)
-        VALUES ($1,$2,$3,'Default',$4,$5,$6,$7)`
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
     _, err := tx.Exec(ctx, query, input.variantID, input.tenantID, input.productID,
+        readDefaultVariantName(input.req),
         input.req.SKUCode, input.req.Barcode, input.req.Unit, input.req.Price)
     return err
+}
+
+func readDefaultVariantName(req CreateRequest) string {
+    if req.VariantName != "" {
+        return req.VariantName
+    }
+    return "Default"
 }
 
 func (r *Repository) GetByID(ctx context.Context, tenantID, id string) (Product, error) {

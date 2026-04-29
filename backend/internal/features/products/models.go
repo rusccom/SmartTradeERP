@@ -69,6 +69,7 @@ type CreateRequest struct {
     Price       decimal.Decimal `json:"price"`
     SKUCode     string          `json:"sku_code"`
     Barcode     string          `json:"barcode"`
+    VariantName string          `json:"variant_name"`
 }
 
 type UpdateRequest struct {

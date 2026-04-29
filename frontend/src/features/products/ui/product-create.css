@@ -1,49 +1,96 @@
-.product-mode-switch,
-.product-variants-builder {
+.product-create-form {
+  display: grid;
+  gap: 18px;
+}
+
+.product-create-card,
+.product-variants-section {
   padding: 18px;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
-.product-mode-switch {
+.product-create-card-title,
+.product-variants-section-title {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.product-create-grid,
+.product-variant-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.product-media-placeholder {
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  gap: 10px;
+  border: 1px dashed #94a3b8;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #475569;
+  text-align: center;
+}
+
+.product-media-placeholder p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.product-media-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.product-media-button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.product-variants-section {
   display: grid;
   gap: 14px;
 }
 
-.product-mode-switch-head,
-.product-variants-head {
+.product-variants-section-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
 
-.product-mode-switch-label,
-.product-variants-title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f172a;
+.product-variants-section-title {
+  margin-bottom: 6px;
 }
 
-.product-mode-switch-text,
 .product-variants-text,
 .product-variant-card-note {
-  margin: 6px 0 0;
+  margin: 0;
   color: #475569;
   line-height: 1.5;
 }
 
-.product-mode-switch-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.product-mode-btn,
 .product-variants-add,
-.product-variant-remove {
+.product-variant-remove,
+.product-create-primary,
+.product-create-secondary {
   min-height: 42px;
   border-radius: 12px;
   padding: 0 16px;
@@ -53,45 +100,36 @@
   transition: 160ms ease;
 }
 
-.product-mode-btn {
+.product-variant-remove,
+.product-create-secondary {
   border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #334155;
 }
 
-.product-mode-btn.is-active {
-  border-color: #2563eb;
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.product-variants-add {
+.product-variants-add,
+.product-create-primary {
   border: 1px solid #2563eb;
   background: #2563eb;
   color: #ffffff;
 }
 
-.product-variant-remove {
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #334155;
-}
-
-.product-mode-btn:disabled,
 .product-variants-add:disabled,
-.product-variant-remove:disabled {
+.product-variant-remove:disabled,
+.product-create-primary:disabled {
   opacity: 0.64;
   cursor: not-allowed;
-}
-
-.product-variants-builder {
-  display: grid;
-  gap: 16px;
 }
 
 .product-variants-list {
   display: grid;
   gap: 14px;
+}
+
+.product-variants-builder {
+  display: grid;
+  gap: 16px;
+  padding-top: 4px;
 }
 
 .product-variant-card {
@@ -120,27 +158,36 @@
   color: #0f172a;
 }
 
-.product-variant-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+.product-create-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.product-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 @media (max-width: 768px) {
-  .product-mode-switch,
-  .product-variants-builder,
+  .product-create-card,
+  .product-variants-section,
   .product-variant-card {
     padding: 14px;
   }
 
-  .product-mode-switch-head,
-  .product-variants-head,
+  .product-create-grid,
+  .product-variant-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-variants-section-head,
   .product-variant-card-head {
     flex-direction: column;
   }
 
-  .product-mode-switch-actions,
-  .product-variant-grid {
-    grid-template-columns: 1fr;
+  .product-create-actions {
+    flex-direction: column-reverse;
   }
 }
