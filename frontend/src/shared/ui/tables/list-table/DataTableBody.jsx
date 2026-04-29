@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { useI18n } from "../../../i18n/useI18n";
+import DataTableOpenLink from "./DataTableOpenLink";
 
 function DataTableBody({ table, onRowOpen, emptyText, subRows }) {
   const { t } = useI18n();
@@ -43,24 +44,22 @@ function DataTableEmpty({ colSpan, emptyText }) {
 }
 
 function BodyRows(props) {
-  const { row, expandedRows, subRows, subRowsCache, t } = props;
+  const { row, expandedRows, onRowOpen, subRowsCache, t } = props;
   const expanded = expandedRows.has(row.id);
   const loadedSubRows = subRowsCache.current.get(row.id) || [];
   return (
     <>
       <MainRow {...props} expanded={expanded} />
-      {expanded && <SubRows row={row} rows={loadedSubRows} subRows={subRows} t={t} />}
+      {expanded && <SubRows row={row} rows={loadedSubRows} t={t} onRowOpen={onRowOpen} />}
     </>
   );
 }
 
 function MainRow(props) {
-  const { row, onRowOpen } = props;
-  const className = readRowClass(onRowOpen);
-  const onClick = onRowOpen ? () => onRowOpen(row.original) : undefined;
+  const { row } = props;
   const firstDataColumnId = readFirstDataColumnId(row);
   return (
-    <tr className={className} onClick={onClick}>
+    <tr className="dt-row">
       {row.getVisibleCells().map((cell) => (
         <td key={cell.id} className="dt-td">
           <MainCell
@@ -90,22 +89,21 @@ function MainCell(props) {
   );
 }
 
-function SubRows({ row, rows, subRows, t }) {
+function SubRows({ row, rows, onRowOpen, t }) {
   const firstDataColumnId = readFirstDataColumnId(row);
-  const onOpen = subRows?.onRowOpen;
   return rows.map((subRow, index) => (
-    <tr key={`${row.id}-sub-${index}`} className={readSubRowClass(onOpen)} onClick={createSubRowClick(onOpen, subRow, row)}>
+    <tr key={`${row.id}-sub-${index}`} className="dt-row dt-row--sub">
       {row.getVisibleCells().map((cell) => (
         <td key={`${cell.id}-sub-${index}`} className="dt-td">
-          <SubCell columnDef={cell.column.columnDef} row={subRow} isFirstData={cell.column.id === firstDataColumnId} t={t} />
+          <SubCell columnDef={cell.column.columnDef} row={subRow} isFirstData={cell.column.id === firstDataColumnId} onRowOpen={onRowOpen} t={t} />
         </td>
       ))}
     </tr>
   ));
 }
 
-function SubCell({ columnDef, row, isFirstData, t }) {
-  const content = resolveSubCellValue(columnDef, row, t);
+function SubCell({ columnDef, row, isFirstData, onRowOpen, t }) {
+  const content = resolveSubCellValue(columnDef, row, onRowOpen, t);
   if (!isFirstData) {
     return content;
   }
@@ -127,18 +125,42 @@ function readFirstDataColumnId(row) {
   return row.getVisibleCells().find((cell) => cell.column.id !== "select")?.column.id;
 }
 
-function resolveSubCellValue(columnDef, row, t) {
+function resolveSubCellValue(columnDef, row, onRowOpen, t) {
   const key = readAccessorKey(columnDef);
   const value = key ? row[key] : "";
   const renderer = columnDef.meta?.rawCell;
   if (typeof renderer === "function") {
-    return renderer(value, row);
+    return renderer(value, row, createCellApi(columnDef, row, onRowOpen));
+  }
+  if (columnDef.meta?.openOnClick === true) {
+    return renderOpenCell(value, row, onRowOpen);
   }
   if (value === undefined || value === null) {
-    return "";
+    return formatCellValue(value);
   }
   if (typeof value === "boolean") {
     return value ? t("common.yes") : t("common.no");
+  }
+  return String(value);
+}
+
+function createCellApi(columnDef, row, onRowOpen) {
+  return {
+    openLink: columnDef.meta?.openOnClick ? createOpenLink(onRowOpen, row) : null,
+  };
+}
+
+function createOpenLink(onRowOpen, row) {
+  return (children, target = row) => <DataTableOpenLink onOpen={onRowOpen} target={target}>{children}</DataTableOpenLink>;
+}
+
+function renderOpenCell(value, row, onRowOpen) {
+  return <DataTableOpenLink onOpen={onRowOpen} target={row}>{formatCellValue(value)}</DataTableOpenLink>;
+}
+
+function formatCellValue(value) {
+  if (value === undefined || value === null) {
+    return "";
   }
   return String(value);
 }
@@ -152,10 +174,7 @@ function renderMainCellValue(cell) {
     return flexRender(cell.column.columnDef.cell, cell.getContext());
   }
   const value = cell.getValue();
-  if (value === undefined || value === null) {
-    return "";
-  }
-  return String(value);
+  return formatCellValue(value);
 }
 
 async function handleExpand({ event, row, expandedRows, setExpandedRows, subRowsCache, getSubRows }) {
@@ -178,20 +197,6 @@ async function loadSubRows(row, subRowsCache, getSubRows) {
   } catch {
     subRowsCache.current.set(row.id, []);
   }
-}
-
-function readRowClass(onRowOpen) {
-  const clickable = onRowOpen ? "dt-row--clickable" : "";
-  return `dt-row ${clickable}`.trim();
-}
-
-function readSubRowClass(onRowOpen) {
-  const clickable = onRowOpen ? "dt-row--clickable" : "";
-  return `dt-row dt-row--sub ${clickable}`.trim();
-}
-
-function createSubRowClick(onOpen, subRow, row) {
-  return onOpen ? () => onOpen(subRow, row.original) : undefined;
 }
 
 function subRowsEnabled(subRows) {

@@ -1,6 +1,7 @@
 import { FALLBACK_STATE } from "./tableState";
 
 const DEFAULT_CAPABILITIES = { sorting: false, search: false };
+const DEFAULT_SEARCH = { queryKey: "search" };
 const REQUIRED_FIELDS = ["id", "rowId", "columns", "fetchPage"];
 
 export function createTablePreset(config) {
@@ -9,6 +10,7 @@ export function createTablePreset(config) {
     ...config,
     defaultState: mergeState(config.defaultState),
     capabilities: mergeCapabilities(config.capabilities),
+    search: mergeSearch(config.search),
   };
   return Object.freeze(preset);
 }
@@ -35,4 +37,11 @@ function mergeState(defaultState) {
 
 function mergeCapabilities(capabilities) {
   return { ...DEFAULT_CAPABILITIES, ...(capabilities || {}) };
+}
+
+function mergeSearch(search) {
+  if (typeof search === "string") {
+    return { ...DEFAULT_SEARCH, queryKey: search };
+  }
+  return { ...DEFAULT_SEARCH, ...(search || {}) };
 }

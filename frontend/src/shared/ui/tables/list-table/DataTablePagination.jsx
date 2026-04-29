@@ -1,13 +1,22 @@
 import { useI18n } from "../../../i18n/useI18n";
 
-function DataTablePagination({ table }) {
+function DataTablePagination({ table, showCount }) {
   const { t } = useI18n();
   const model = readPaginationModel(table, t);
   return (
     <div className="dt-pagination">
-      <span className="dt-page-info">{model.range}</span>
+      <PaginationInfo model={model} showCount={showCount} t={t} />
       <PageControls table={table} model={model} />
       <PageSizeSelect table={table} pageSize={model.pageSize} t={t} />
+    </div>
+  );
+}
+
+function PaginationInfo({ model, showCount, t }) {
+  return (
+    <div className="dt-pagination-info">
+      <span className="dt-page-info">{model.range}</span>
+      {showCount && <span className="dt-count">{t("dataTable.totalCount", { count: model.rowCount })}</span>}
     </div>
   );
 }
@@ -22,6 +31,7 @@ function readPaginationModel(table, t) {
     pageIndex,
     pageSize,
     pageCount,
+    rowCount,
     range: readRange(pageIndex, pageSize, rowCount, t),
     pages: readVisiblePages(pageIndex, pageCount),
   };

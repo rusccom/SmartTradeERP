@@ -5,6 +5,7 @@ import { useI18n } from "../../../i18n/useI18n";
 import DataTableBody from "./DataTableBody";
 import DataTableError from "./DataTableError";
 import DataTableHeader from "./DataTableHeader";
+import DataTableOpenLink from "./DataTableOpenLink";
 import DataTablePagination from "./DataTablePagination";
 import DataTableSelectionCheckbox from "./DataTableSelectionCheckbox";
 import DataTableToolbar from "./DataTableToolbar";
@@ -28,13 +29,13 @@ function DataTable(props) {
         loadingClass={loadingClass}
         emptyText={emptyText}
       />
-      {slots.pagination && <DataTablePagination table={table} />}
+      {slots.pagination && <DataTablePagination table={table} showCount={slots.count} />}
     </section>
   );
 }
 
 function useDataTableInstance(props) {
-  const mappedColumns = useMemo(() => readColumns(props), [props.columns, props.selectable]);
+  const mappedColumns = useMemo(() => readColumns(props), [props.columns, props.selectable, props.onRowOpen]);
   return useReactTable({
     data: props.data,
     columns: mappedColumns,
@@ -69,8 +70,6 @@ function ToolbarBlock({ props, slots }) {
       onGlobalFilterChange={props.onGlobalFilterChange}
       searchable={slots.search}
       actions={props.actions}
-      showCount={slots.count}
-      rowCount={props.rowCount}
     />
   );
 }
@@ -105,17 +104,17 @@ function readSlots(props) {
     search,
     actions,
     count,
-    toolbar: components.toolbar !== false && (search || actions || count),
+    toolbar: components.toolbar !== false && (search || actions),
     pagination: components.pagination !== false,
   };
 }
 
 function readColumns(props) {
-  const columns = props.columns.map((column) => mapColumn(column));
+  const columns = props.columns.map((column) => mapColumn(column, props));
   return props.selectable ? [createSelectionColumn(), ...columns] : columns;
 }
 
-function mapColumn(column) {
+function mapColumn(column, props) {
   const mapped = {
     id: column.id || column.accessorKey,
     accessorKey: column.accessorKey,
@@ -125,12 +124,40 @@ function mapColumn(column) {
     meta: {
       rawCell: column.cell,
       accessorKey: column.accessorKey,
+      openOnClick: column.openOnClick === true,
     },
   };
   if (column.cell) {
-    mapped.cell = (info) => column.cell(info.getValue(), info.row.original);
+    mapped.cell = (info) => renderCustomCell(column, props, info);
+  } else if (column.openOnClick === true) {
+    mapped.cell = (info) => renderOpenCell(info.getValue(), info.row.original, props.onRowOpen);
   }
   return mapped;
+}
+
+function renderCustomCell(column, props, info) {
+  return column.cell(info.getValue(), info.row.original, createCellApi(column, props, info.row.original));
+}
+
+function renderOpenCell(value, row, onRowOpen) {
+  return <DataTableOpenLink onOpen={onRowOpen} target={row}>{formatValue(value)}</DataTableOpenLink>;
+}
+
+function createCellApi(column, props, row) {
+  return {
+    openLink: column.openOnClick === true ? createOpenLink(props.onRowOpen, row) : null,
+  };
+}
+
+function createOpenLink(onRowOpen, row) {
+  return (children, target = row) => <DataTableOpenLink onOpen={onRowOpen} target={target}>{children}</DataTableOpenLink>;
+}
+
+function formatValue(value) {
+  if (value === undefined || value === null) {
+    return "";
+  }
+  return String(value);
 }
 
 function createSelectionColumn() {

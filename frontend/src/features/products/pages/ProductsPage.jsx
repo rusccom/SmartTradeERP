@@ -1,4 +1,3 @@
-import { Pencil } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useI18n } from "../../../shared/i18n/useI18n";
@@ -17,9 +16,8 @@ function ProductsPage() {
     <ServerListTable
       preset={preset}
       selectable={true}
-      actions={(api) => renderEditAction(t, api, setEditProduct)}
       onRowOpen={setEditProduct}
-      subRows={readSubRowsConfig(setEditProduct)}
+      subRows={readSubRowsConfig()}
       primaryAction={createProductAction(t, setCreateOpen)}
     >
       {({ retry }) => (
@@ -39,21 +37,11 @@ function createProductAction(t, setCreateOpen) {
   };
 }
 
-function renderEditAction(t, api, setEditProduct) {
-  return (
-    <button className="dt-action-secondary" type="button" disabled={api.selectedCount !== 1} onClick={() => setEditProduct(api.selectedRow)}>
-      <Pencil size={15} />
-      <span>{t("products.editButton")}</span>
-    </button>
-  );
-}
-
-function readSubRowsConfig(setEditProduct) {
+function readSubRowsConfig() {
   return {
     enabled: true,
     getRows: loadProductVariants,
     canExpand: hasMultipleVariants,
-    onRowOpen: (_row, product) => setEditProduct(product),
   };
 }
 

@@ -13,6 +13,7 @@ export function createProductsTablePreset(t) {
     rowId: readProductId,
     columns: createColumns(t),
     capabilities,
+    search: { queryKey: "search" },
     mapRows,
     mapStateToQuery: () => ({ include: "variants,stock" }),
   });
@@ -23,11 +24,16 @@ function createColumns(t) {
     {
       accessorKey: "name",
       header: t("products.columns.name"),
-      cell: (value, row) => createElement(ProductTableProductCell, { row, value }),
+      openOnClick: true,
+      cell: (value, row, api) => createProductCell(t, value, row, api),
     },
     { accessorKey: "price_label", header: t("products.columns.price"), enableSorting: false, cell: readPriceCell },
     { accessorKey: "stock_label", header: t("products.columns.stock"), enableSorting: false, cell: readStockCell },
   ];
+}
+
+function createProductCell(t, value, row, api) {
+  return createElement(ProductTableProductCell, { openLink: api.openLink, row, t, value });
 }
 
 function readProductId(row) {

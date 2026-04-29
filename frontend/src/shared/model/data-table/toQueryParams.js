@@ -28,17 +28,26 @@ function appendSearch(params, state, preset) {
   if (preset.capabilities.search !== true || value === "") {
     return;
   }
-  params.search = value;
+  params[readSearchQueryKey(preset)] = value;
+}
+
+function readSearchQueryKey(preset) {
+  return preset.search?.queryKey || "search";
 }
 
 function readCustomParams(state, preset) {
   const source = preset.mapStateToQuery ? preset.mapStateToQuery(state) : {};
+  const reserved = readReservedKeys(preset);
   return Object.entries(source || {}).reduce((acc, [key, value]) => {
-    if (!RESERVED_KEYS.has(key)) {
+    if (!reserved.has(key)) {
       acc[key] = value;
     }
     return acc;
   }, {});
+}
+
+function readReservedKeys(preset) {
+  return new Set([...RESERVED_KEYS, readSearchQueryKey(preset)]);
 }
 
 function cleanParams(params) {

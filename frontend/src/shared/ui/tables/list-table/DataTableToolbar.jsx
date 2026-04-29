@@ -16,7 +16,6 @@ function DataTableToolbar(props) {
         )}
       </div>
       <div className="dt-toolbar-right">
-        {props.showCount && <span className="dt-count">{t("dataTable.totalCount", { count: props.rowCount })}</span>}
         {props.actions && <div className="dt-toolbar-actions">{props.actions}</div>}
       </div>
     </div>

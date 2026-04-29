@@ -1,23 +1,20 @@
-function ProductTableProductCell({ row, value }) {
+import ProductTableMetaList from "./ProductTableMetaList";
+
+function ProductTableProductCell({ openLink, row, t, value }) {
   const name = value || row.name || "";
-  const details = readDetails(row);
   return (
     <div className="product-table-product">
-      <span className="product-table-name">{name}</span>
-      {details.length > 0 && (
-        <span className="product-table-meta">
-          {details.map((item) => <span key={item} className="product-table-meta-item">{item}</span>)}
-        </span>
-      )}
+      {renderName(name, row, openLink)}
+      <ProductTableMetaList row={row} t={t} />
     </div>
   );
 }
 
-function readDetails(row) {
-  return [
-    row.sku_code ? `SKU: ${row.sku_code}` : "",
-    row.barcode ? `Barcode: ${row.barcode}` : "",
-  ].filter(Boolean);
+function renderName(name, row, openLink) {
+  if (openLink) {
+    return openLink(name, row.product || row);
+  }
+  return <span className="product-table-name">{name}</span>;
 }
 
 export default ProductTableProductCell;

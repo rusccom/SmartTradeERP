@@ -44,4 +44,8 @@
     justify-content: center;
     flex-wrap: wrap;
   }
+
+  .dt-pagination-info {
+    justify-content: space-between;
+  }
 }
