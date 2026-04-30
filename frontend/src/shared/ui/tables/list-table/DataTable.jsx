@@ -69,6 +69,7 @@ function ToolbarBlock({ props, slots }) {
       globalFilter={props.globalFilter}
       onGlobalFilterChange={props.onGlobalFilterChange}
       searchable={slots.search}
+      search={props.search}
       actions={props.actions}
     />
   );

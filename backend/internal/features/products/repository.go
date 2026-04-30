@@ -6,9 +6,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	productsearch "smarterp/backend/internal/features/products/search"
 	"smarterp/backend/internal/shared/db"
 	"smarterp/backend/internal/shared/httpx"
-	"smarterp/backend/internal/shared/search"
 )
 
 type Repository struct {
@@ -58,7 +58,7 @@ func (r *Repository) load(ctx context.Context, tenantID string, query ProductLis
 func appendListFilters(query string, args []any, productQuery ProductListQuery) (string, []any) {
 	listQuery := productQuery.List
 	query = addProductScopeFilter(query)
-	query, args = search.AppendProductSearch(query, args, listQuery.Search)
+	query, args = productsearch.AppendProductSearch(query, args, listQuery.Search)
 	return appendProductStockFilter(query, args, productQuery.Stock)
 }
 

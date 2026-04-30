@@ -154,6 +154,7 @@ export const messagesByLocale = {
     "products.form.variantName": "Variant name",
     "products.form.variantSavedHint": "Saved already. This row is locked until the remaining variants finish saving.",
     "products.form.variantsEmptyHint": "Add a variant to move SKU and barcode from the product inventory into variant rows.",
+    "products.search.placeholder": "Search products, variants, SKU, barcode...",
     "products.tabs.bundles": "Bundles",
     "products.tabs.label": "Product catalog sections",
     "products.tabs.products": "Products",

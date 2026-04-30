@@ -1,6 +1,5 @@
-import { Search } from "lucide-react";
-
 import { useI18n } from "../../../i18n/useI18n";
+import DataTableSearchField from "./DataTableSearchField";
 
 function DataTableToolbar(props) {
   const { t } = useI18n();
@@ -8,10 +7,10 @@ function DataTableToolbar(props) {
     <div className="dt-toolbar">
       <div className="dt-toolbar-left">
         {props.searchable && (
-          <SearchField
+          <DataTableSearchField
             value={props.globalFilter}
             onChange={props.onGlobalFilterChange}
-            placeholder={t("dataTable.searchPlaceholder")}
+            placeholder={readSearchPlaceholder(props.search, t)}
           />
         )}
       </div>
@@ -22,19 +21,11 @@ function DataTableToolbar(props) {
   );
 }
 
-function SearchField({ value, onChange, placeholder }) {
-  return (
-    <label className="dt-search-wrap">
-      <Search className="dt-search-icon" size={14} />
-      <input
-        className="dt-search"
-        type="text"
-        value={value || ""}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-      />
-    </label>
-  );
+function readSearchPlaceholder(search, t) {
+  if (search?.placeholder) {
+    return search.placeholder;
+  }
+  return t(search?.placeholderKey || "dataTable.searchPlaceholder");
 }
 
 export default DataTableToolbar;

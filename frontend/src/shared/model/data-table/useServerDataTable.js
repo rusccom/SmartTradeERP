@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { applyStateChange } from "./tableState";
+import { readTableSearchDebounce } from "./tableSearchFilter";
 import { toQueryParams } from "./toQueryParams";
 import { useDebounce } from "./useDebounce";
 
 export function useServerDataTable(preset) {
   const table = useTableState(preset.defaultState);
   const fetchState = useFetchState();
-  const requestState = useRequestState(table.state);
+  const requestState = useRequestState(table.state, preset.search);
   useFetchEffect({ preset, requestState, retryToken: table.retryToken, ...fetchState });
   return buildHookResult({ ...fetchState, retry: table.retry, state: table.state, tableHandlers: table.handlers });
 }
@@ -28,8 +29,9 @@ function useFetchState() {
   return { data, total, loading, error, setData, setTotal, setLoading, setError };
 }
 
-function useRequestState(state) {
-  const debouncedGlobalFilter = useDebounce(state.globalFilter, 300);
+function useRequestState(state, search) {
+  const debounceMs = readTableSearchDebounce(search);
+  const debouncedGlobalFilter = useDebounce(state.globalFilter, debounceMs);
   return useMemo(
     () => createQueryState(state, debouncedGlobalFilter),
     [state.pagination, state.sorting, debouncedGlobalFilter],

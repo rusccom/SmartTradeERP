@@ -1,3 +1,5 @@
+import { serializeTableSearchFilter } from "./tableSearchFilter";
+
 const RESERVED_KEYS = new Set(["page", "per_page", "sort_by", "sort_dir", "search"]);
 
 export function toQueryParams(state, preset) {
@@ -24,11 +26,18 @@ function appendSorting(params, state, preset) {
 }
 
 function appendSearch(params, state, preset) {
-  const value = state.globalFilter.trim();
-  if (preset.capabilities.search !== true || value === "") {
+  if (!isSearchEnabled(preset)) {
+    return;
+  }
+  const value = serializeTableSearchFilter(preset.search, state.globalFilter);
+  if (value === "") {
     return;
   }
   params[readSearchQueryKey(preset)] = value;
+}
+
+function isSearchEnabled(preset) {
+  return preset.capabilities.search === true && preset.search?.enabled !== false;
 }
 
 function readSearchQueryKey(preset) {

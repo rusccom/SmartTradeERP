@@ -3,6 +3,7 @@ import { createElement } from "react";
 import { apiPaths } from "../../../shared/api/publicApi";
 import { createApiTablePreset } from "../../../shared/model/data-table/createApiTablePreset";
 import ProductTableProductCell from "../ui/ProductTableProductCell";
+import { productSearchFilter } from "./productSearchFilter";
 
 const capabilities = { sorting: true, search: true };
 
@@ -13,7 +14,7 @@ export function createProductsTablePreset(t) {
     rowId: readProductId,
     columns: createColumns(t),
     capabilities,
-    search: { queryKey: "search" },
+    search: productSearchFilter,
     mapRows,
     mapStateToQuery: () => ({ include: "variants,stock" }),
   });

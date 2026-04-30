@@ -1,17 +1,20 @@
 package search
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 func AppendProductSearch(query string, args []any, value string) (string, []any) {
-	value = CleanProductSearch(value)
+	value = cleanProductSearch(value)
 	if value == "" {
 		return query, args
 	}
-	query += ` AND ` + productPredicate(Position(args))
+	query += ` AND ` + productPredicate(position(args))
 	return query, append(args, value)
 }
 
-func CleanProductSearch(value string) string {
+func cleanProductSearch(value string) string {
 	value = strings.TrimSpace(value)
 	lower := strings.ToLower(value)
 	for _, prefix := range productSearchPrefixes() {
@@ -47,4 +50,8 @@ func compactSQL(field string) string {
 
 func compactParamSQL(param string) string {
 	return `replace(replace(lower($` + param + `), ' ', ''), '-', '')`
+}
+
+func position(args []any) string {
+	return strconv.Itoa(len(args) + 1)
 }

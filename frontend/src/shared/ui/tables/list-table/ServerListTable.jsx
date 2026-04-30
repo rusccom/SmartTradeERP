@@ -23,6 +23,7 @@ function readDataTableProps(props, table, api, rowSelection, setRowSelection) {
     data: table.data,
     getRowId: props.preset.rowId,
     searchable: readSearchable(props),
+    search: props.preset.search,
     rowCount: table.total,
     loading: table.loading,
     error: table.error,
@@ -56,7 +57,11 @@ function readSubRowsConfig(props) {
 }
 
 function readSearchable(props) {
-  return props.searchable ?? (props.preset.capabilities.search === true);
+  return props.searchable ?? isPresetSearchable(props.preset);
+}
+
+function isPresetSearchable(preset) {
+  return preset.capabilities.search === true && preset.search?.enabled !== false;
 }
 
 function readPublicApi(table, props, rowSelection, setRowSelection) {
