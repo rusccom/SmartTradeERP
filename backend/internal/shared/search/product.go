@@ -38,10 +38,7 @@ func productVariantPredicate(param string) string {
         OR COALESCE(v.sku_code,'') ILIKE '%' || $` + param + ` || '%'
         OR COALESCE(v.barcode,'') ILIKE '%' || $` + param + ` || '%'
         OR ` + compactSQL("v.sku_code") + ` LIKE '%' || ` + compactParamSQL(param) + ` || '%'
-        OR ` + compactSQL("v.barcode") + ` LIKE '%' || ` + compactParamSQL(param) + ` || '%'
-        OR COALESCE(v.option1,'') ILIKE '%' || $` + param + ` || '%'
-        OR COALESCE(v.option2,'') ILIKE '%' || $` + param + ` || '%'
-        OR COALESCE(v.option3,'') ILIKE '%' || $` + param + ` || '%'`
+        OR ` + compactSQL("v.barcode") + ` LIKE '%' || ` + compactParamSQL(param) + ` || '%'`
 }
 
 func compactSQL(field string) string {
