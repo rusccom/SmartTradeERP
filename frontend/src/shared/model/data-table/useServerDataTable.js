@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { applyStateChange } from "./tableState";
-import { readTableSearchDebounce } from "./tableSearchFilter";
+import { readTableSearchDebounce } from "./filters/tableSearchFilter";
 import { toQueryParams } from "./toQueryParams";
 import { useDebounce } from "./useDebounce";
 

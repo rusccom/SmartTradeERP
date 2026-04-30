@@ -1,4 +1,4 @@
-import { serializeTableSearchFilter } from "./tableSearchFilter";
+import { serializeTableSearchFilter } from "./filters/tableSearchFilter";
 
 const RESERVED_KEYS = new Set(["page", "per_page", "sort_by", "sort_dir", "search"]);
 

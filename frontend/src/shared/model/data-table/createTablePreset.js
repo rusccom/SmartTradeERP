@@ -1,5 +1,5 @@
 import { FALLBACK_STATE } from "./tableState";
-import { createTableSearchFilter } from "./tableSearchFilter";
+import { createTableSearchFilter } from "./filters/tableSearchFilter";
 
 const DEFAULT_CAPABILITIES = { sorting: false, search: false };
 const REQUIRED_FIELDS = ["id", "rowId", "columns", "fetchPage"];

@@ -1,4 +1,4 @@
-import { createTableSearchFilter } from "../../../shared/model/data-table/tableSearchFilter";
+import { createTableSearchFilter } from "../../../shared/model/data-table/filters/tableSearchFilter";
 
 export const productSearchFilter = createTableSearchFilter({
   id: "products",
