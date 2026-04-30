@@ -7,20 +7,20 @@ import { productSearchFilter } from "./productSearchFilter";
 
 const capabilities = { sorting: true, search: true };
 
-export function createProductsTablePreset(t) {
+export function createProductsTablePreset(t, formatMoney) {
   return createApiTablePreset({
     id: "products",
     path: apiPaths.products,
     rowId: readProductId,
-    columns: createColumns(t),
+    columns: createColumns(t, formatMoney),
     capabilities,
     search: productSearchFilter,
-    mapRows,
+    mapRows: (rows) => mapRows(rows, formatMoney),
     mapStateToQuery: () => ({ include: "variants,stock" }),
   });
 }
 
-function createColumns(t) {
+function createColumns(t, formatMoney) {
   return [
     {
       accessorKey: "name",
@@ -28,7 +28,7 @@ function createColumns(t) {
       openOnClick: true,
       cell: (value, row, api) => createProductCell(t, value, row, api),
     },
-    { accessorKey: "price_label", header: t("products.columns.price"), enableSorting: false, cell: readPriceCell },
+    { accessorKey: "price_label", header: t("products.columns.price"), enableSorting: false, cell: (value, row) => readPriceCell(value, row, formatMoney) },
     { accessorKey: "stock_label", header: t("products.columns.stock"), enableSorting: false, cell: readStockCell },
   ];
 }
@@ -41,11 +41,11 @@ function readProductId(row) {
   return row.id;
 }
 
-function mapRows(rows) {
-  return rows.map((row) => ({ ...row, ...readProductDisplay(row) }));
+function mapRows(rows, formatMoney) {
+  return rows.map((row) => ({ ...row, ...readProductDisplay(row, formatMoney) }));
 }
 
-function readProductDisplay(row) {
+function readProductDisplay(row, formatMoney) {
   const variants = readVariants(row);
   const single = variants.length === 1 ? variants[0] : null;
   const unit = single?.unit || readSharedValue(variants, "unit");
@@ -53,26 +53,26 @@ function readProductDisplay(row) {
     sku_code: single?.sku_code || "",
     barcode: single?.barcode || "",
     unit,
-    price_label: readPriceLabel(variants),
+    price_label: readPriceLabel(variants, formatMoney),
     stock_label: formatStock(row.global_qty, unit),
     global_qty: formatDecimal(row.global_qty),
   };
 }
 
-function readPriceCell(value, row) {
-  return value || formatDecimal(row.price);
+function readPriceCell(value, row, formatMoney) {
+  return value || formatMoney(row.price);
 }
 
 function readStockCell(value, row) {
   return value || formatStock(row.global_qty, row.unit);
 }
 
-function readPriceLabel(variants) {
+function readPriceLabel(variants, formatMoney) {
   const prices = variants.map((item) => Number(item.price)).filter(Number.isFinite);
   if (prices.length === 0) return "";
   const min = Math.min(...prices);
   const max = Math.max(...prices);
-  return min === max ? formatDecimal(min) : `${formatDecimal(min)} - ${formatDecimal(max)}`;
+  return min === max ? formatMoney(min) : `${formatMoney(min)} - ${formatMoney(max)}`;
 }
 
 function formatStock(quantity, unit) {

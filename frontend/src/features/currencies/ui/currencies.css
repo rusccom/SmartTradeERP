@@ -1,0 +1,143 @@
+.currency-settings {
+  display: grid;
+  gap: 14px;
+  max-width: 760px;
+}
+
+.currency-settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.currency-settings-head h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.currency-settings-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.currency-settings-actions button,
+.currency-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.currency-settings-actions button {
+  padding: 0 12px;
+}
+
+.currency-primary-btn {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.currency-settings-actions button:disabled,
+.currency-primary-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.currency-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.currency-summary--empty {
+  justify-content: flex-start;
+  color: #64748b;
+}
+
+.currency-summary-main,
+.currency-summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.currency-summary-code {
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.currency-summary-name,
+.currency-summary-meta {
+  color: #475569;
+  font-size: 14px;
+}
+
+.currency-summary-meta svg {
+  color: #16a34a;
+}
+
+.currency-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) minmax(120px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.currency-form label {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.currency-form input,
+.currency-form select {
+  min-height: 38px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 0 10px;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.currency-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+@media (max-width: 820px) {
+  .currency-settings-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .currency-form {
+    grid-template-columns: 1fr;
+  }
+}

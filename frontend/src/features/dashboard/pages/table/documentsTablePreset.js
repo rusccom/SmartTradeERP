@@ -1,14 +1,14 @@
 import { apiPaths } from "../../../../shared/api/publicApi";
 import { createApiTablePreset } from "../../../../shared/model/data-table/createApiTablePreset";
 
-export function createDocumentsTablePreset(t) {
+export function createDocumentsTablePreset(t, formatMoney) {
   return createApiTablePreset({
     id: "documents",
     path: apiPaths.documents,
     rowId: readDocumentId,
     columns: createColumns(t),
     capabilities: { sorting: true, search: true },
-    mapRows: mapDocumentRows,
+    mapRows: (rows) => mapDocumentRows(rows, formatMoney),
   });
 }
 
@@ -17,7 +17,7 @@ function createColumns(t) {
     { accessorKey: "number", header: t("documents.columns.number") },
     createTypeColumn(t),
     createStatusColumn(t),
-    { accessorKey: "total_cost", header: t("documents.columns.totalCost") },
+    { accessorKey: "total_cost_label", header: t("documents.columns.totalCost") },
     { accessorKey: "date", header: t("documents.columns.date") },
   ];
 }
@@ -60,8 +60,12 @@ function readStatusLabel(value, t) {
   return labels[value] || value;
 }
 
-function mapDocumentRows(rows) {
-  return rows.map((row) => ({ ...row, doc_type: row.type }));
+function mapDocumentRows(rows, formatMoney) {
+  return rows.map((row) => ({
+    ...row,
+    doc_type: row.type,
+    total_cost_label: formatMoney(row.total_cost),
+  }));
 }
 
 function readDocumentId(row) {

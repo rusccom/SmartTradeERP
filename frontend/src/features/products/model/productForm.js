@@ -8,12 +8,14 @@ const defaultForm = {
   variants: [],
 };
 
-const variantFields = [
-  { name: "name", labelKey: "products.form.variantName", type: "text", required: true },
-  { name: "skuCode", labelKey: "products.form.skuCode", type: "text" },
-  { name: "barcode", labelKey: "products.form.barcode", type: "text" },
-  { name: "price", labelKey: "products.form.price", type: "number", min: "0", step: "0.01", required: true },
-];
+function variantFields(priceStep = "0.01") {
+  return [
+    { name: "name", labelKey: "products.form.variantName", type: "text", required: true },
+    { name: "skuCode", labelKey: "products.form.skuCode", type: "text" },
+    { name: "barcode", labelKey: "products.form.barcode", type: "text" },
+    { name: "price", labelKey: "products.form.price", type: "number", min: "0", step: priceStep, required: true },
+  ];
+}
 
 let draftCounter = 0;
 
@@ -40,8 +42,8 @@ export function readPendingVariantPayloads(form, productId, startIndex) {
   return form.variants.slice(startIndex).map((item) => toVariantPayload(item, productId));
 }
 
-export function readVariantFields() {
-  return variantFields;
+export function readVariantFields(priceStep) {
+  return variantFields(priceStep);
 }
 
 export function removeProductVariant(form, variantId) {

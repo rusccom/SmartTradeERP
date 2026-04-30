@@ -29,6 +29,20 @@ paths:
   /client/auth/register:
     post:
       summary: Register tenant and owner
+  /client/currencies:
+    get:
+      summary: List tenant currencies
+    post:
+      summary: Create tenant currency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyCreate'
+  /client/currency-options:
+    get:
+      summary: List global currency options
   /client/products:
     get:
       summary: List regular products with optional variants, stock and warehouses includes
@@ -246,6 +260,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BundleComponent'
+    CurrencyCreate:
+      type: object
+      required: [currency_id]
+      properties:
+        currency_id:
+          type: string
+        display_symbol:
+          type: string
+        is_base:
+          type: boolean
     BundleComponent:
       type: object
       required: [component_variant_id, qty]

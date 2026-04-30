@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import { useI18n } from "../../../shared/i18n/useI18n";
 import { ServerListTable } from "../../../shared/ui/tables/list-table";
+import { useCurrencies } from "../../currencies/model/useCurrencies";
 import { loadProductVariants } from "../api/loadProductVariants";
 import { createProductsTablePreset } from "../model/productsTablePreset";
 import ProductCreateModal from "../ui/ProductCreateModal";
@@ -9,9 +10,10 @@ import ProductEditModal from "../ui/ProductEditModal";
 
 function ProductsPage() {
   const { t } = useI18n();
+  const { formatMoney } = useCurrencies();
   const [createOpen, setCreateOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
-  const preset = useMemo(() => createProductsTablePreset(t), [t]);
+  const preset = useMemo(() => createProductsTablePreset(t, formatMoney), [formatMoney, t]);
   return (
     <ServerListTable
       preset={preset}

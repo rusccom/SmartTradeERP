@@ -6,20 +6,6 @@ const defaultForm = {
   barcode: "",
 };
 
-const bundleSections = [
-  {
-    id: "bundle",
-    titleKey: "bundles.form.sections.bundle",
-    fields: [
-      { name: "name", labelKey: "bundles.form.name", type: "text", required: true, autoFocus: true },
-      { name: "unit", labelKey: "bundles.form.unit", type: "text", required: true },
-      { name: "price", labelKey: "bundles.form.price", type: "number", min: "0", step: "0.01", required: true },
-      { name: "skuCode", labelKey: "bundles.form.skuCode", type: "text" },
-      { name: "barcode", labelKey: "bundles.form.barcode", type: "text" },
-    ],
-  },
-];
-
 export function createBundleFormState() {
   return { ...defaultForm };
 }
@@ -29,8 +15,12 @@ export function patchBundleForm(form, event) {
   return { ...form, [name]: value };
 }
 
-export function readBundleSections() {
-  return bundleSections;
+export function readBundleSections(priceStep = "0.01") {
+  return [{
+    id: "bundle",
+    titleKey: "bundles.form.sections.bundle",
+    fields: bundleFields(priceStep),
+  }];
 }
 
 export function toCreateBundlePayload(form) {
@@ -41,4 +31,14 @@ export function toCreateBundlePayload(form) {
     sku_code: form.skuCode.trim(),
     barcode: form.barcode.trim(),
   };
+}
+
+function bundleFields(priceStep) {
+  return [
+    { name: "name", labelKey: "bundles.form.name", type: "text", required: true, autoFocus: true },
+    { name: "unit", labelKey: "bundles.form.unit", type: "text", required: true },
+    { name: "price", labelKey: "bundles.form.price", type: "number", min: "0", step: priceStep, required: true },
+    { name: "skuCode", labelKey: "bundles.form.skuCode", type: "text" },
+    { name: "barcode", labelKey: "bundles.form.barcode", type: "text" },
+  ];
 }

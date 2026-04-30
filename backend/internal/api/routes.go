@@ -22,6 +22,7 @@ func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService) {
 	registerClientAuth(mux, store, tokens)
 	registerCatalog(mux, store, tokens, ledgerService, bundleService)
 	registerOperations(mux, store, tokens, ledgerService, bundleService)
+	registerSettings(mux, store, tokens)
 }
 
 func newBundleService(store *db.Store) *bundles.Service {

@@ -1,9 +1,14 @@
 import { useI18n } from "../../../shared/i18n/useI18n";
-import PlaceholderPage from "../../../shared/ui/PlaceholderPage";
+import CurrencySettingsPanel from "../../currencies/ui/CurrencySettingsPanel";
 
 function SettingsPage() {
   const { t } = useI18n();
-  return <PlaceholderPage title={t("dashboard.settings.title")} text={t("dashboard.settings.text")} />;
+  return (
+    <section className="placeholder">
+      <h2>{t("dashboard.settings.title")}</h2>
+      <CurrencySettingsPanel />
+    </section>
+  );
 }
 
 export default SettingsPage;

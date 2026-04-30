@@ -1,9 +1,11 @@
 import { Plus, RefreshCw } from "lucide-react";
 
 import { useI18n } from "../../../shared/i18n/useI18n";
+import { useCurrencies } from "../../currencies/model/useCurrencies";
 
 function BundleList({ bundles, loading, onCreate, onReload, onSelect, selectedID }) {
   const { t } = useI18n();
+  const { formatMoney } = useCurrencies();
   const showHeader = bundles.length > 0;
   return (
     <section className="bundles-list">
@@ -15,6 +17,7 @@ function BundleList({ bundles, loading, onCreate, onReload, onSelect, selectedID
         <BundleTable
           bundles={bundles}
           loading={loading}
+          formatMoney={formatMoney}
           onSelect={onSelect}
           selectedID={selectedID}
           showHeader={showHeader}
@@ -73,7 +76,7 @@ function renderBundleRow(bundle, props) {
       <td>{bundle.product_name}</td>
       <td>{bundle.variant_name}</td>
       <td>{bundle.sku_code || "-"}</td>
-      <td>{bundle.price}</td>
+      <td>{props.formatMoney(bundle.price)}</td>
     </tr>
   );
 }

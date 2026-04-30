@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "../../../shared/i18n/useI18n";
 import { clearClientToken } from "../../../shared/auth/session";
+import CurrencyProvider from "../../currencies/model/CurrencyProvider";
 import LocaleSwitcher from "../../../shared/ui/LocaleSwitcher";
 import { createMenuSections } from "../registry";
 import Sidebar from "./Sidebar";
@@ -52,9 +53,11 @@ function ClientLayout() {
             </button>
           </div>
         </header>
-        <main className="workspace-content">
-          <Outlet />
-        </main>
+        <CurrencyProvider>
+          <main className="workspace-content">
+            <Outlet />
+          </main>
+        </CurrencyProvider>
       </div>
 
       <Sidebar open={menuOpen} sections={sections} onClose={closeMenu} />
