@@ -62,7 +62,7 @@
 .dt-search:focus {
   outline: none;
   background: #ffffff;
-  border-color: #6366f1;
+  border-color: #8c9196;
 }
 
 .dt-count {
@@ -137,7 +137,7 @@
 
 .dt-sort-icon--active {
   opacity: 1;
-  color: #6366f1;
+  color: #202223;
 }
 
 .dt-td {
@@ -154,7 +154,7 @@
   border: 0;
   border-radius: 4px;
   background: transparent;
-  color: #1d4ed8;
+  color: #202223;
   cursor: pointer;
   font: inherit;
   font-weight: 650;
@@ -167,7 +167,7 @@
 
 .dt-open-link:hover,
 .dt-open-link:focus-visible {
-  color: #1e40af;
+  color: #202223;
   outline: none;
   text-decoration-color: currentColor;
 }
