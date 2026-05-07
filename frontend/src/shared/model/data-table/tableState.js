@@ -1,5 +1,5 @@
 export const FALLBACK_STATE = {
-  pagination: { pageIndex: 0, pageSize: 20 },
+  pagination: { pageIndex: 0, pageSize: 50 },
   sorting: [],
   globalFilter: "",
 };

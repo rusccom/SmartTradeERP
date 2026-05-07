@@ -11,6 +11,7 @@ import DataTableSelectionCheckbox from "./DataTableSelectionCheckbox";
 import DataTableToolbar from "./DataTableToolbar";
 import "./data-table-actions.css";
 import "./data-table.css";
+import "./data-table-pagination.css";
 import "./data-table-state.css";
 
 function DataTable(props) {
@@ -29,7 +30,7 @@ function DataTable(props) {
         loadingClass={loadingClass}
         emptyText={emptyText}
       />
-      {slots.pagination && <DataTablePagination table={table} showCount={slots.count} />}
+      {slots.pagination && <DataTablePagination table={table} />}
     </section>
   );
 }
