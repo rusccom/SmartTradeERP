@@ -24,6 +24,7 @@ function readDataTableProps(props, table, api, rowSelection, setRowSelection) {
     getRowId: props.preset.rowId,
     searchable: readSearchable(props),
     search: props.preset.search,
+    sortingConfig: props.preset.sortingConfig,
     rowCount: table.total,
     loading: table.loading,
     error: table.error,

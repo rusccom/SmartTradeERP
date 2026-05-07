@@ -1,5 +1,6 @@
 import { FALLBACK_STATE } from "./tableState";
 import { createTableSearchFilter } from "./filters/tableSearchFilter";
+import { createTableSortingConfig } from "./tableSorting";
 
 const DEFAULT_CAPABILITIES = { sorting: false, search: false };
 const REQUIRED_FIELDS = ["id", "rowId", "columns", "fetchPage"];
@@ -11,6 +12,7 @@ export function createTablePreset(config) {
     defaultState: mergeState(config.defaultState),
     capabilities: mergeCapabilities(config.capabilities),
     search: createTableSearchFilter(config.search),
+    sortingConfig: createTableSortingConfig(config.sorting),
   };
   return Object.freeze(preset);
 }

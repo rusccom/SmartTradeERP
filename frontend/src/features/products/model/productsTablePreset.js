@@ -4,6 +4,7 @@ import { apiPaths } from "../../../shared/api/publicApi";
 import { createApiTablePreset } from "../../../shared/model/data-table/createApiTablePreset";
 import ProductTableProductCell from "../ui/ProductTableProductCell";
 import { productSearchFilter } from "./productSearchFilter";
+import { productsTableSorting } from "./productsTableSorting";
 
 const capabilities = { sorting: true, search: true };
 
@@ -14,6 +15,7 @@ export function createProductsTablePreset(t, formatMoney) {
     rowId: readProductId,
     columns: createColumns(t, formatMoney),
     capabilities,
+    sorting: productsTableSorting,
     search: productSearchFilter,
     mapRows: (rows) => mapRows(rows, formatMoney),
     mapStateToQuery: () => ({ include: "variants,stock" }),
@@ -28,8 +30,8 @@ function createColumns(t, formatMoney) {
       openOnClick: true,
       cell: (value, row, api) => createProductCell(t, value, row, api),
     },
-    { accessorKey: "price_label", header: t("products.columns.price"), enableSorting: false, cell: (value, row) => readPriceCell(value, row, formatMoney) },
-    { accessorKey: "stock_label", header: t("products.columns.stock"), enableSorting: false, cell: readStockCell },
+    { accessorKey: "price_label", header: t("products.columns.price"), cell: (value, row) => readPriceCell(value, row, formatMoney) },
+    { accessorKey: "stock_label", header: t("products.columns.stock"), cell: readStockCell },
   ];
 }
 

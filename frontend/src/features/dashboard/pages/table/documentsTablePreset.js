@@ -1,5 +1,6 @@
 import { apiPaths } from "../../../../shared/api/publicApi";
 import { createApiTablePreset } from "../../../../shared/model/data-table/createApiTablePreset";
+import { documentsTableSorting } from "./documentsTableSorting";
 
 export function createDocumentsTablePreset(t, formatMoney) {
   return createApiTablePreset({
@@ -8,6 +9,7 @@ export function createDocumentsTablePreset(t, formatMoney) {
     rowId: readDocumentId,
     columns: createColumns(t),
     capabilities: { sorting: true, search: true },
+    sorting: documentsTableSorting,
     mapRows: (rows) => mapDocumentRows(rows, formatMoney),
   });
 }
@@ -26,7 +28,6 @@ function createTypeColumn(t) {
   return {
     accessorKey: "doc_type",
     header: t("documents.columns.type"),
-    enableSorting: false,
     cell: (value) => readDocumentTypeLabel(value, t),
   };
 }
@@ -35,7 +36,6 @@ function createStatusColumn(t) {
   return {
     accessorKey: "status",
     header: t("documents.columns.status"),
-    enableSorting: false,
     cell: (value) => readStatusLabel(value, t),
   };
 }

@@ -2,6 +2,7 @@ import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useMemo } from "react";
 
 import { useI18n } from "../../../i18n/useI18n";
+import { isColumnSortable } from "../../../model/data-table/tableSorting";
 import DataTableBody from "./DataTableBody";
 import DataTableError from "./DataTableError";
 import DataTableHeader from "./DataTableHeader";
@@ -122,7 +123,7 @@ function mapColumn(column, props) {
     accessorKey: column.accessorKey,
     header: column.header,
     size: column.size,
-    enableSorting: column.enableSorting !== false,
+    enableSorting: isColumnSortable(props.sortingConfig, column),
     meta: {
       rawCell: column.cell,
       accessorKey: column.accessorKey,

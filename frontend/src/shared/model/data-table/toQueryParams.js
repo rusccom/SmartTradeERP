@@ -1,4 +1,5 @@
 import { serializeTableSearchFilter } from "./filters/tableSearchFilter";
+import { readSortQuery } from "./tableSorting";
 
 const RESERVED_KEYS = new Set(["page", "per_page", "sort_by", "sort_dir", "search"]);
 
@@ -21,8 +22,12 @@ function appendSorting(params, state, preset) {
   if (preset.capabilities.sorting !== true || state.sorting.length === 0) {
     return;
   }
-  params.sort_by = state.sorting[0].id;
-  params.sort_dir = state.sorting[0].desc ? "desc" : "asc";
+  const sorting = readSortQuery(preset.sortingConfig, state.sorting[0]);
+  if (!sorting) {
+    return;
+  }
+  params.sort_by = sorting.sortBy;
+  params.sort_dir = sorting.sortDir;
 }
 
 function appendSearch(params, state, preset) {

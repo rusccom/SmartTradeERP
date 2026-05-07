@@ -26,7 +26,7 @@ function HeaderCell({ header }) {
     <th className={className} colSpan={header.colSpan} style={readColumnStyle(header)}>
       <SortTrigger sortable={header.column.getCanSort()} onClick={onClick}>
         <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-        <SortIcon direction={sorted} />
+        {header.column.getCanSort() && <SortIcon direction={sorted} />}
       </SortTrigger>
     </th>
   );
