@@ -11,6 +11,7 @@ export const apiPaths = Object.freeze({
   clientLogin: `${apiScopes.client}/auth/login`,
   clientRegister: `${apiScopes.client}/auth/register`,
   currencies: `${apiScopes.client}/currencies`,
+  currencyBase: `${apiScopes.client}/currencies/base`,
   currencyOptions: `${apiScopes.client}/currency-options`,
   products: `${apiScopes.client}/products`,
   productById: (id) => `${apiScopes.client}/products/${id}`,

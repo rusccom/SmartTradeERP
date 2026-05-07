@@ -12,6 +12,5 @@ export function toCurrencyPayload(form, fallbackID) {
   return {
     currency_id: form.currencyID || fallbackID,
     display_symbol: form.displaySymbol.trim(),
-    is_base: true,
   };
 }

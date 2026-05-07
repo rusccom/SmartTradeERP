@@ -1,12 +1,13 @@
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { initialCurrencyForm, patchCurrencyForm, toCurrencyPayload } from "../model/currencyForm";
 
-function CurrencyCreateForm({ labels, onSubmit, options }) {
+function CurrencyCreateForm({ initialCurrencyID, initialSymbol, labels, onSubmit, options }) {
   const [form, setForm] = useState(initialCurrencyForm);
   const [submitting, setSubmitting] = useState(false);
-  const selectedID = form.currencyID || options[0]?.id || "";
+  useResetForm(initialCurrencyID, initialSymbol, setForm);
+  const selectedID = form.currencyID || initialCurrencyID || options[0]?.id || "";
   return (
     <form className="currency-form" onSubmit={(e) => submitForm(e, formState(form, selectedID, setForm, setSubmitting, onSubmit))}>
       {renderCurrencySelect(labels, options, selectedID, setForm)}
@@ -16,6 +17,12 @@ function CurrencyCreateForm({ labels, onSubmit, options }) {
       </button>
     </form>
   );
+}
+
+function useResetForm(initialCurrencyID, initialSymbol, setForm) {
+  useEffect(() => {
+    setForm({ currencyID: initialCurrencyID || "", displaySymbol: initialSymbol || "" });
+  }, [initialCurrencyID, initialSymbol, setForm]);
 }
 
 function formState(form, selectedID, setForm, setSubmitting, onSubmit) {

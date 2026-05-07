@@ -27,3 +27,8 @@ type CreateRequest struct {
 	DisplaySymbol string `json:"display_symbol"`
 	IsBase        bool   `json:"is_base"`
 }
+
+type BaseRequest struct {
+	CurrencyID    string `json:"currency_id"`
+	DisplaySymbol string `json:"display_symbol"`
+}

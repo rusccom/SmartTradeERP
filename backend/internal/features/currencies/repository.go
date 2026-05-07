@@ -128,6 +128,16 @@ func (r *Repository) Create(ctx context.Context, tx db.DBTX, tenantID, id string
 	return err
 }
 
+func (r *Repository) UpsertBase(ctx context.Context, tx db.DBTX, tenantID, id string, req BaseRequest) error {
+	query := `INSERT INTO platform.tenant_currencies
+		(id, tenant_id, currency_id, is_base, is_enabled, display_symbol)
+		VALUES ($1,$2,$3,true,true,$4)
+		ON CONFLICT (tenant_id, currency_id) DO UPDATE SET
+			is_base=true, is_enabled=true, display_symbol=EXCLUDED.display_symbol, updated_at=now()`
+	_, err := tx.Exec(ctx, query, id, tenantID, req.CurrencyID, req.DisplaySymbol)
+	return err
+}
+
 func (r *Repository) SaveBaseSetting(ctx context.Context, tx db.DBTX, tenantID, currencyID string) error {
 	query := `INSERT INTO platform.tenant_settings (tenant_id, allow_negative_stock, base_currency_id)
 		VALUES ($1,false,$2)

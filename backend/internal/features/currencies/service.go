@@ -42,6 +42,20 @@ func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest
 	return id, nil
 }
 
+func (s *Service) SetBase(ctx context.Context, tenantID string, req BaseRequest) error {
+	req = normalizeBaseRequest(req)
+	if err := validateBaseRequest(req); err != nil {
+		return err
+	}
+	err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
+		return s.setBaseCurrency(ctx, tx, tenantID, req)
+	})
+	if err != nil {
+		return mapCurrencyWriteError(err)
+	}
+	return nil
+}
+
 func (s *Service) insertCurrency(ctx context.Context, tx pgx.Tx, tenantID, id string, req CreateRequest) error {
 	count, err := s.repo.Count(ctx, tx, tenantID)
 	if err != nil {
@@ -52,6 +66,17 @@ func (s *Service) insertCurrency(ctx context.Context, tx pgx.Tx, tenantID, id st
 		return s.repo.Create(ctx, tx, tenantID, id, req)
 	}
 	return s.createBase(ctx, tx, tenantID, id, req)
+}
+
+func (s *Service) setBaseCurrency(ctx context.Context, tx pgx.Tx, tenantID string, req BaseRequest) error {
+	if err := s.repo.ClearBase(ctx, tx, tenantID); err != nil {
+		return err
+	}
+	id := uuid.NewString()
+	if err := s.repo.UpsertBase(ctx, tx, tenantID, id, req); err != nil {
+		return err
+	}
+	return s.repo.SaveBaseSetting(ctx, tx, tenantID, req.CurrencyID)
 }
 
 func (s *Service) createBase(ctx context.Context, tx pgx.Tx, tenantID, id string, req CreateRequest) error {
@@ -70,7 +95,23 @@ func normalizeRequest(req CreateRequest) CreateRequest {
 	return req
 }
 
+func normalizeBaseRequest(req BaseRequest) BaseRequest {
+	req.CurrencyID = validation.Clean(req.CurrencyID)
+	req.DisplaySymbol = validation.Clean(req.DisplaySymbol)
+	return req
+}
+
 func validateRequest(req CreateRequest) error {
+	if !validation.UUID(req.CurrencyID) {
+		return validation.ErrInvalidData
+	}
+	if !validation.Max(req.DisplaySymbol, 8) {
+		return validation.ErrInvalidData
+	}
+	return nil
+}
+
+func validateBaseRequest(req BaseRequest) error {
 	if !validation.UUID(req.CurrencyID) {
 		return validation.ErrInvalidData
 	}

@@ -49,13 +49,27 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	tenantID := tenant.FromContext(r.Context())
 	id, err := h.service.Create(r.Context(), tenantID, req)
 	if err != nil {
-		h.writeCreateError(w, err)
+		h.writeCurrencyError(w, err, "failed to create currency")
 		return
 	}
 	httpx.WriteData(w, http.StatusCreated, map[string]string{"id": id}, nil)
 }
 
-func (h *Handler) writeCreateError(w http.ResponseWriter, err error) {
+func (h *Handler) SetBase(w http.ResponseWriter, r *http.Request) {
+	req := BaseRequest{}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid payload", err.Error())
+		return
+	}
+	tenantID := tenant.FromContext(r.Context())
+	if err := h.service.SetBase(r.Context(), tenantID, req); err != nil {
+		h.writeCurrencyError(w, err, "failed to set base currency")
+		return
+	}
+	httpx.WriteData(w, http.StatusOK, map[string]string{"status": "updated"}, nil)
+}
+
+func (h *Handler) writeCurrencyError(w http.ResponseWriter, err error, message string) {
 	if errors.Is(err, validation.ErrInvalidData) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid_data", "invalid currency data", nil)
 		return
@@ -64,5 +78,5 @@ func (h *Handler) writeCreateError(w http.ResponseWriter, err error) {
 		httpx.WriteError(w, http.StatusConflict, "currency_exists", "currency already exists", nil)
 		return
 	}
-	httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to create currency", err.Error())
+	httpx.WriteError(w, http.StatusInternalServerError, "internal_error", message, err.Error())
 }

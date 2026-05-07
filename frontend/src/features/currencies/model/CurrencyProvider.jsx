@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { loadCurrencies } from "../api/loadCurrencies";
 import { createCurrency } from "../api/createCurrency";
+import { setBaseCurrency } from "../api/setBaseCurrency";
 import CurrencyContext from "./currencyContext";
 import { formatMoneyValue } from "./formatMoney";
 
@@ -13,8 +14,12 @@ function CurrencyProvider({ children }) {
   const formatMoney = useCallback((value) => formatMoneyValue(value, defaultCurrency), [defaultCurrency]);
   const refresh = useCallback(() => reloadCurrencies(setCurrencies, setError, setLoading), []);
   const addCurrency = useCallback((payload) => createAndReload(payload, refresh, setError), [refresh]);
+  const changeBase = useCallback((payload) => setBaseAndReload(payload, refresh, setError), [refresh]);
   useInitialLoad(setCurrencies, setError, setLoading);
-  const value = useProviderValue({ addCurrency, currencies, defaultCurrency, error, formatMoney, loading, refresh });
+  const value = useProviderValue({
+    addCurrency, currencies, defaultCurrency, error, formatMoney,
+    loading, refresh, setBaseCurrency: changeBase,
+  });
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
 }
 
@@ -29,7 +34,7 @@ function useInitialLoad(setCurrencies, setError, setLoading) {
 function useProviderValue(value) {
   return useMemo(() => value, [
     value.addCurrency, value.currencies, value.defaultCurrency, value.error,
-    value.formatMoney, value.loading, value.refresh,
+    value.formatMoney, value.loading, value.refresh, value.setBaseCurrency,
   ]);
 }
 
@@ -53,6 +58,17 @@ async function createAndReload(payload, refresh, setError) {
   setError("");
   try {
     await createCurrency(payload);
+    await refresh();
+  } catch (error) {
+    setError(error.message);
+    throw error;
+  }
+}
+
+async function setBaseAndReload(payload, refresh, setError) {
+  setError("");
+  try {
+    await setBaseCurrency(payload);
     await refresh();
   } catch (error) {
     setError(error.message);

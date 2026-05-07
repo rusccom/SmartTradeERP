@@ -8,6 +8,7 @@ export const defaultCurrencyState = Object.freeze({
   formatMoney: formatRawMoney,
   loading: false,
   refresh: async () => null,
+  setBaseCurrency: async () => null,
 });
 
 function formatRawMoney(value) {

@@ -29,23 +29,13 @@
 }
 
 @media (max-width: 768px) {
-  .dt-toolbar,
-  .dt-pagination {
+  .dt-toolbar {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
 
   .dt-toolbar-right {
-    justify-content: space-between;
-  }
-
-  .dt-page-controls {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .dt-pagination-info {
     justify-content: space-between;
   }
 }

@@ -40,6 +40,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CurrencyCreate'
+  /client/currencies/base:
+    put:
+      summary: Set tenant base currency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyCreate'
   /client/currency-options:
     get:
       summary: List global currency options
@@ -268,8 +277,6 @@ components:
           type: string
         display_symbol:
           type: string
-        is_base:
-          type: boolean
     BundleComponent:
       type: object
       required: [component_variant_id, qty]

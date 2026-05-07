@@ -14,5 +14,6 @@ func registerSettings(mux *http.ServeMux, store *db.Store, tokens *auth.TokenSer
 	handler := currencies.NewHandler(service)
 	handleClient(mux, tokens, "GET /api/client/currencies", handler.List)
 	handleClient(mux, tokens, "POST /api/client/currencies", handler.Create)
+	handleClient(mux, tokens, "PUT /api/client/currencies/base", handler.SetBase)
 	handleClient(mux, tokens, "GET /api/client/currency-options", handler.Options)
 }

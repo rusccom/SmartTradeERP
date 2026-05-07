@@ -26,7 +26,7 @@ function CurrencySettingsPanel() {
         formatMoney={state.formatMoney}
         loadingLabel={state.loading ? t("currencies.loading") : ""}
       />
-      {state.showForm && <CurrencyCreateForm labels={currencyFormLabels(t)} onSubmit={state.handleSubmit} options={state.options} />}
+      {state.showForm && <CurrencyCreateForm {...currencyFormProps(t, state)} />}
       {state.error && <p className="currency-error">{state.error}</p>}
     </section>
   );
@@ -41,10 +41,10 @@ function usePanelState() {
     ...currencies,
     canCreate,
     error: currencies.error || options.error,
-    handleSubmit: (payload) => submitCurrency(payload, currencies.addCurrency, setFormOpen),
+    handleSubmit: (payload) => submitCurrency(payload, currencies, setFormOpen),
     openForm: () => setFormOpen(true),
     options: options.items,
-    showForm: canCreate && options.items.length > 0 && (formOpen || !options.loading),
+    showForm: !currencies.loading && options.items.length > 0 && (!canCreate || formOpen || !options.loading),
   };
 }
 
@@ -74,8 +74,12 @@ async function loadOptions(signal, setItems, setLoading, setError) {
   }
 }
 
-async function submitCurrency(payload, addCurrency, setFormOpen) {
-  await addCurrency(payload);
+async function submitCurrency(payload, state, setFormOpen) {
+  if (state.currencies.length === 0) {
+    await state.addCurrency(payload);
+  } else {
+    await state.setBaseCurrency(payload);
+  }
   setFormOpen(false);
 }
 
@@ -93,6 +97,16 @@ function currencyFormLabels(t) {
     save: t("currencies.save"),
     saving: t("currencies.saving"),
     symbol: t("currencies.symbol"),
+  };
+}
+
+function currencyFormProps(t, state) {
+  return {
+    initialCurrencyID: state.defaultCurrency?.currency_id || "",
+    initialSymbol: state.defaultCurrency?.display_symbol || "",
+    labels: currencyFormLabels(t),
+    onSubmit: state.handleSubmit,
+    options: state.options,
   };
 }
 

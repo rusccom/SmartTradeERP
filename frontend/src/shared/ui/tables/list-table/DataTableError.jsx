@@ -6,7 +6,7 @@ function DataTableError({ message, onRetry }) {
     <div className="dt-error">
       <span>{message}</span>
       {onRetry && (
-        <button className="dt-page-btn dt-error-btn" type="button" onClick={onRetry}>
+        <button className="dt-error-btn" type="button" onClick={onRetry}>
           {t("dataTable.retry")}
         </button>
       )}
