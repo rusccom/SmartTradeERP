@@ -6,6 +6,7 @@ import (
 	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/customers"
 	"smarterp/backend/internal/features/ledger"
+	mediafeature "smarterp/backend/internal/features/media"
 	"smarterp/backend/internal/features/products"
 	"smarterp/backend/internal/features/variants"
 	"smarterp/backend/internal/features/warehouses"
@@ -13,35 +14,41 @@ import (
 	"smarterp/backend/internal/shared/db"
 )
 
+type catalogDeps struct {
+	store   *db.Store
+	tokens  *auth.TokenService
+	ledger  *ledger.Service
+	bundles *bundles.Service
+	media   *mediafeature.Service
+}
+
 func registerCatalog(
 	mux *http.ServeMux,
-	store *db.Store,
-	tokens *auth.TokenService,
-	ledgerService *ledger.Service,
-	bundleService *bundles.Service,
+	deps catalogDeps,
 ) {
-	registerProducts(mux, store, tokens, ledgerService, bundleService)
-	registerVariants(mux, store, tokens, ledgerService, bundleService)
-	registerBundles(mux, tokens, bundleService)
-	registerWarehouses(mux, store, tokens, ledgerService)
-	registerCustomers(mux, store, tokens)
+	registerProducts(mux, deps)
+	registerVariants(mux, deps.store, deps.tokens, deps.ledger, deps.bundles)
+	registerBundles(mux, deps.tokens, deps.bundles)
+	registerWarehouses(mux, deps.store, deps.tokens, deps.ledger)
+	registerCustomers(mux, deps.store, deps.tokens)
 }
 
 func registerProducts(
 	mux *http.ServeMux,
-	store *db.Store,
-	tokens *auth.TokenService,
-	ledgerService *ledger.Service,
-	bundleService *bundles.Service,
+	deps catalogDeps,
 ) {
-	repo := products.NewRepository(store)
-	service := products.NewService(store, repo, ledgerService, bundleService)
+	repo := products.NewRepository(deps.store)
+	service := products.NewService(deps.store, repo, deps.ledger, deps.bundles)
+	service.SetMediaService(deps.media)
 	handler := products.NewHandler(service)
-	handleClient(mux, tokens, "GET /api/client/products", handler.List)
-	handleClient(mux, tokens, "POST /api/client/products", handler.Create)
-	handleClient(mux, tokens, "GET /api/client/products/{id}", handler.ByID)
-	handleClient(mux, tokens, "PUT /api/client/products/{id}", handler.Update)
-	handleClient(mux, tokens, "DELETE /api/client/products/{id}", handler.Delete)
+	handleClient(mux, deps.tokens, "GET /api/client/products", handler.List)
+	handleClient(mux, deps.tokens, "POST /api/client/products", handler.Create)
+	handleClient(mux, deps.tokens, "GET /api/client/products/{id}", handler.ByID)
+	handleClient(mux, deps.tokens, "PUT /api/client/products/{id}", handler.Update)
+	handleClient(mux, deps.tokens, "DELETE /api/client/products/{id}", handler.Delete)
+	handleClient(mux, deps.tokens, "GET /api/client/products/{id}/media", handler.ListMedia)
+	handleClient(mux, deps.tokens, "POST /api/client/products/{id}/media", handler.UploadMedia)
+	handleClient(mux, deps.tokens, "POST /api/client/products/{id}/media/{mediaID}/complete", handler.CompleteMediaUpload)
 }
 
 func registerVariants(

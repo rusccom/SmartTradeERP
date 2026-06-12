@@ -7,20 +7,34 @@ import (
 
 	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/ledger"
+	mediafeature "smarterp/backend/internal/features/media"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
 	"smarterp/backend/internal/shared/httpx"
+	"smarterp/backend/internal/shared/storage"
 )
 
 const healthDBTimeout = 2 * time.Second
 
-func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService) {
+func Register(
+	mux *http.ServeMux,
+	store *db.Store,
+	tokens *auth.TokenService,
+	mediaStore storage.ObjectStore,
+) {
 	mux.HandleFunc("GET /health", health(store))
 	ledgerService := ledger.NewService(store)
 	bundleService := newBundleService(store)
+	mediaService := newMediaService(store, mediaStore)
 	registerAdmin(mux, store, tokens)
 	registerClientAuth(mux, store, tokens)
-	registerCatalog(mux, store, tokens, ledgerService, bundleService)
+	registerCatalog(mux, catalogDeps{
+		store:   store,
+		tokens:  tokens,
+		ledger:  ledgerService,
+		bundles: bundleService,
+		media:   mediaService,
+	})
 	registerOperations(mux, store, tokens, ledgerService, bundleService)
 	registerSettings(mux, store, tokens)
 }
@@ -28,6 +42,11 @@ func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService) {
 func newBundleService(store *db.Store) *bundles.Service {
 	repo := bundles.NewRepository(store)
 	return bundles.NewService(store, repo)
+}
+
+func newMediaService(store *db.Store, objectStore storage.ObjectStore) *mediafeature.Service {
+	repo := mediafeature.NewRepository(store)
+	return mediafeature.NewService(store, repo, objectStore)
 }
 
 func health(store *db.Store) http.HandlerFunc {

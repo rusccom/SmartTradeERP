@@ -4,6 +4,8 @@ import (
 	"errors"
 	"os"
 	"time"
+
+	"smarterp/backend/internal/shared/storage"
 )
 
 type Config struct {
@@ -11,6 +13,7 @@ type Config struct {
 	DatabaseURL string
 	JWTSecret   string
 	AccessTTL   time.Duration
+	R2          storage.R2Options
 }
 
 func Load() (Config, error) {
@@ -19,7 +22,18 @@ func Load() (Config, error) {
 	cfg.DatabaseURL = os.Getenv("DATABASE_URL")
 	cfg.JWTSecret = os.Getenv("JWT_SECRET")
 	cfg.AccessTTL = parseDuration("JWT_ACCESS_TTL", "8760h")
+	cfg.R2 = loadR2Options()
 	return cfg, validate(cfg)
+}
+
+func loadR2Options() storage.R2Options {
+	return storage.R2Options{
+		AccountID:     os.Getenv("R2_ACCOUNT_ID"),
+		Bucket:        os.Getenv("R2_BUCKET"),
+		AccessKeyID:   os.Getenv("R2_ACCESS_KEY_ID"),
+		SecretKey:     os.Getenv("R2_SECRET_ACCESS_KEY"),
+		PublicBaseURL: os.Getenv("R2_PUBLIC_BASE_URL"),
+	}
 }
 
 func validate(cfg Config) error {

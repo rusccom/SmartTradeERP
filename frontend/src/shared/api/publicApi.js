@@ -15,6 +15,8 @@ export const apiPaths = Object.freeze({
   currencyOptions: `${apiScopes.client}/currency-options`,
   products: `${apiScopes.client}/products`,
   productById: (id) => `${apiScopes.client}/products/${id}`,
+  productMedia: (id) => `${apiScopes.client}/products/${id}/media`,
+  productMediaComplete: (id, mediaID) => `${apiScopes.client}/products/${id}/media/${mediaID}/complete`,
   bundles: `${apiScopes.client}/bundles`,
   bundleById: (id) => `${apiScopes.client}/bundles/${id}`,
   bundleComponents: (id) => `${apiScopes.client}/bundles/${id}/components`,

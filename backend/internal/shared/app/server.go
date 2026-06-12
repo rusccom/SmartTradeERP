@@ -8,6 +8,7 @@ import (
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/config"
 	"smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/storage"
 )
 
 func Build(ctx context.Context, cfg config.Config) (*http.Server, func(), error) {
@@ -16,9 +17,14 @@ func Build(ctx context.Context, cfg config.Config) (*http.Server, func(), error)
 		return nil, nil, err
 	}
 	store := db.NewStore(pool)
+	mediaStore, err := storage.NewR2Store(cfg.R2)
+	if err != nil {
+		pool.Close()
+		return nil, nil, err
+	}
 	tokens := auth.NewTokenService(cfg.JWTSecret, cfg.AccessTTL)
 	mux := http.NewServeMux()
-	api.Register(mux, store, tokens)
+	api.Register(mux, store, tokens, mediaStore)
 	server := &http.Server{Addr: cfg.HTTPAddr, Handler: cors(mux)}
 	cleanup := func() { pool.Close() }
 	return server, cleanup, nil

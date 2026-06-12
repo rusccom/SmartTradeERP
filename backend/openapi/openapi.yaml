@@ -97,6 +97,39 @@ paths:
       summary: Delete product when no inventory movements and bundle links exist
       parameters:
         - $ref: '#/components/parameters/PathID'
+  /client/products/{id}/media:
+    get:
+      summary: List product media objects
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+    post:
+      summary: Create direct product media upload
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file_name, content_type, size_bytes]
+              properties:
+                file_name:
+                  type: string
+                content_type:
+                  type: string
+                size_bytes:
+                  type: integer
+  /client/products/{id}/media/{mediaID}/complete:
+    post:
+      summary: Complete direct product media upload
+      parameters:
+        - $ref: '#/components/parameters/PathID'
+        - name: mediaID
+          in: path
+          required: true
+          schema:
+            type: string
   /client/variants:
     get:
       summary: List variants

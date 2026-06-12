@@ -17,10 +17,11 @@ var ErrCompositeTypeLocked = errors.New("product composite type is locked")
 var ErrUsedInBundle = errors.New("product used in bundle")
 
 type Service struct {
-    store       *db.Store
-    repo        *Repository
-    ledger      *ledger.Service
-    bundleState ComponentStateReader
+	store       *db.Store
+	repo        *Repository
+	ledger      *ledger.Service
+	bundleState ComponentStateReader
+	media       MediaService
 }
 
 type ComponentStateReader interface {
@@ -29,12 +30,12 @@ type ComponentStateReader interface {
 }
 
 func NewService(
-    store *db.Store,
-    repo *Repository,
-    ledger *ledger.Service,
-    bundleState ComponentStateReader,
+	store *db.Store,
+	repo *Repository,
+	ledger *ledger.Service,
+	bundleState ComponentStateReader,
 ) *Service {
-    return &Service{store: store, repo: repo, ledger: ledger, bundleState: bundleState}
+	return &Service{store: store, repo: repo, ledger: ledger, bundleState: bundleState}
 }
 
 func (s *Service) List(ctx context.Context, tenantID string, query ProductListQuery) ([]Product, int, error) {
@@ -55,16 +56,16 @@ func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest
 	if err := validateCreate(req); err != nil {
 		return "", err
 	}
-    productID := uuid.NewString()
-    variantID := uuid.NewString()
-    err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
-        input := createProductTx{tenantID: tenantID, productID: productID, variantID: variantID, req: req}
-        return s.createWithDefaultVariant(ctx, tx, input)
-    })
-    if err != nil {
-        return "", err
-    }
-    return productID, nil
+	productID := uuid.NewString()
+	variantID := uuid.NewString()
+	err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
+		input := createProductTx{tenantID: tenantID, productID: productID, variantID: variantID, req: req}
+		return s.createWithDefaultVariant(ctx, tx, input)
+	})
+	if err != nil {
+		return "", err
+	}
+	return productID, nil
 }
 
 type createProductTx struct {
@@ -75,18 +76,18 @@ type createProductTx struct {
 }
 
 func (s *Service) createWithDefaultVariant(
-    ctx context.Context,
-    tx pgx.Tx,
-    input createProductTx,
+	ctx context.Context,
+	tx pgx.Tx,
+	input createProductTx,
 ) error {
-    if err := s.repo.Create(ctx, tx, input.tenantID, input.productID, input.req); err != nil {
-        return err
-    }
-    return s.repo.CreateDefaultVariant(ctx, tx, input)
+	if err := s.repo.Create(ctx, tx, input.tenantID, input.productID, input.req); err != nil {
+		return err
+	}
+	return s.repo.CreateDefaultVariant(ctx, tx, input)
 }
 
 func (s *Service) ByID(ctx context.Context, tenantID, id string) (Product, error) {
-    return s.repo.GetByID(ctx, tenantID, id)
+	return s.repo.GetByID(ctx, tenantID, id)
 }
 
 func (s *Service) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
@@ -97,7 +98,7 @@ func (s *Service) Update(ctx context.Context, tenantID, id string, req UpdateReq
 	if err := s.ensureCompositeChangeAllowed(ctx, tenantID, id, req.IsComposite); err != nil {
 		return err
 	}
-    return s.repo.Update(ctx, tenantID, id, req)
+	return s.repo.Update(ctx, tenantID, id, req)
 }
 
 func (s *Service) ensureCompositeChangeAllowed(ctx context.Context, tenantID, id string, next bool) error {
@@ -131,17 +132,17 @@ func (s *Service) productHasBundleState(ctx context.Context, tenantID, id string
 }
 
 func (s *Service) Delete(ctx context.Context, tenantID, id string) error {
-    hasMovements, err := s.ledger.HasProductMovements(ctx, tenantID, id)
-    if err != nil {
-        return err
-    }
-    if hasMovements {
-        return ErrHasMovements
-    }
+	hasMovements, err := s.ledger.HasProductMovements(ctx, tenantID, id)
+	if err != nil {
+		return err
+	}
+	if hasMovements {
+		return ErrHasMovements
+	}
 	if err := s.ensureProductNotInBundle(ctx, tenantID, id); err != nil {
 		return err
 	}
-    return s.repo.Delete(ctx, tenantID, id)
+	return s.repo.Delete(ctx, tenantID, id)
 }
 
 func (s *Service) ensureProductNotInBundle(ctx context.Context, tenantID, id string) error {
