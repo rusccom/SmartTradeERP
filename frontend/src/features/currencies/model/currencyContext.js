@@ -1,7 +1,6 @@
 import { createContext } from "react";
 
 export const defaultCurrencyState = Object.freeze({
-  addCurrency: async () => null,
   currencies: [],
   defaultCurrency: null,
   error: "",

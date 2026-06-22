@@ -1,4 +1,4 @@
-import { Plus, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useI18n } from "../../../shared/i18n/useI18n";
@@ -16,7 +16,6 @@ function CurrencySettingsPanel() {
       <header className="currency-settings-head">
         <h2>{t("currencies.title")}</h2>
         <div className="currency-settings-actions">
-          {state.canCreate && renderAddButton(t, state.openForm)}
           {renderRefreshButton(t, state.refresh, state.loading)}
         </div>
       </header>
@@ -35,16 +34,12 @@ function CurrencySettingsPanel() {
 function usePanelState() {
   const currencies = useCurrencies();
   const options = useCurrencyOptions();
-  const [formOpen, setFormOpen] = useState(false);
-  const canCreate = !currencies.loading && currencies.currencies.length === 0;
   return {
     ...currencies,
-    canCreate,
     error: currencies.error || options.error,
-    handleSubmit: (payload) => submitCurrency(payload, currencies, setFormOpen),
-    openForm: () => setFormOpen(true),
+    handleSubmit: (payload) => currencies.setBaseCurrency(payload),
     options: options.items,
-    showForm: !currencies.loading && options.items.length > 0 && (!canCreate || formOpen || !options.loading),
+    showForm: !currencies.loading && options.items.length > 0,
   };
 }
 
@@ -72,19 +67,6 @@ async function loadOptions(signal, setItems, setLoading, setError) {
   } finally {
     if (!signal.aborted) setLoading(false);
   }
-}
-
-async function submitCurrency(payload, state, setFormOpen) {
-  if (state.currencies.length === 0) {
-    await state.addCurrency(payload);
-  } else {
-    await state.setBaseCurrency(payload);
-  }
-  setFormOpen(false);
-}
-
-function renderAddButton(t, onClick) {
-  return <button type="button" onClick={onClick}><Plus size={16} /> {t("currencies.addButton")}</button>;
 }
 
 function renderRefreshButton(t, refresh, loading) {

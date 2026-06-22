@@ -106,6 +106,9 @@ func (s *Service) createTenantDefaults(
 	if err := insertDefaultCustomer(ctx, tx, ids); err != nil {
 		return err
 	}
+	if err := insertBaseCurrency(ctx, tx, ids.tenantID); err != nil {
+		return err
+	}
 	return insertTenantSettings(ctx, tx, ids.tenantID)
 }
 
@@ -137,10 +140,21 @@ func insertDefaultCustomer(ctx context.Context, tx pgx.Tx, ids registerIDs) erro
 	return err
 }
 
+// defaultCurrencyID is USD, seeded in migration 000009. Every tenant starts
+// with exactly one base currency so all money is labelled from day one.
+const defaultCurrencyID = "00000000-0000-0000-0000-000000000840"
+
+func insertBaseCurrency(ctx context.Context, tx pgx.Tx, tenantID string) error {
+	query := `INSERT INTO platform.tenant_currencies (id, tenant_id, currency_id, is_base, is_enabled)
+        VALUES ($1,$2,$3,true,true)`
+	_, err := tx.Exec(ctx, query, uuid.NewString(), tenantID, defaultCurrencyID)
+	return err
+}
+
 func insertTenantSettings(ctx context.Context, tx pgx.Tx, tenantID string) error {
-	query := `INSERT INTO platform.tenant_settings (tenant_id, allow_negative_stock)
-        VALUES ($1,false)`
-	_, err := tx.Exec(ctx, query, tenantID)
+	query := `INSERT INTO platform.tenant_settings (tenant_id, allow_negative_stock, base_currency_id)
+        VALUES ($1,false,$2)`
+	_, err := tx.Exec(ctx, query, tenantID, defaultCurrencyID)
 	return err
 }
 

@@ -22,12 +22,6 @@ type CurrencyOption struct {
 	DecimalPlaces int    `json:"decimal_places"`
 }
 
-type CreateRequest struct {
-	CurrencyID    string `json:"currency_id"`
-	DisplaySymbol string `json:"display_symbol"`
-	IsBase        bool   `json:"is_base"`
-}
-
 type BaseRequest struct {
 	CurrencyID    string `json:"currency_id"`
 	DisplaySymbol string `json:"display_symbol"`

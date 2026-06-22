@@ -60,7 +60,6 @@ export const messagesByLocale = {
     "common.close": "Close dialog",
     "common.no": "No",
     "common.yes": "Yes",
-    "currencies.addButton": "Add currency",
     "currencies.empty": "No currency configured.",
     "currencies.loading": "Loading currency...",
     "currencies.reload": "Reload currencies",

@@ -108,23 +108,8 @@ func scanOptions(rows pgx.Rows) ([]CurrencyOption, error) {
 	return items, rows.Err()
 }
 
-func (r *Repository) Count(ctx context.Context, tx db.DBTX, tenantID string) (int, error) {
-	row := tx.QueryRow(ctx, `SELECT COUNT(*) FROM platform.tenant_currencies WHERE tenant_id=$1`, tenantID)
-	count := 0
-	err := row.Scan(&count)
-	return count, err
-}
-
 func (r *Repository) ClearBase(ctx context.Context, tx db.DBTX, tenantID string) error {
 	_, err := tx.Exec(ctx, `UPDATE platform.tenant_currencies SET is_base=false WHERE tenant_id=$1`, tenantID)
-	return err
-}
-
-func (r *Repository) Create(ctx context.Context, tx db.DBTX, tenantID, id string, req CreateRequest) error {
-	query := `INSERT INTO platform.tenant_currencies
-		(id, tenant_id, currency_id, is_base, is_enabled, display_symbol)
-		VALUES ($1,$2,$3,$4,true,$5)`
-	_, err := tx.Exec(ctx, query, id, tenantID, req.CurrencyID, req.IsBase, req.DisplaySymbol)
 	return err
 }
 

@@ -8,12 +8,7 @@ import (
 	"smarterp/backend/internal/shared/validation"
 )
 
-var ErrCurrencyExists = errors.New("currency exists")
-
 func mapCurrencyWriteError(err error) error {
-	if isPgError(err, "23505") {
-		return ErrCurrencyExists
-	}
 	if isPgError(err, "23503") || isPgError(err, "23514") {
 		return validation.ErrInvalidData
 	}
