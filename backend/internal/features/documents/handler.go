@@ -1,30 +1,30 @@
 package documents
 
 import (
-    "errors"
-    "net/http"
+	"errors"
+	"net/http"
 
 	"github.com/jackc/pgx/v5"
 
 	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/ledger"
 	"smarterp/backend/internal/shared/httpx"
-    "smarterp/backend/internal/shared/tenant"
-    "smarterp/backend/internal/shared/validation"
+	"smarterp/backend/internal/shared/tenant"
+	"smarterp/backend/internal/shared/validation"
 )
 
 type Handler struct {
-    service *Service
+	service *Service
 }
 
 func NewHandler(service *Service) *Handler {
-    return &Handler{service: service}
+	return &Handler{service: service}
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	tenantID := tenant.FromContext(r.Context())
 	query := httpx.ParseListQuery(r, httpx.SortConfig{
-		Allowed: []string{"date", "number", "total_cost"},
+		Allowed:  []string{"date", "number", "total_cost"},
 		Fallback: "date",
 	}, []string{"type", "status", "date"})
 	items, total, err := h.service.List(r.Context(), tenantID, query)
@@ -37,11 +37,11 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-    req := CreateRequest{}
-    if err := httpx.DecodeJSON(r, &req); err != nil {
-        httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid payload", err.Error())
-        return
-    }
+	req := CreateRequest{}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid payload", err.Error())
+		return
+	}
 	tenantID := tenant.FromContext(r.Context())
 	result, err := h.service.Create(r.Context(), tenantID, req)
 	if err != nil {
@@ -52,109 +52,109 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ByID(w http.ResponseWriter, r *http.Request) {
-    tenantID := tenant.FromContext(r.Context())
-    item, err := h.service.ByID(r.Context(), tenantID, r.PathValue("id"))
-    if err != nil {
-        h.writeDocumentError(w, err, "failed to read document")
-        return
-    }
-    httpx.WriteData(w, http.StatusOK, item, nil)
+	tenantID := tenant.FromContext(r.Context())
+	item, err := h.service.ByID(r.Context(), tenantID, r.PathValue("id"))
+	if err != nil {
+		h.writeDocumentError(w, err, "failed to read document")
+		return
+	}
+	httpx.WriteData(w, http.StatusOK, item, nil)
 }
 
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
-    req := UpdateRequest{}
-    if err := httpx.DecodeJSON(r, &req); err != nil {
-        httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid payload", err.Error())
-        return
-    }
-    tenantID := tenant.FromContext(r.Context())
-    err := h.service.Update(r.Context(), tenantID, r.PathValue("id"), req)
-    if err != nil {
-        h.writeDocumentError(w, err, "failed to update document")
-        return
-    }
-    httpx.WriteData(w, http.StatusOK, map[string]string{"status": "updated"}, nil)
+	req := UpdateRequest{}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid payload", err.Error())
+		return
+	}
+	tenantID := tenant.FromContext(r.Context())
+	err := h.service.Update(r.Context(), tenantID, r.PathValue("id"), req)
+	if err != nil {
+		h.writeDocumentError(w, err, "failed to update document")
+		return
+	}
+	httpx.WriteData(w, http.StatusOK, map[string]string{"status": "updated"}, nil)
 }
 
 func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
-    tenantID := tenant.FromContext(r.Context())
-    err := h.service.Post(r.Context(), tenantID, r.PathValue("id"))
-    if err != nil {
-        h.writeDocumentError(w, err, "failed to post document")
-        return
-    }
-    httpx.WriteData(w, http.StatusOK, map[string]string{"status": "posted"}, nil)
+	tenantID := tenant.FromContext(r.Context())
+	err := h.service.Post(r.Context(), tenantID, r.PathValue("id"))
+	if err != nil {
+		h.writeDocumentError(w, err, "failed to post document")
+		return
+	}
+	httpx.WriteData(w, http.StatusOK, map[string]string{"status": "posted"}, nil)
 }
 
 func (h *Handler) Cancel(w http.ResponseWriter, r *http.Request) {
-    tenantID := tenant.FromContext(r.Context())
-    err := h.service.Cancel(r.Context(), tenantID, r.PathValue("id"))
-    if err != nil {
-        h.writeDocumentError(w, err, "failed to cancel document")
-        return
-    }
-    httpx.WriteData(w, http.StatusOK, map[string]string{"status": "cancelled"}, nil)
+	tenantID := tenant.FromContext(r.Context())
+	err := h.service.Cancel(r.Context(), tenantID, r.PathValue("id"))
+	if err != nil {
+		h.writeDocumentError(w, err, "failed to cancel document")
+		return
+	}
+	httpx.WriteData(w, http.StatusOK, map[string]string{"status": "cancelled"}, nil)
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-    tenantID := tenant.FromContext(r.Context())
-    err := h.service.Delete(r.Context(), tenantID, r.PathValue("id"))
-    if err != nil {
-        h.writeDocumentError(w, err, "failed to delete document")
-        return
-    }
-    httpx.WriteData(w, http.StatusOK, map[string]string{"status": "deleted"}, nil)
+	tenantID := tenant.FromContext(r.Context())
+	err := h.service.Delete(r.Context(), tenantID, r.PathValue("id"))
+	if err != nil {
+		h.writeDocumentError(w, err, "failed to delete document")
+		return
+	}
+	httpx.WriteData(w, http.StatusOK, map[string]string{"status": "deleted"}, nil)
 }
 
 func (h *Handler) writeDocumentError(w http.ResponseWriter, err error, message string) {
-    if writeDocumentRequestError(w, err) {
-        return
-    }
-    if writeDocumentStateError(w, err) {
-        return
-    }
-    if writeDocumentPostingError(w, err) {
-        return
-    }
-    httpx.WriteError(w, http.StatusInternalServerError, "internal_error", message, err.Error())
+	if writeDocumentRequestError(w, err) {
+		return
+	}
+	if writeDocumentStateError(w, err) {
+		return
+	}
+	if writeDocumentPostingError(w, err) {
+		return
+	}
+	httpx.WriteError(w, http.StatusInternalServerError, "internal_error", message, err.Error())
 }
 
 func writeDocumentRequestError(w http.ResponseWriter, err error) bool {
-    if writeDocumentIdentityError(w, err) {
-        return true
-    }
-    if writeDocumentBundleError(w, err) {
-        return true
-    }
-    return writeDocumentPaymentError(w, err)
+	if writeDocumentIdentityError(w, err) {
+		return true
+	}
+	if writeDocumentBundleError(w, err) {
+		return true
+	}
+	return writeDocumentPaymentError(w, err)
 }
 
 func writeDocumentIdentityError(w http.ResponseWriter, err error) bool {
-    if errors.Is(err, validation.ErrInvalidData) {
-        httpx.WriteError(w, http.StatusBadRequest, "invalid_data", "invalid document data", nil)
-        return true
-    }
-    if errors.Is(err, ErrInvalidDocumentReference) {
-        httpx.WriteError(w, http.StatusBadRequest, "invalid_reference", "invalid document reference", nil)
-        return true
-    }
-    if errors.Is(err, ErrDocumentNumberConflict) {
-        httpx.WriteError(w, http.StatusConflict, "number_conflict", "document number already exists", nil)
-        return true
-    }
-    if errors.Is(err, pgx.ErrNoRows) {
-        httpx.WriteError(w, http.StatusNotFound, "not_found", "document not found", nil)
-        return true
-    }
-    return false
+	if errors.Is(err, validation.ErrInvalidData) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_data", "invalid document data", nil)
+		return true
+	}
+	if errors.Is(err, ErrInvalidDocumentReference) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_reference", "invalid document reference", nil)
+		return true
+	}
+	if errors.Is(err, ErrDocumentNumberConflict) {
+		httpx.WriteError(w, http.StatusConflict, "number_conflict", "document number already exists", nil)
+		return true
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		httpx.WriteError(w, http.StatusNotFound, "not_found", "document not found", nil)
+		return true
+	}
+	return false
 }
 
 func writeDocumentBundleError(w http.ResponseWriter, err error) bool {
-    if errors.Is(err, ErrBundleDocumentType) {
-        httpx.WriteError(w, http.StatusBadRequest, "bundle_document_type", ErrBundleDocumentType.Error(), nil)
-        return true
-    }
-    return false
+	if errors.Is(err, ErrBundleDocumentType) {
+		httpx.WriteError(w, http.StatusBadRequest, "bundle_document_type", ErrBundleDocumentType.Error(), nil)
+		return true
+	}
+	return false
 }
 
 func writeDocumentPaymentError(w http.ResponseWriter, err error) bool {
@@ -193,49 +193,49 @@ func writePaymentValueError(w http.ResponseWriter, err error) bool {
 }
 
 func writeDocumentStateError(w http.ResponseWriter, err error) bool {
-    if errors.Is(err, ErrDraftOnly) {
-        httpx.WriteError(w, http.StatusConflict, "draft_only", "operation allowed only for draft", nil)
-        return true
-    }
-    if errors.Is(err, ErrPostedOnly) {
-        httpx.WriteError(w, http.StatusConflict, "posted_only", "operation allowed only for posted", nil)
-        return true
-    }
-    if errors.Is(err, ErrStatusConflict) {
-        httpx.WriteError(w, http.StatusConflict, "status_conflict", "invalid document status", nil)
-        return true
-    }
-    return writeShiftStateError(w, err)
+	if errors.Is(err, ErrDraftOnly) {
+		httpx.WriteError(w, http.StatusConflict, "draft_only", "operation allowed only for draft", nil)
+		return true
+	}
+	if errors.Is(err, ErrPostedOnly) {
+		httpx.WriteError(w, http.StatusConflict, "posted_only", "operation allowed only for posted", nil)
+		return true
+	}
+	if errors.Is(err, ErrStatusConflict) {
+		httpx.WriteError(w, http.StatusConflict, "status_conflict", "invalid document status", nil)
+		return true
+	}
+	return writeShiftStateError(w, err)
 }
 
 func writeShiftStateError(w http.ResponseWriter, err error) bool {
-    if errors.Is(err, ErrShiftDocumentLocked) {
-        httpx.WriteError(w, http.StatusConflict, "shift_document_locked", "shift document cannot be modified", nil)
-        return true
-    }
-    if errors.Is(err, ErrShiftClosed) {
-        httpx.WriteError(w, http.StatusConflict, "shift_closed", "shift is closed", nil)
-        return true
-    }
-    if errors.Is(err, ErrTypeImmutable) {
-        httpx.WriteError(w, http.StatusConflict, "type_immutable", "document type cannot be changed", nil)
-        return true
-    }
-    return false
+	if errors.Is(err, ErrShiftDocumentLocked) {
+		httpx.WriteError(w, http.StatusConflict, "shift_document_locked", "shift document cannot be modified", nil)
+		return true
+	}
+	if errors.Is(err, ErrShiftClosed) {
+		httpx.WriteError(w, http.StatusConflict, "shift_closed", "shift is closed", nil)
+		return true
+	}
+	if errors.Is(err, ErrTypeImmutable) {
+		httpx.WriteError(w, http.StatusConflict, "type_immutable", "document type cannot be changed", nil)
+		return true
+	}
+	return false
 }
 
 func writeDocumentPostingError(w http.ResponseWriter, err error) bool {
-    if errors.Is(err, bundles.ErrMissingComponents) {
-        httpx.WriteError(w, http.StatusConflict, "missing_components", "composite variant has no components", nil)
-        return true
-    }
-    if errors.Is(err, ledger.ErrNegativeStock) {
-        httpx.WriteError(w, http.StatusConflict, "negative_stock", "negative stock is not allowed", nil)
-        return true
-    }
-    if errors.Is(err, ledger.ErrActiveBatchRequired) {
-        httpx.WriteError(w, http.StatusConflict, "active_batch_required", "active posting batch is required", nil)
-        return true
-    }
-    return false
+	if errors.Is(err, bundles.ErrMissingComponents) {
+		httpx.WriteError(w, http.StatusConflict, "missing_components", "composite variant has no components", nil)
+		return true
+	}
+	if errors.Is(err, ledger.ErrNegativeStock) {
+		httpx.WriteError(w, http.StatusConflict, "negative_stock", "negative stock is not allowed", nil)
+		return true
+	}
+	if errors.Is(err, ledger.ErrActiveBatchRequired) {
+		httpx.WriteError(w, http.StatusConflict, "active_batch_required", "active posting batch is required", nil)
+		return true
+	}
+	return false
 }
