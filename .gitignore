@@ -1,6 +1,9 @@
-﻿# Frontend
+﻿# Frontend (npm workspace)
 frontend/node_modules/
-frontend/dist/
+frontend/apps/*/node_modules/
+frontend/packages/*/node_modules/
+frontend/apps/*/dist/
+frontend/packages/*/dist/
 
 # Environment
 .env

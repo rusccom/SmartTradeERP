@@ -2,25 +2,13 @@
   "name": "smarterp-frontend",
   "private": true,
   "version": "0.1.0",
-  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "generate:client": "echo OpenAPI client generation placeholder"
-  },
-  "dependencies": {
-    "@tanstack/react-table": "^8.21.3",
-    "@tailwindcss/vite": "^4.2.1",
-    "framer-motion": "^12.34.3",
-    "lucide-react": "^0.575.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^7.6.2",
-    "tailwindcss": "^4.2.1"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.4.1",
-    "vite": "^6.3.5"
+    "dev": "npm run dev --workspace @smarterp/app",
+    "build": "npm run build --workspace @smarterp/app",
+    "build:all": "npm run build --workspaces --if-present"
   }
 }
