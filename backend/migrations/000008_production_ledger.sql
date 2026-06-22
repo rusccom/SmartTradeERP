@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS ledger.posting_batches (
     posted_at TIMESTAMP NOT NULL DEFAULT now(),
     supersedes_batch_id UUID,
     reason VARCHAR NOT NULL DEFAULT 'posting',
+    posted_by UUID REFERENCES platform.tenant_users(id),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     UNIQUE (tenant_id, id),
@@ -46,12 +47,12 @@ CREATE TABLE IF NOT EXISTS ledger.inventory_movements (
     variant_id UUID NOT NULL,
     warehouse_id UUID NOT NULL,
     movement_date DATE NOT NULL,
-    direction VARCHAR(3) NOT NULL CHECK (direction IN ('IN', 'OUT')),
+    direction VARCHAR(3) NOT NULL CHECK (direction IN ('IN', 'OUT', 'SET')),
     reason VARCHAR NOT NULL CHECK (reason IN (
-        'PURCHASE', 'SALE', 'WRITEOFF', 'SHORTAGE', 'SURPLUS',
-        'RETURN_IN', 'RETURN_OUT', 'TRANSFER_IN', 'TRANSFER_OUT'
+        'PURCHASE', 'SALE', 'WRITEOFF', 'COUNT',
+        'RETURN_IN', 'TRANSFER_IN', 'TRANSFER_OUT'
     )),
-    qty DECIMAL(12,3) NOT NULL CHECK (qty > 0),
+    qty DECIMAL(12,3) NOT NULL CHECK (qty > 0 OR (direction = 'SET' AND qty >= 0)),
     unit_price DECIMAL(12,4) NOT NULL CHECK (unit_price >= 0),
     total_amount DECIMAL(14,4) NOT NULL CHECK (total_amount >= 0),
     revenue_amount DECIMAL(14,4),

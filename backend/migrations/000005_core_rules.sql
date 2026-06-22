@@ -1,9 +1,5 @@
 BEGIN;
 
-CREATE UNIQUE INDEX IF NOT EXISTS ux_documents_number_per_tenant_type
-    ON documents.documents (tenant_id, type, number)
-    WHERE number IS NOT NULL AND btrim(number) <> '';
-
 CREATE OR REPLACE FUNCTION public.add_constraint_if_missing(target_table regclass, constraint_name text, ddl text)
 RETURNS void AS $$
 BEGIN
@@ -121,6 +117,16 @@ BEGIN
 
     IF NEW.type NOT IN ('SALE', 'RETURN') AND payment_total <> 0 THEN
         RAISE EXCEPTION 'payments are allowed only for sales and returns';
+    END IF;
+
+    IF NEW.type IN ('SALE', 'RETURN') AND NEW.shift_id IS NOT NULL THEN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM documents.shifts
+            WHERE tenant_id = NEW.tenant_id AND id = NEW.shift_id AND status = 'open'
+        ) THEN
+            RAISE EXCEPTION 'sale and return documents require an open shift';
+        END IF;
     END IF;
 
     RETURN NEW;

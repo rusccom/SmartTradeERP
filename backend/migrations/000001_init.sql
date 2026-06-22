@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS catalog.product_option_values (
 
 CREATE TABLE IF NOT EXISTS catalog.product_variants (
     id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
     product_id UUID NOT NULL REFERENCES catalog.products(id) ON DELETE CASCADE,
     name VARCHAR,
     sku_code VARCHAR,
@@ -95,23 +96,27 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_warehouse_default_per_tenant
 CREATE TABLE IF NOT EXISTS documents.documents (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,
-    type VARCHAR NOT NULL CHECK (type IN ('RECEIPT', 'SALE', 'WRITEOFF', 'INVENTORY', 'TRANSFER')),
+    type VARCHAR NOT NULL CHECK (type IN ('RECEIPT', 'SALE', 'WRITEOFF', 'INVENTORY', 'TRANSFER', 'RETURN')),
     date DATE NOT NULL,
-    number VARCHAR,
+    number VARCHAR NOT NULL CHECK (btrim(number) <> ''),
     status VARCHAR NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'posted', 'cancelled')),
     warehouse_id UUID REFERENCES catalog.warehouses(id),
     source_warehouse_id UUID REFERENCES catalog.warehouses(id),
     target_warehouse_id UUID REFERENCES catalog.warehouses(id),
+    created_by UUID REFERENCES platform.tenant_users(id),
     note TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS ux_documents_tenant_number
+    ON documents.documents (tenant_id, number);
+
 CREATE TABLE IF NOT EXISTS documents.document_items (
     id UUID PRIMARY KEY,
     document_id UUID NOT NULL REFERENCES documents.documents(id) ON DELETE CASCADE,
     variant_id UUID NOT NULL REFERENCES catalog.product_variants(id),
-    qty DECIMAL(12,3) NOT NULL CHECK (qty > 0),
+    qty DECIMAL(12,3) NOT NULL CHECK (qty >= 0),
     unit_price DECIMAL(12,4) NOT NULL,
     total_amount DECIMAL(14,4) NOT NULL
 );
@@ -132,13 +137,13 @@ DECLARE
     variant_tenant UUID;
     component_tenant UUID;
 BEGIN
-    SELECT p.is_composite, p.tenant_id
+    SELECT p.is_composite, v.tenant_id
     INTO variant_is_composite, variant_tenant
     FROM catalog.product_variants v
     JOIN catalog.products p ON p.id = v.product_id
     WHERE v.id = NEW.variant_id;
 
-    SELECT p.is_composite, p.tenant_id
+    SELECT p.is_composite, v.tenant_id
     INTO component_is_composite, component_tenant
     FROM catalog.product_variants v
     JOIN catalog.products p ON p.id = v.product_id

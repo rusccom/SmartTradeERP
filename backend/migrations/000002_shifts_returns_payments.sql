@@ -1,12 +1,5 @@
 BEGIN;
 
-ALTER TABLE documents.documents
-    DROP CONSTRAINT IF EXISTS documents_documents_type_check;
-
-ALTER TABLE documents.documents
-    ADD CONSTRAINT documents_documents_type_check
-        CHECK (type IN ('RECEIPT', 'SALE', 'WRITEOFF', 'INVENTORY', 'TRANSFER', 'RETURN'));
-
 CREATE TABLE IF NOT EXISTS documents.shifts (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,

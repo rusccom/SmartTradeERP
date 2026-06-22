@@ -18,53 +18,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_shifts_tenant_id_id
 CREATE UNIQUE INDEX IF NOT EXISTS ux_document_items_document_id_id
     ON documents.document_items (document_id, id);
 
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM documents.shifts s
-        JOIN platform.tenant_users u ON u.id = s.user_id
-        WHERE u.tenant_id IS DISTINCT FROM s.tenant_id
-    ) THEN
-        RAISE EXCEPTION 'cross-tenant shift user references exist';
-    END IF;
-
-    IF EXISTS (
-        SELECT 1
-        FROM documents.shifts s
-        JOIN catalog.warehouses w ON w.id = s.warehouse_id
-        WHERE w.tenant_id IS DISTINCT FROM s.tenant_id
-    ) THEN
-        RAISE EXCEPTION 'cross-tenant shift warehouse references exist';
-    END IF;
-END $$;
-
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM documents.document_items i
-        JOIN documents.documents d ON d.id = i.document_id
-        JOIN catalog.product_variants v ON v.id = i.variant_id
-        JOIN catalog.products p ON p.id = v.product_id
-        WHERE p.tenant_id IS DISTINCT FROM d.tenant_id
-    ) THEN
-        RAISE EXCEPTION 'cross-tenant document item variant references exist';
-    END IF;
-
-    IF EXISTS (
-        SELECT 1
-        FROM documents.document_item_components c
-        JOIN documents.document_items i ON i.id = c.document_item_id
-        JOIN documents.documents d ON d.id = i.document_id
-        JOIN catalog.product_variants v ON v.id = c.component_variant_id
-        JOIN catalog.products p ON p.id = v.product_id
-        WHERE p.tenant_id IS DISTINCT FROM d.tenant_id
-    ) THEN
-        RAISE EXCEPTION 'cross-tenant document item component references exist';
-    END IF;
-END $$;
-
 CREATE OR REPLACE FUNCTION public.add_constraint_if_missing(target_table regclass, constraint_name text, ddl text)
 RETURNS void AS $$
 BEGIN
@@ -174,10 +127,9 @@ BEGIN
     FROM documents.documents
     WHERE id = NEW.document_id;
 
-    SELECT p.tenant_id INTO variant_tenant
-    FROM catalog.product_variants v
-    JOIN catalog.products p ON p.id = v.product_id
-    WHERE v.id = NEW.variant_id;
+    SELECT tenant_id INTO variant_tenant
+    FROM catalog.product_variants
+    WHERE id = NEW.variant_id;
 
     IF doc_tenant IS NULL OR variant_tenant IS DISTINCT FROM doc_tenant THEN
         RAISE EXCEPTION 'document item variant must belong to document tenant';
@@ -204,10 +156,9 @@ BEGIN
     JOIN documents.documents d ON d.id = i.document_id
     WHERE i.id = NEW.document_item_id;
 
-    SELECT p.tenant_id INTO component_tenant
-    FROM catalog.product_variants v
-    JOIN catalog.products p ON p.id = v.product_id
-    WHERE v.id = NEW.component_variant_id;
+    SELECT tenant_id INTO component_tenant
+    FROM catalog.product_variants
+    WHERE id = NEW.component_variant_id;
 
     IF doc_tenant IS NULL OR component_tenant IS DISTINCT FROM doc_tenant THEN
         RAISE EXCEPTION 'item component variant must belong to document tenant';
