@@ -135,7 +135,7 @@ func insertDefaultWarehouse(ctx context.Context, tx pgx.Tx, ids registerIDs) err
 
 func insertDefaultCustomer(ctx context.Context, tx pgx.Tx, ids registerIDs) error {
 	query := `INSERT INTO catalog.customers (id, tenant_id, name, is_default)
-        VALUES ($1,$2,'Розничный покупатель',true)`
+        VALUES ($1,$2,'Retail Customer',true)`
 	_, err := tx.Exec(ctx, query, ids.customerID, ids.tenantID)
 	return err
 }
