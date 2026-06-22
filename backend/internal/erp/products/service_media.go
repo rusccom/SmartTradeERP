@@ -3,7 +3,7 @@ package products
 import (
 	"context"
 
-	mediafeature "smarterp/backend/internal/features/media"
+	mediafeature "smarterp/backend/internal/platform/media"
 	"smarterp/backend/internal/shared/validation"
 )
 

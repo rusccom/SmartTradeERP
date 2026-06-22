@@ -5,7 +5,7 @@ import (
 
     "github.com/google/uuid"
 
-    "smarterp/backend/internal/features/ledger"
+    "smarterp/backend/internal/erp/ledger"
     "smarterp/backend/internal/shared/validation"
 )
 

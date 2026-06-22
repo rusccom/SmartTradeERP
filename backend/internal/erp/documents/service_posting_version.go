@@ -5,8 +5,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"smarterp/backend/internal/features/bundles"
-	"smarterp/backend/internal/features/ledger"
+	"smarterp/backend/internal/erp/bundles"
+	"smarterp/backend/internal/erp/ledger"
 )
 
 type postingVersionInput struct {

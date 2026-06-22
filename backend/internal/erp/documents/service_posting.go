@@ -3,8 +3,8 @@ package documents
 import (
 	"github.com/shopspring/decimal"
 
-	"smarterp/backend/internal/features/bundles"
-	"smarterp/backend/internal/features/ledger"
+	"smarterp/backend/internal/erp/bundles"
+	"smarterp/backend/internal/erp/ledger"
 )
 
 func (s *Service) postItems(

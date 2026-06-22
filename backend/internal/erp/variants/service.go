@@ -8,7 +8,7 @@ import (
     "github.com/jackc/pgx/v5"
     "github.com/shopspring/decimal"
 
-    "smarterp/backend/internal/features/ledger"
+    "smarterp/backend/internal/erp/ledger"
     "smarterp/backend/internal/shared/db"
     "smarterp/backend/internal/shared/validation"
 )

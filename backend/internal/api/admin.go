@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"smarterp/backend/internal/features/admin"
-	"smarterp/backend/internal/features/clientauth"
+	"smarterp/backend/internal/platform/admin"
+	"smarterp/backend/internal/platform/clientauth"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
 )

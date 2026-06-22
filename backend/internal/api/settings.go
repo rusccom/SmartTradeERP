@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"smarterp/backend/internal/features/currencies"
+	"smarterp/backend/internal/platform/currencies"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
 )

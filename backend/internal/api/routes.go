@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"smarterp/backend/internal/features/bundles"
-	"smarterp/backend/internal/features/ledger"
-	mediafeature "smarterp/backend/internal/features/media"
+	"smarterp/backend/internal/erp/bundles"
+	"smarterp/backend/internal/erp/ledger"
+	mediafeature "smarterp/backend/internal/platform/media"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
 	"smarterp/backend/internal/shared/httpx"

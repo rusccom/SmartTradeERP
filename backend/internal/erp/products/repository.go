@@ -6,7 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	productsearch "smarterp/backend/internal/features/products/search"
+	productsearch "smarterp/backend/internal/erp/products/search"
 	"smarterp/backend/internal/shared/db"
 	"smarterp/backend/internal/shared/httpx"
 )

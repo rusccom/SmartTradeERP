@@ -3,11 +3,11 @@ package api
 import (
 	"net/http"
 
-	"smarterp/backend/internal/features/bundles"
-	"smarterp/backend/internal/features/documents"
-	"smarterp/backend/internal/features/ledger"
-	"smarterp/backend/internal/features/reports"
-	"smarterp/backend/internal/features/shifts"
+	"smarterp/backend/internal/erp/bundles"
+	"smarterp/backend/internal/erp/documents"
+	"smarterp/backend/internal/erp/ledger"
+	"smarterp/backend/internal/erp/reports"
+	"smarterp/backend/internal/erp/shifts"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
 )

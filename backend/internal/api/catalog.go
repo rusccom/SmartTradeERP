@@ -3,13 +3,13 @@ package api
 import (
 	"net/http"
 
-	"smarterp/backend/internal/features/bundles"
-	"smarterp/backend/internal/features/customers"
-	"smarterp/backend/internal/features/ledger"
-	mediafeature "smarterp/backend/internal/features/media"
-	"smarterp/backend/internal/features/products"
-	"smarterp/backend/internal/features/variants"
-	"smarterp/backend/internal/features/warehouses"
+	"smarterp/backend/internal/erp/bundles"
+	"smarterp/backend/internal/directory/customers"
+	"smarterp/backend/internal/erp/ledger"
+	mediafeature "smarterp/backend/internal/platform/media"
+	"smarterp/backend/internal/erp/products"
+	"smarterp/backend/internal/erp/variants"
+	"smarterp/backend/internal/erp/warehouses"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
 )

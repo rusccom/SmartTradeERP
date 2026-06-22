@@ -6,7 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	mediafeature "smarterp/backend/internal/features/media"
+	mediafeature "smarterp/backend/internal/platform/media"
 	"smarterp/backend/internal/shared/httpx"
 	"smarterp/backend/internal/shared/tenant"
 )

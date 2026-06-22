@@ -6,7 +6,7 @@ import (
 
 	"github.com/shopspring/decimal"
 
-	"smarterp/backend/internal/features/ledger"
+	"smarterp/backend/internal/erp/ledger"
 	"smarterp/backend/internal/shared/httpx"
 )
 
