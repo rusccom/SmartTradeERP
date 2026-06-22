@@ -7,11 +7,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type variantWarehouseRow struct {
-	VariantID string
-	Item      ProductWarehouseItem
-}
-
 func (r *Repository) attachVariantWarehouses(
 	ctx context.Context,
 	tenantID string,
