@@ -22,6 +22,9 @@ type postingData struct {
 }
 
 func (s *Service) postDocumentTx(ctx context.Context, tx pgx.Tx, tenantID, documentID string) error {
+	if err := s.lockDocumentStatus(ctx, tx, tenantID, documentID, "draft"); err != nil {
+		return err
+	}
 	input := postingVersionInput{tenantID: tenantID, documentID: documentID}
 	_, err := s.postVersion(ctx, tx, input)
 	return err

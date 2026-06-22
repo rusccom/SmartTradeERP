@@ -233,6 +233,9 @@ func (s *Service) ensureShiftOpenForCancel(ctx context.Context, tx pgx.Tx, tenan
 }
 
 func (s *Service) cancelTx(ctx context.Context, tx pgx.Tx, tenantID, id string) error {
+	if err := s.lockDocumentStatus(ctx, tx, tenantID, id, "posted"); err != nil {
+		return err
+	}
 	affected, err := s.ledger.ReverseDocument(ctx, tx, tenantID, id)
 	if err != nil {
 		return err
