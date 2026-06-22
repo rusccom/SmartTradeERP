@@ -30,6 +30,7 @@ func (s *Service) newPostingRun(
 		EffectiveDate:     mustDate(doc.Date),
 		SupersedesBatchID: input.supersedes,
 		Reason:            "document_posting",
+		PostedBy:          actorID(ctx),
 	}
 	batchID, err := s.ledger.BeginPosting(ctx, tx, batchInput)
 	run := postingRun{

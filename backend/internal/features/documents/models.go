@@ -52,6 +52,7 @@ type Document struct {
 	TargetWarehouseID string          `json:"target_warehouse_id"`
 	ShiftID           string          `json:"shift_id"`
 	CustomerID        string          `json:"customer_id"`
+	CreatedBy         string          `json:"created_by"`
 	Note              string          `json:"note"`
 	Items             []DocumentItem  `json:"items"`
 	Payments          []Payment       `json:"payments"`

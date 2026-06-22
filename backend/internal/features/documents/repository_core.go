@@ -138,14 +138,14 @@ func (r *Repository) ByID(ctx context.Context, tenantID, id string) (Document, e
 	query := `SELECT id::text, type, date::text, COALESCE(number,''), status,
         COALESCE(warehouse_id::text,''), COALESCE(source_warehouse_id::text,''),
         COALESCE(target_warehouse_id::text,''), COALESCE(shift_id::text,''),
-        COALESCE(customer_id::text,''), COALESCE(note,'')
+        COALESCE(customer_id::text,''), COALESCE(created_by::text,''), COALESCE(note,'')
         FROM documents.documents
         WHERE tenant_id=$1 AND id=$2`
 	row := r.store.Pool.QueryRow(ctx, query, tenantID, id)
 	item := Document{}
 	err := row.Scan(&item.ID, &item.Type, &item.Date, &item.Number, &item.Status,
 		&item.WarehouseID, &item.SourceWarehouseID, &item.TargetWarehouseID,
-		&item.ShiftID, &item.CustomerID, &item.Note)
+		&item.ShiftID, &item.CustomerID, &item.CreatedBy, &item.Note)
 	return item, err
 }
 
@@ -184,11 +184,11 @@ func scanItems(rows pgx.Rows) ([]DocumentItem, decimal.Decimal, error) {
 
 func (r *Repository) InsertDocument(ctx context.Context, tx pgx.Tx, tenantID, documentID string, req CreateRequest) error {
 	query := `INSERT INTO documents.documents
-        (id, tenant_id, type, date, number, status, warehouse_id, source_warehouse_id, target_warehouse_id, shift_id, customer_id, note)
-        VALUES ($1,$2,$3,$4,$5,'draft',NULLIF($6,''),NULLIF($7,''),NULLIF($8,''),NULLIF($9,''),NULLIF($10,''),$11)`
+        (id, tenant_id, type, date, number, status, warehouse_id, source_warehouse_id, target_warehouse_id, shift_id, customer_id, note, created_by)
+        VALUES ($1,$2,$3,$4,$5,'draft',NULLIF($6,''),NULLIF($7,''),NULLIF($8,''),NULLIF($9,''),NULLIF($10,''),$11,NULLIF($12,'')::uuid)`
 	_, err := tx.Exec(ctx, query, documentID, tenantID, req.Type, req.Date,
 		req.Number, req.WarehouseID, req.SourceWarehouseID, req.TargetWarehouseID,
-		req.ShiftID, req.CustomerID, req.Note)
+		req.ShiftID, req.CustomerID, req.Note, actorID(ctx))
 	return err
 }
 

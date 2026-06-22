@@ -10,10 +10,10 @@ import (
 func (s *Service) BeginPosting(ctx context.Context, tx pgx.Tx, input BatchInput) (string, error) {
 	id := uuid.NewString()
 	query := `INSERT INTO ledger.posting_batches
-        (id, tenant_id, document_id, effective_date, supersedes_batch_id, reason)
-        VALUES ($1,$2,$3,$4,NULLIF($5,'')::uuid,$6)`
+        (id, tenant_id, document_id, effective_date, supersedes_batch_id, reason, posted_by)
+        VALUES ($1,$2,$3,$4,NULLIF($5,'')::uuid,$6,NULLIF($7,'')::uuid)`
 	_, err := tx.Exec(ctx, query, id, input.TenantID, input.DocumentID,
-		input.EffectiveDate, input.SupersedesBatchID, postingReason(input))
+		input.EffectiveDate, input.SupersedesBatchID, postingReason(input), input.PostedBy)
 	return id, err
 }
 

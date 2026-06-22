@@ -12,6 +12,7 @@ type BatchInput struct {
 	EffectiveDate     time.Time
 	SupersedesBatchID string
 	Reason            string
+	PostedBy          string
 }
 
 type EntryInput struct {
