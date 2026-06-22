@@ -1,4 +1,4 @@
-import { createTableSearchFilter } from "../../../shared/model/data-table/filters/tableSearchFilter";
+import { createTableSearchFilter } from "@smarterp/model/data-table/filters/tableSearchFilter";
 
 export const productSearchFilter = createTableSearchFilter({
   id: "products",

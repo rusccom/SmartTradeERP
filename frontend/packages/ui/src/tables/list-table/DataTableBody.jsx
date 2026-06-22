@@ -2,7 +2,7 @@ import { flexRender } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 
-import { useI18n } from "../../../i18n/useI18n";
+import { useI18n } from "@smarterp/i18n/useI18n";
 import DataTableOpenLink from "./DataTableOpenLink";
 
 function DataTableBody({ table, onRowOpen, emptyText, subRows }) {

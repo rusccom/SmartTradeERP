@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
-import { ServerListTable } from "../../../shared/ui/tables/list-table";
+import { useI18n } from "@smarterp/i18n/useI18n";
+import { ServerListTable } from "@smarterp/ui/tables/list-table";
 import { useCurrencies } from "../../currencies/model/useCurrencies";
 import { createDocumentsTablePreset } from "./table/documentsTablePreset";
 

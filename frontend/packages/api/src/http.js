@@ -1,4 +1,4 @@
-import { getAdminToken, getClientToken } from "../auth/session";
+import { getAdminToken, getClientToken } from "@smarterp/auth/session";
 import { assertPublicApiPath, isAdminApiPath, isClientApiPath } from "./publicApi";
 
 const API_BASE_URL = normalizeBaseURL(import.meta.env.VITE_API_URL);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
-import FormModal from "../../../shared/ui/form-modal/FormModal";
+import { useI18n } from "@smarterp/i18n/useI18n";
+import FormModal from "@smarterp/ui/form-modal/FormModal";
 import { decimalStep } from "../../currencies/model/formatMoney";
 import { useCurrencies } from "../../currencies/model/useCurrencies";
 import { createBundle } from "../api/createBundle";

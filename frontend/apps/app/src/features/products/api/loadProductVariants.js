@@ -1,5 +1,5 @@
-import { apiPaths } from "../../../shared/api/publicApi";
-import { getJSON } from "../../../shared/api/http";
+import { apiPaths } from "@smarterp/api/publicApi";
+import { getJSON } from "@smarterp/api/http";
 
 export function loadProductVariants(row) {
   if (Array.isArray(row.variants)) {

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { MapPin, Package, PenLine } from "lucide-react";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { useI18n } from "@smarterp/i18n/useI18n";
 
 function LandingShowcase() {
   const { t } = useI18n();

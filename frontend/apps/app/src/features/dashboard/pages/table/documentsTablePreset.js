@@ -1,5 +1,5 @@
-import { apiPaths } from "../../../../shared/api/publicApi";
-import { createApiTablePreset } from "../../../../shared/model/data-table/createApiTablePreset";
+import { apiPaths } from "@smarterp/api/publicApi";
+import { createApiTablePreset } from "@smarterp/model/data-table/createApiTablePreset";
 import { documentsTableSorting } from "./documentsTableSorting";
 
 export function createDocumentsTablePreset(t, formatMoney) {

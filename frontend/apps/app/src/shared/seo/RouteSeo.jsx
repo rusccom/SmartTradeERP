@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-import { buildLandingPath, DEFAULT_LOCALE, isLandingPath, readRouteLocale, readSupportedLocales } from "../i18n/localeConfig";
-import { messagesByLocale } from "../i18n/messages";
-import { useI18n } from "../i18n/useI18n";
+import { buildLandingPath, DEFAULT_LOCALE, isLandingPath, readRouteLocale, readSupportedLocales } from "@smarterp/i18n/localeConfig";
+import { messagesByLocale } from "@smarterp/i18n/messages";
+import { useI18n } from "@smarterp/i18n/useI18n";
 
 const supportedLocales = readSupportedLocales(messagesByLocale);
 

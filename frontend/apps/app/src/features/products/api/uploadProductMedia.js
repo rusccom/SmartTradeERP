@@ -1,5 +1,5 @@
-import { apiPaths } from "../../../shared/api/publicApi";
-import { postJSON } from "../../../shared/api/http";
+import { apiPaths } from "@smarterp/api/publicApi";
+import { postJSON } from "@smarterp/api/http";
 import { uploadDirectMedia } from "../../media/api/uploadDirectMedia";
 
 export async function uploadProductMedia(productID, file) {

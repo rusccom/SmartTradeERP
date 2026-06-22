@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { setAdminToken } from "../../../shared/auth/session";
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { setAdminToken } from "@smarterp/auth/session";
+import { useI18n } from "@smarterp/i18n/useI18n";
 import { loginAdmin } from "../api/adminAuthApi";
 
 const DEFAULT_ADMIN = {

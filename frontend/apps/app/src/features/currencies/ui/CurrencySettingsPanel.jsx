@@ -1,7 +1,7 @@
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { useI18n } from "@smarterp/i18n/useI18n";
 import { loadCurrencyOptions } from "../api/loadCurrencyOptions";
 import { useCurrencies } from "../model/useCurrencies";
 import CurrencyCreateForm from "./CurrencyCreateForm";

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { PackagePlus, Rocket, UserPlus } from "lucide-react";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { useI18n } from "@smarterp/i18n/useI18n";
 
 function LandingHowItWorks() {
   const { t } = useI18n();

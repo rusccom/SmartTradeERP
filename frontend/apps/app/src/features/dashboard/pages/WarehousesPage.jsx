@@ -1,5 +1,5 @@
-import { useI18n } from "../../../shared/i18n/useI18n";
-import PlaceholderPage from "../../../shared/ui/PlaceholderPage";
+import { useI18n } from "@smarterp/i18n/useI18n";
+import PlaceholderPage from "@smarterp/ui/PlaceholderPage";
 
 function WarehousesPage() {
   const { t } = useI18n();

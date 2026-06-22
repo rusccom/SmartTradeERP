@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useServerDataTable } from "../../../model/data-table/useServerDataTable";
+import { useServerDataTable } from "@smarterp/model/data-table/useServerDataTable";
 import DataTable from "./DataTable";
 
 function ServerListTable(props) {

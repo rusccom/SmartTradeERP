@@ -1,9 +1,9 @@
 import { Link, Outlet } from "react-router-dom";
 import { useMemo } from "react";
 
-import { hasAdminSession, hasClientSession } from "../shared/auth/session";
-import { buildLandingPath } from "../shared/i18n/localeConfig";
-import { useI18n } from "../shared/i18n/useI18n";
+import { hasAdminSession, hasClientSession } from "@smarterp/auth/session";
+import { buildLandingPath } from "@smarterp/i18n/localeConfig";
+import { useI18n } from "@smarterp/i18n/useI18n";
 
 function AppFrame() {
   const { locale, t } = useI18n();

@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { buildLandingPath, isLandingPath } from "../i18n/localeConfig";
-import { useI18n } from "../i18n/useI18n";
+import { buildLandingPath, isLandingPath } from "@smarterp/i18n/localeConfig";
+import { useI18n } from "@smarterp/i18n/useI18n";
 
 function LocaleSwitcher() {
   const { availableLocales, locale, setLocale, t } = useI18n();

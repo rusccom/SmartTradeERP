@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { useI18n } from "@smarterp/i18n/useI18n";
 
 const LOGOS = ["Partner 1", "Partner 2", "Partner 3", "Partner 4", "Partner 5"];
 

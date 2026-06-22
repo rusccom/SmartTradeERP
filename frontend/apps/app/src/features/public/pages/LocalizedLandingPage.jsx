@@ -1,7 +1,7 @@
 import { Navigate, useParams } from "react-router-dom";
 
-import { buildLandingPath, DEFAULT_LOCALE, readSupportedLocales } from "../../../shared/i18n/localeConfig";
-import { messagesByLocale } from "../../../shared/i18n/messages";
+import { buildLandingPath, DEFAULT_LOCALE, readSupportedLocales } from "@smarterp/i18n/localeConfig";
+import { messagesByLocale } from "@smarterp/i18n/messages";
 import LandingPage from "./LandingPage";
 
 const supportedLocales = readSupportedLocales(messagesByLocale);

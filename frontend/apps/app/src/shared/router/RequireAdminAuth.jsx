@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 
-import { hasAdminSession } from "../auth/session";
+import { hasAdminSession } from "@smarterp/auth/session";
 
 function RequireAdminAuth({ children }) {
   if (!hasAdminSession()) {

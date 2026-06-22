@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 
-import { hasClientSession } from "../auth/session";
+import { hasClientSession } from "@smarterp/auth/session";
 
 function RequireClientAuth({ children }) {
   if (!hasClientSession()) {

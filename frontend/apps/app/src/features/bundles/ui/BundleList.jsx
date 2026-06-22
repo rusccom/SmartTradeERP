@@ -1,6 +1,6 @@
 import { Plus, RefreshCw } from "lucide-react";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { useI18n } from "@smarterp/i18n/useI18n";
 import { useCurrencies } from "../../currencies/model/useCurrencies";
 
 function BundleList({ bundles, loading, onCreate, onReload, onSelect, selectedID }) {

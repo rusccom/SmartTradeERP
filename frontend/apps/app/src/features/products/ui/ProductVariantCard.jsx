@@ -1,4 +1,4 @@
-import FormField from "../../../shared/ui/form-modal/FormField";
+import FormField from "@smarterp/ui/form-modal/FormField";
 
 function ProductVariantCard({ canRemove, fields, index, locked, onChange, onRemove, t, variant }) {
   return (

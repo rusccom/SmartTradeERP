@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { setClientToken } from "../../../shared/auth/session";
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { setClientToken } from "@smarterp/auth/session";
+import { useI18n } from "@smarterp/i18n/useI18n";
 import { loginClient } from "../api/clientAuthApi";
 
 const initialForm = { email: "", password: "" };

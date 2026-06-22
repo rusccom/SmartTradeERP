@@ -1,5 +1,5 @@
-import { apiPaths } from "../../../shared/api/publicApi";
-import { getJSON } from "../../../shared/api/http";
+import { apiPaths } from "@smarterp/api/publicApi";
+import { getJSON } from "@smarterp/api/http";
 
 export async function loadBundles(signal) {
   const params = { page: 1, per_page: 100 };

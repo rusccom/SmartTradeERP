@@ -1,10 +1,10 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
-import { clearAdminToken, hasAdminSession } from "../../../shared/auth/session";
-import LocaleSwitcher from "../../../shared/ui/LocaleSwitcher";
-import "../../../shared/ui/workspace-layout.css";
+import { useI18n } from "@smarterp/i18n/useI18n";
+import { clearAdminToken, hasAdminSession } from "@smarterp/auth/session";
+import LocaleSwitcher from "@smarterp/ui/LocaleSwitcher";
+import "@smarterp/ui/workspace-layout.css";
 
 function AdminLayout() {
   const { t } = useI18n();

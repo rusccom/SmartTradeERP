@@ -1,7 +1,7 @@
 import { createElement } from "react";
 
-import { apiPaths } from "../../../shared/api/publicApi";
-import { createApiTablePreset } from "../../../shared/model/data-table/createApiTablePreset";
+import { apiPaths } from "@smarterp/api/publicApi";
+import { createApiTablePreset } from "@smarterp/model/data-table/createApiTablePreset";
 import ProductTableProductCell from "../ui/ProductTableProductCell";
 import { productSearchFilter } from "./productSearchFilter";
 import { productsTableSorting } from "./productsTableSorting";

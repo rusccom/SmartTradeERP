@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 
-import { hasAnySession, resolveHomeRoute } from "../auth/session";
+import { hasAnySession, resolveHomeRoute } from "@smarterp/auth/session";
 
 function RequireNoSession({ children }) {
   const { pathname } = useLocation();

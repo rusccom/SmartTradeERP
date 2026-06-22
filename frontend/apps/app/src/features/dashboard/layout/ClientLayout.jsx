@@ -1,13 +1,13 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
-import { clearClientToken } from "../../../shared/auth/session";
+import { useI18n } from "@smarterp/i18n/useI18n";
+import { clearClientToken } from "@smarterp/auth/session";
 import CurrencyProvider from "../../currencies/model/CurrencyProvider";
-import LocaleSwitcher from "../../../shared/ui/LocaleSwitcher";
+import LocaleSwitcher from "@smarterp/ui/LocaleSwitcher";
 import { createMenuSections } from "../registry";
 import Sidebar from "./Sidebar";
-import "../../../shared/ui/workspace-layout.css";
+import "@smarterp/ui/workspace-layout.css";
 import "./sidebar.css";
 
 function ClientLayout() {

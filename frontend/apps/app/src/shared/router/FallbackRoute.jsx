@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 
-import { resolveHomeRoute } from "../auth/session";
+import { resolveHomeRoute } from "@smarterp/auth/session";
 
 function FallbackRoute() {
   const { pathname } = useLocation();

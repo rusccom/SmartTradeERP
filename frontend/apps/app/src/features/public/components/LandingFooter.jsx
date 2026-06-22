@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
-import { buildLandingPath } from "../../../shared/i18n/localeConfig";
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { buildLandingPath } from "@smarterp/i18n/localeConfig";
+import { useI18n } from "@smarterp/i18n/useI18n";
 
 function LandingFooter() {
   const { locale, t } = useI18n();

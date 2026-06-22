@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { useI18n } from "@smarterp/i18n/useI18n";
 
 function LandingTestimonials() {
   const { t } = useI18n();

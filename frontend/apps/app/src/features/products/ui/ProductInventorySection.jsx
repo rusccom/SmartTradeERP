@@ -1,4 +1,4 @@
-import FormField from "../../../shared/ui/form-modal/FormField";
+import FormField from "@smarterp/ui/form-modal/FormField";
 
 const inventoryFields = [
   { name: "skuCode", labelKey: "products.form.skuCode", type: "text" },

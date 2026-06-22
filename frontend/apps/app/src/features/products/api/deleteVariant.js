@@ -1,5 +1,5 @@
-import { deleteJSON } from "../../../shared/api/http";
-import { apiPaths } from "../../../shared/api/publicApi";
+import { deleteJSON } from "@smarterp/api/http";
+import { apiPaths } from "@smarterp/api/publicApi";
 
 export function deleteVariant(id) {
   return deleteJSON(apiPaths.variantById(id));

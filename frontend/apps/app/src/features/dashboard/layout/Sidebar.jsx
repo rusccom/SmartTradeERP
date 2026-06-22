@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { useI18n } from "@smarterp/i18n/useI18n";
 
 function Sidebar({ open, sections, onClose }) {
   const { t } = useI18n();

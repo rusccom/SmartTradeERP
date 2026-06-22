@@ -1,4 +1,4 @@
-import { useI18n } from "../../../shared/i18n/useI18n";
+import { useI18n } from "@smarterp/i18n/useI18n";
 import CurrencySettingsPanel from "../../currencies/ui/CurrencySettingsPanel";
 
 function SettingsPage() {

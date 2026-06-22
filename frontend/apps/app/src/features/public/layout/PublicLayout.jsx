@@ -1,9 +1,9 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 
-import { buildLandingPath, isLandingPath } from "../../../shared/i18n/localeConfig";
-import { useI18n } from "../../../shared/i18n/useI18n";
-import LocaleSwitcher from "../../../shared/ui/LocaleSwitcher";
+import { buildLandingPath, isLandingPath } from "@smarterp/i18n/localeConfig";
+import { useI18n } from "@smarterp/i18n/useI18n";
+import LocaleSwitcher from "@smarterp/ui/LocaleSwitcher";
 
 function PublicLayout() {
   const { availableLocales, locale, t } = useI18n();

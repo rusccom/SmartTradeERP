@@ -1,4 +1,4 @@
-import { getJSON } from "../../api/http";
+import { getJSON } from "@smarterp/api/http";
 import { createTablePreset } from "./createTablePreset";
 
 export function createApiTablePreset(config) {
