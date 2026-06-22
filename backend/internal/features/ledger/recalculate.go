@@ -2,6 +2,7 @@ package ledger
 
 import (
 	"context"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -11,6 +12,7 @@ import (
 type movementRow struct {
 	id        string
 	itemType  string
+	reason    string
 	qty       decimal.Decimal
 	unitPrice decimal.Decimal
 	revenue   *decimal.Decimal
@@ -18,10 +20,12 @@ type movementRow struct {
 }
 
 type movementCalc struct {
-	row      movementRow
-	seq      int64
-	previous calcState
-	result   calcResult
+	row       movementRow
+	seq       int64
+	previous  calcState
+	qtyDelta  decimal.Decimal
+	unitPrice decimal.Decimal
+	result    calcResult
 }
 
 type rebuildRun struct {
@@ -34,27 +38,29 @@ type rebuildRun struct {
 }
 
 func (s *Service) RebuildAffected(ctx context.Context, tx pgx.Tx, tenantID string, affected []VariantSequence) error {
-	if err := s.lockTenant(ctx, tx, tenantID); err != nil {
-		return err
+	variantIDs := sortedVariantIDs(affected)
+	if len(variantIDs) == 0 {
+		return nil
 	}
 	allowNegative, err := s.AllowNegativeStock(ctx, tx, tenantID)
 	if err != nil {
 		return err
 	}
-	for _, item := range affected {
-		if err := s.rebuildVariant(ctx, tx, tenantID, item.VariantID, allowNegative); err != nil {
+	for _, variantID := range variantIDs {
+		if err := s.rebuildVariant(ctx, tx, tenantID, variantID, allowNegative); err != nil {
 			return err
 		}
 	}
-	return s.RefreshTenantProjections(ctx, tx, tenantID)
+	return s.refreshVariantProjections(ctx, tx, tenantID, variantIDs)
 }
 
-func (s *Service) RebuildVariant(ctx context.Context, tx pgx.Tx, tenantID, variantID string) error {
-	allowNegative, err := s.AllowNegativeStock(ctx, tx, tenantID)
-	if err != nil {
-		return err
+func sortedVariantIDs(affected []VariantSequence) []string {
+	ids := make([]string, 0, len(affected))
+	for _, item := range affected {
+		ids = append(ids, item.VariantID)
 	}
-	return s.rebuildVariant(ctx, tx, tenantID, variantID, allowNegative)
+	sort.Strings(ids)
+	return ids
 }
 
 func (s *Service) rebuildVariant(
@@ -90,12 +96,6 @@ func newRebuildRun(ctx context.Context, tx pgx.Tx, tenantID, variantID string, a
 	}
 }
 
-func (s *Service) lockTenant(ctx context.Context, tx pgx.Tx, tenantID string) error {
-	query := `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`
-	_, err := tx.Exec(ctx, query, "tenant:"+tenantID)
-	return err
-}
-
 func (s *Service) lockVariant(run rebuildRun) error {
 	query := `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`
 	_, err := run.tx.Exec(run.ctx, query, run.tenantID+":"+run.variantID)
@@ -120,7 +120,7 @@ func (s *Service) deleteResults(run rebuildRun) error {
 }
 
 func (s *Service) activeRows(run rebuildRun) (pgx.Rows, error) {
-	query := `SELECT m.id::text, m.direction, m.qty, m.unit_price,
+	query := `SELECT m.id::text, m.direction, m.reason, m.qty, m.unit_price,
         m.revenue_amount, m.warehouse_id::text
         FROM ledger.inventory_movements m
         JOIN ledger.posting_batches b ON b.id=m.posting_batch_id
@@ -152,10 +152,11 @@ func (s *Service) writeMovementResult(
 	state calcState,
 	seq int64,
 ) (calcState, error) {
-	calc, err := nextMovementCalc(rows, state, seq)
+	row, err := scanMovementRow(rows)
 	if err != nil {
 		return state, err
 	}
+	calc := buildMovementCalc(row, state, seq, warehouseQty[row.warehouse])
 	if err := applyStockPolicy(run, warehouseQty, calc); err != nil {
 		return state, err
 	}
@@ -170,7 +171,7 @@ func applyStockPolicy(
 	warehouseQty map[string]decimal.Decimal,
 	calc movementCalc,
 ) error {
-	nextQty := warehouseQty[calc.row.warehouse].Add(qtyDelta(calc))
+	nextQty := warehouseQty[calc.row.warehouse].Add(calc.qtyDelta)
 	if !run.allowNegative && nextQty.LessThan(decimal.Zero) {
 		return ErrNegativeStock
 	}
@@ -181,25 +182,46 @@ func applyStockPolicy(
 	return nil
 }
 
-func nextMovementCalc(rows pgx.Rows, state calcState, seq int64) (movementCalc, error) {
-	row, err := scanMovementRow(rows)
-	if err != nil {
-		return movementCalc{}, err
-	}
-	return movementCalc{row: row, seq: seq, previous: state, result: calculateRow(state, row)}, nil
-}
-
 func scanMovementRow(rows pgx.Rows) (movementRow, error) {
 	row := movementRow{}
-	err := rows.Scan(&row.id, &row.itemType, &row.qty, &row.unitPrice, &row.revenue, &row.warehouse)
+	err := rows.Scan(&row.id, &row.itemType, &row.reason, &row.qty,
+		&row.unitPrice, &row.revenue, &row.warehouse)
 	return row, err
 }
 
-func calculateRow(state calcState, row movementRow) calcResult {
+func buildMovementCalc(row movementRow, state calcState, seq int64, whQty decimal.Decimal) movementCalc {
+	delta := movementQtyDelta(row, whQty)
+	price := effectiveUnitPrice(state, row)
+	calc := movementCalc{row: row, seq: seq, previous: state, qtyDelta: delta, unitPrice: price}
+	calc.result = applyDelta(state, delta, price, row.revenue)
+	return calc
+}
+
+func movementQtyDelta(row movementRow, whQty decimal.Decimal) decimal.Decimal {
 	if row.itemType == "IN" {
-		return applyIn(state, row.qty, row.unitPrice, row.revenue)
+		return row.qty
 	}
-	return applyOut(state, row.qty, row.revenue)
+	if row.itemType == "SET" {
+		return row.qty.Sub(whQty)
+	}
+	return row.qty.Neg()
+}
+
+func effectiveUnitPrice(state calcState, row movementRow) decimal.Decimal {
+	if row.itemType == "IN" && row.reason != "TRANSFER_IN" && row.reason != "RETURN_IN" {
+		return row.unitPrice.Round(4)
+	}
+	return state.avg.Round(4)
+}
+
+func applyDelta(state calcState, delta, price decimal.Decimal, revenue *decimal.Decimal) calcResult {
+	if delta.IsPositive() {
+		return applyIn(state, delta, price, revenue)
+	}
+	if delta.IsNegative() {
+		return applyOut(state, delta.Neg(), revenue)
+	}
+	return calcResult{state: state}
 }
 
 func (s *Service) insertResult(run rebuildRun, calc movementCalc) error {
@@ -209,7 +231,7 @@ func (s *Service) insertResult(run rebuildRun, calc movementCalc) error {
          running_qty, running_avg_cost, running_inventory_value, calculation_version)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`
 	_, err := run.tx.Exec(run.ctx, query, calc.row.id, run.tenantID, run.variantID,
-		calc.seq, qtyDelta(calc), unitCost(calc), movementCost(calc), calc.row.revenue,
+		calc.seq, calc.qtyDelta, calc.unitPrice, movementCost(calc), calc.row.revenue,
 		calc.result.cogs, calc.result.profit, calc.result.state.qty,
 		calc.result.state.avg, inventoryValue(calc), run.version)
 	return err
@@ -222,29 +244,15 @@ func (s *Service) upsertBalance(run rebuildRun, calc movementCalc) error {
         ON CONFLICT (tenant_id, variant_id, warehouse_id)
         DO UPDATE SET qty=ledger.stock_balances.qty + EXCLUDED.qty, updated_at=now()`
 	_, err := run.tx.Exec(run.ctx, query, run.tenantID, run.variantID,
-		calc.row.warehouse, qtyDelta(calc))
+		calc.row.warehouse, calc.qtyDelta)
 	return err
-}
-
-func qtyDelta(calc movementCalc) decimal.Decimal {
-	if calc.row.itemType == "IN" {
-		return calc.row.qty
-	}
-	return calc.row.qty.Neg()
-}
-
-func unitCost(calc movementCalc) decimal.Decimal {
-	if calc.row.itemType == "OUT" {
-		return calc.previous.avg.Round(4)
-	}
-	return calc.row.unitPrice.Round(4)
 }
 
 func movementCost(calc movementCalc) decimal.Decimal {
 	if calc.result.cogs != nil {
 		return *calc.result.cogs
 	}
-	return calc.row.qty.Mul(calc.row.unitPrice).Round(4)
+	return calc.qtyDelta.Abs().Mul(calc.unitPrice).Round(4)
 }
 
 func inventoryValue(calc movementCalc) decimal.Decimal {

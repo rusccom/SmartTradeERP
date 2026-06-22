@@ -121,6 +121,9 @@ func (s *Service) CashOp(ctx context.Context, tenantID, userID string, req CashO
 		return err
 	}
 	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+		if err := s.repo.LockOpenShift(ctx, tx, tenantID, shift.ID); err != nil {
+			return err
+		}
 		return s.repo.InsertCashOp(ctx, tx, shift.ID, req)
 	})
 }
@@ -157,7 +160,10 @@ func (s *Service) Close(ctx context.Context, tenantID, userID string) (ShiftRepo
 
 func (s *Service) closeWithExpectedCash(ctx context.Context, tenantID string, shift Shift) error {
 	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
-		totals, err := s.repo.ShiftTotals(ctx, tenantID, shift.ID)
+		if err := s.repo.LockOpenShift(ctx, tx, tenantID, shift.ID); err != nil {
+			return err
+		}
+		totals, err := s.repo.ShiftTotals(ctx, tx, tenantID, shift.ID)
 		if err != nil {
 			return err
 		}
@@ -175,7 +181,7 @@ func (s *Service) Report(ctx context.Context, tenantID, shiftID string) (ShiftRe
 	if err != nil {
 		return ShiftReport{}, err
 	}
-	totals, err := s.repo.ShiftTotals(ctx, tenantID, shiftID)
+	totals, err := s.repo.ShiftTotals(ctx, s.store.Pool, tenantID, shiftID)
 	if err != nil {
 		return ShiftReport{}, err
 	}
@@ -184,17 +190,19 @@ func (s *Service) Report(ctx context.Context, tenantID, shiftID string) (ShiftRe
 
 func buildReport(shift Shift, cashOps []CashOp, totals shiftTotals) ShiftReport {
 	return ShiftReport{
-		Shift:        shift,
-		CashOps:      cashOps,
-		TotalSales:   totals.totalSales,
-		TotalReturns: totals.totalReturns,
-		SalesCash:    totals.salesCash,
-		SalesCard:    totals.salesCard,
-		ReturnsCash:  totals.returnsCash,
-		ReturnsCard:  totals.returnsCard,
-		TotalCashIn:  totals.totalCashIn,
-		TotalCashOut: totals.totalCashOut,
-		ExpectedCash: expectedCash(shift.OpeningCash, totals),
+		Shift:           shift,
+		CashOps:         cashOps,
+		TotalSales:      totals.totalSales,
+		TotalReturns:    totals.totalReturns,
+		SalesCash:       totals.salesCash,
+		SalesCard:       totals.salesCard,
+		SalesTransfer:   totals.salesTransfer,
+		ReturnsCash:     totals.returnsCash,
+		ReturnsCard:     totals.returnsCard,
+		ReturnsTransfer: totals.returnsTransfer,
+		TotalCashIn:     totals.totalCashIn,
+		TotalCashOut:    totals.totalCashOut,
+		ExpectedCash:    expectedCash(shift.OpeningCash, totals),
 	}
 }
 

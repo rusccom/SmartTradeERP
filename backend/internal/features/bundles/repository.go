@@ -219,6 +219,38 @@ func insertComponent(ctx context.Context, tx pgx.Tx, row componentInsert) error 
 	return err
 }
 
+func (r *Repository) DocumentSnapshots(
+	ctx context.Context,
+	tx pgx.Tx,
+	tenantID string,
+	documentID string,
+) (map[string][]Component, error) {
+	query := `SELECT DISTINCT i.variant_id::text, c.component_variant_id::text, c.qty_per_unit
+        FROM documents.document_item_components c
+        JOIN documents.document_items i ON i.id=c.document_item_id
+        JOIN documents.documents d ON d.id=i.document_id
+        WHERE d.tenant_id=$1 AND d.id=$2`
+	rows, err := tx.Query(ctx, query, tenantID, documentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanSnapshots(rows)
+}
+
+func scanSnapshots(rows pgx.Rows) (map[string][]Component, error) {
+	snapshots := make(map[string][]Component)
+	for rows.Next() {
+		variantID := ""
+		item := Component{}
+		if err := rows.Scan(&variantID, &item.ComponentVariantID, &item.Qty); err != nil {
+			return nil, err
+		}
+		snapshots[variantID] = append(snapshots[variantID], item)
+	}
+	return snapshots, rows.Err()
+}
+
 func (r *Repository) SaveSnapshot(ctx context.Context, tx pgx.Tx, input SnapshotInput) error {
 	for _, item := range input.Components {
 		if err := insertSnapshot(ctx, tx, input, item); err != nil {

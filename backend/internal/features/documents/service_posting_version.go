@@ -5,6 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/ledger"
 )
 
@@ -12,6 +13,7 @@ type postingVersionInput struct {
 	tenantID   string
 	documentID string
 	supersedes string
+	snapshots  map[string][]bundles.Component
 }
 
 type postingData struct {
@@ -20,19 +22,9 @@ type postingData struct {
 }
 
 func (s *Service) postDocumentTx(ctx context.Context, tx pgx.Tx, tenantID, documentID string) error {
-	_, err := s.postDocumentVersionTx(ctx, tx, tenantID, documentID, "")
+	input := postingVersionInput{tenantID: tenantID, documentID: documentID}
+	_, err := s.postVersion(ctx, tx, input)
 	return err
-}
-
-func (s *Service) postDocumentVersionTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	tenantID string,
-	documentID string,
-	supersedes string,
-) ([]ledger.VariantSequence, error) {
-	input := postingVersionInput{tenantID: tenantID, documentID: documentID, supersedes: supersedes}
-	return s.postVersion(ctx, tx, input)
 }
 
 func (s *Service) postVersion(
@@ -66,7 +58,7 @@ func (s *Service) writePostingData(
 	input postingVersionInput,
 	data postingData,
 ) ([]ledger.VariantSequence, error) {
-	run, err := s.newPostingRun(ctx, tx, input.tenantID, data.doc, input.supersedes)
+	run, err := s.newPostingRun(ctx, tx, input, data.doc)
 	if err != nil {
 		return nil, err
 	}

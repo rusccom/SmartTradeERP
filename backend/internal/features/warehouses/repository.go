@@ -43,21 +43,50 @@ func scan(rows pgx.Rows) ([]Warehouse, error) {
 }
 
 func (r *Repository) Create(ctx context.Context, tenantID, id string, req CreateRequest) error {
+    return r.store.WithTx(ctx, func(tx pgx.Tx) error {
+        if err := clearOtherDefaults(ctx, tx, tenantID, id, req.IsDefault); err != nil {
+            return err
+        }
+        return insertWarehouse(ctx, tx, tenantID, id, req)
+    })
+}
+
+func insertWarehouse(ctx context.Context, tx pgx.Tx, tenantID, id string, req CreateRequest) error {
     query := `INSERT INTO catalog.warehouses
         (id, tenant_id, name, address, is_default, is_active)
         VALUES ($1,$2,$3,$4,$5,$6)`
-    _, err := r.store.Pool.Exec(ctx, query, id, tenantID, req.Name, req.Address, req.IsDefault, req.IsActive)
+    _, err := tx.Exec(ctx, query, id, tenantID, req.Name, req.Address, req.IsDefault, req.IsActive)
     return err
 }
 
 func (r *Repository) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
+    return r.store.WithTx(ctx, func(tx pgx.Tx) error {
+        if err := clearOtherDefaults(ctx, tx, tenantID, id, req.IsDefault); err != nil {
+            return err
+        }
+        return updateWarehouse(ctx, tx, tenantID, id, req)
+    })
+}
+
+func updateWarehouse(ctx context.Context, tx pgx.Tx, tenantID, id string, req UpdateRequest) error {
     query := `UPDATE catalog.warehouses
         SET name=$3, address=$4, is_default=$5, is_active=$6
         WHERE tenant_id=$1 AND id=$2`
-    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.Address, req.IsDefault, req.IsActive)
+    tag, err := tx.Exec(ctx, query, tenantID, id, req.Name, req.Address, req.IsDefault, req.IsActive)
     if err == nil && tag.RowsAffected() == 0 {
         return pgx.ErrNoRows
     }
+    return err
+}
+
+func clearOtherDefaults(ctx context.Context, tx pgx.Tx, tenantID, keepID string, isDefault bool) error {
+    if !isDefault {
+        return nil
+    }
+    query := `UPDATE catalog.warehouses
+        SET is_default=false
+        WHERE tenant_id=$1 AND is_default=true AND id<>$2`
+    _, err := tx.Exec(ctx, query, tenantID, keepID)
     return err
 }
 

@@ -36,6 +36,7 @@ type CreateRequest struct {
 type CreateResult struct {
 	ID     string `json:"id"`
 	Number string `json:"number"`
+	Status string `json:"status"`
 }
 
 type UpdateRequest = CreateRequest
@@ -75,12 +76,6 @@ type ListItem struct {
 	CustomerID string `json:"customer_id"`
 	Note       string `json:"note"`
 	TotalCost  string `json:"total_cost"`
-}
-
-type Filters struct {
-	Type   string
-	Status string
-	Date   string
 }
 
 type postingItem struct {

@@ -5,33 +5,37 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/ledger"
 )
 
 type postingRun struct {
-	ctx      context.Context
-	tx       pgx.Tx
-	tenantID string
-	batchID  string
-	doc      Document
+	ctx       context.Context
+	tx        pgx.Tx
+	tenantID  string
+	batchID   string
+	doc       Document
+	snapshots map[string][]bundles.Component
 }
 
 func (s *Service) newPostingRun(
 	ctx context.Context,
 	tx pgx.Tx,
-	tenantID string,
+	input postingVersionInput,
 	doc Document,
-	supersedes string,
 ) (postingRun, error) {
-	input := ledger.BatchInput{
-		TenantID:          tenantID,
+	batchInput := ledger.BatchInput{
+		TenantID:          input.tenantID,
 		DocumentID:        doc.ID,
 		EffectiveDate:     mustDate(doc.Date),
-		SupersedesBatchID: supersedes,
+		SupersedesBatchID: input.supersedes,
 		Reason:            "document_posting",
 	}
-	batchID, err := s.ledger.BeginPosting(ctx, tx, input)
-	run := postingRun{ctx: ctx, tx: tx, tenantID: tenantID, batchID: batchID, doc: doc}
+	batchID, err := s.ledger.BeginPosting(ctx, tx, batchInput)
+	run := postingRun{
+		ctx: ctx, tx: tx, tenantID: input.tenantID,
+		batchID: batchID, doc: doc, snapshots: input.snapshots,
+	}
 	return run, err
 }
 

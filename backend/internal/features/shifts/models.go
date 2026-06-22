@@ -33,15 +33,17 @@ type CashOp struct {
 }
 
 type ShiftReport struct {
-	Shift        Shift           `json:"shift"`
-	CashOps      []CashOp        `json:"cash_ops"`
-	TotalSales   decimal.Decimal `json:"total_sales"`
-	TotalReturns decimal.Decimal `json:"total_returns"`
-	SalesCash    decimal.Decimal `json:"sales_cash"`
-	SalesCard    decimal.Decimal `json:"sales_card"`
-	ReturnsCash  decimal.Decimal `json:"returns_cash"`
-	ReturnsCard  decimal.Decimal `json:"returns_card"`
-	TotalCashIn  decimal.Decimal `json:"total_cash_in"`
-	TotalCashOut decimal.Decimal `json:"total_cash_out"`
-	ExpectedCash decimal.Decimal `json:"expected_cash"`
+	Shift           Shift           `json:"shift"`
+	CashOps         []CashOp        `json:"cash_ops"`
+	TotalSales      decimal.Decimal `json:"total_sales"`
+	TotalReturns    decimal.Decimal `json:"total_returns"`
+	SalesCash       decimal.Decimal `json:"sales_cash"`
+	SalesCard       decimal.Decimal `json:"sales_card"`
+	SalesTransfer   decimal.Decimal `json:"sales_transfer"`
+	ReturnsCash     decimal.Decimal `json:"returns_cash"`
+	ReturnsCard     decimal.Decimal `json:"returns_card"`
+	ReturnsTransfer decimal.Decimal `json:"returns_transfer"`
+	TotalCashIn     decimal.Decimal `json:"total_cash_in"`
+	TotalCashOut    decimal.Decimal `json:"total_cash_out"`
+	ExpectedCash    decimal.Decimal `json:"expected_cash"`
 }

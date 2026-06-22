@@ -91,15 +91,10 @@ func (s *Service) buildCompositeSaleEntry(
 
 func (s *Service) buildCompositeReturnEntry(input compositeReturnInput, component bundles.Component) (ledger.EntryInput, error) {
 	qty := input.item.Qty.Mul(component.Qty)
-	_, avg, err := s.ledger.GlobalStockTx(input.run.ctx, input.run.tx, input.run.tenantID, component.ComponentVariantID)
-	if err != nil {
-		return ledger.EntryInput{}, err
-	}
 	share := input.shares[component.ComponentVariantID]
 	revenue := input.item.TotalAmount.Mul(share).Round(4).Neg()
-	total := qty.Mul(avg).Round(4)
 	entry := makeEntry(input.run.tenantID, input.run.doc.ID, input.item.ID, component.ComponentVariantID,
-		input.run.doc.WarehouseID, mustDate(input.run.doc.Date), "IN", "RETURN_IN", qty, avg, total, &revenue)
+		input.run.doc.WarehouseID, mustDate(input.run.doc.Date), "IN", "RETURN_IN", qty, decimal.Zero, decimal.Zero, &revenue)
 	return entry, nil
 }
 
@@ -129,10 +124,6 @@ func docMeta(documentType string) (string, string) {
 	switch documentType {
 	case "RECEIPT":
 		return "IN", "PURCHASE"
-	case "SALE":
-		return "OUT", "SALE"
-	case "RETURN":
-		return "IN", "RETURN_IN"
 	case "WRITEOFF":
 		return "OUT", "WRITEOFF"
 	}
@@ -140,16 +131,11 @@ func docMeta(documentType string) (string, string) {
 }
 
 func revenueForType(documentType string, amount decimal.Decimal) *decimal.Decimal {
-	switch documentType {
-	case "SALE":
-		value := amount
-		return &value
-	case "RETURN":
-		value := amount.Neg()
-		return &value
-	default:
+	if documentType != "SALE" {
 		return nil
 	}
+	value := amount
+	return &value
 }
 
 func mustDate(raw string) time.Time {

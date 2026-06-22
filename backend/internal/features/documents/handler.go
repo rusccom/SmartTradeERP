@@ -205,6 +205,22 @@ func writeDocumentStateError(w http.ResponseWriter, err error) bool {
         httpx.WriteError(w, http.StatusConflict, "status_conflict", "invalid document status", nil)
         return true
     }
+    return writeShiftStateError(w, err)
+}
+
+func writeShiftStateError(w http.ResponseWriter, err error) bool {
+    if errors.Is(err, ErrShiftDocumentLocked) {
+        httpx.WriteError(w, http.StatusConflict, "shift_document_locked", "shift document cannot be modified", nil)
+        return true
+    }
+    if errors.Is(err, ErrShiftClosed) {
+        httpx.WriteError(w, http.StatusConflict, "shift_closed", "shift is closed", nil)
+        return true
+    }
+    if errors.Is(err, ErrTypeImmutable) {
+        httpx.WriteError(w, http.StatusConflict, "type_immutable", "document type cannot be changed", nil)
+        return true
+    }
     return false
 }
 

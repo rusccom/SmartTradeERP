@@ -20,18 +20,16 @@ func (r *Repository) CustomerExists(ctx context.Context, tx pgx.Tx, tenantID str
 	return exists(ctx, tx, query, tenantID, id)
 }
 
-func (r *Repository) ShiftExists(ctx context.Context, tx pgx.Tx, tenantID string, id string) (bool, error) {
-	query := `SELECT EXISTS(
-        SELECT 1 FROM documents.shifts WHERE tenant_id=$1 AND id=$2
-    )`
-	return exists(ctx, tx, query, tenantID, id)
-}
-
 func (r *Repository) OpenShiftExists(ctx context.Context, tx pgx.Tx, tenantID string, id string) (bool, error) {
-	query := `SELECT EXISTS(
-        SELECT 1 FROM documents.shifts WHERE tenant_id=$1 AND id=$2 AND status='open'
-    )`
-	return exists(ctx, tx, query, tenantID, id)
+	query := `SELECT status FROM documents.shifts
+        WHERE tenant_id=$1 AND id=$2
+        FOR UPDATE`
+	status := ""
+	err := tx.QueryRow(ctx, query, tenantID, id).Scan(&status)
+	if err == pgx.ErrNoRows {
+		return false, nil
+	}
+	return status == "open", err
 }
 
 func (r *Repository) VariantComposite(ctx context.Context, tx pgx.Tx, tenantID string, id string) (bool, bool, error) {

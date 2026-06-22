@@ -72,6 +72,15 @@ func (s *Service) SaveSnapshot(ctx context.Context, tx pgx.Tx, input SnapshotInp
 	return s.repo.SaveSnapshot(ctx, tx, input)
 }
 
+func (s *Service) DocumentSnapshots(
+	ctx context.Context,
+	tx pgx.Tx,
+	tenantID string,
+	documentID string,
+) (map[string][]Component, error) {
+	return s.repo.DocumentSnapshots(ctx, tx, tenantID, documentID)
+}
+
 func (s *Service) ProductHasComponents(ctx context.Context, tenantID, productID string) (bool, error) {
 	return s.repo.ProductHasComponents(ctx, tenantID, productID)
 }

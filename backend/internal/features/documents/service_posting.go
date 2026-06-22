@@ -40,9 +40,6 @@ func (s *Service) postSimpleItem(
 	if err != nil {
 		return nil, err
 	}
-	if len(entries) == 0 {
-		return nil, nil
-	}
 	return s.appendEntries(run, entries)
 }
 
@@ -71,6 +68,9 @@ func (s *Service) loadCompositeComponents(
 	run postingRun,
 	item postingItem,
 ) ([]bundles.Component, error) {
+	if components, ok := run.snapshots[item.VariantID]; ok {
+		return components, nil
+	}
 	return s.bundles.ResolveComponents(run.ctx, run.tx, run.tenantID, item.VariantID)
 }
 
@@ -91,7 +91,7 @@ func (s *Service) buildEntriesForSimple(
 	case "TRANSFER":
 		return s.buildTransferEntries(run, item)
 	case "INVENTORY":
-		return s.buildInventoryEntry(run, item)
+		return []ledger.EntryInput{inventoryCountEntry(run.doc, run.tenantID, item)}, nil
 	case "RETURN":
 		return s.buildReturnEntry(run, item)
 	default:
@@ -103,63 +103,17 @@ func (s *Service) buildTransferEntries(
 	run postingRun,
 	item postingItem,
 ) ([]ledger.EntryInput, error) {
-	_, avg, err := s.ledger.GlobalStockTx(run.ctx, run.tx, run.tenantID, item.VariantID)
-	if err != nil {
-		return nil, err
-	}
 	date := mustDate(run.doc.Date)
-	total := item.Qty.Mul(avg).Round(4)
 	outEntry := makeEntry(run.tenantID, run.doc.ID, item.ID, item.VariantID, run.doc.SourceWarehouseID,
-		date, "OUT", "TRANSFER_OUT", item.Qty, avg, total, nil)
+		date, "OUT", "TRANSFER_OUT", item.Qty, decimal.Zero, decimal.Zero, nil)
 	inEntry := makeEntry(run.tenantID, run.doc.ID, item.ID, item.VariantID, run.doc.TargetWarehouseID,
-		date, "IN", "TRANSFER_IN", item.Qty, avg, total, nil)
+		date, "IN", "TRANSFER_IN", item.Qty, decimal.Zero, decimal.Zero, nil)
 	return []ledger.EntryInput{outEntry, inEntry}, nil
 }
 
-func (s *Service) buildInventoryEntry(
-	run postingRun,
-	item postingItem,
-) ([]ledger.EntryInput, error) {
-	diff, err := s.inventoryDiff(run, item)
-	if err != nil {
-		return nil, err
-	}
-	if diff.IsZero() {
-		return nil, nil
-	}
-	_, avg, err := s.ledger.GlobalStockTx(run.ctx, run.tx, run.tenantID, item.VariantID)
-	if err != nil {
-		return nil, err
-	}
-	entry := inventoryEntry(run.doc, run.tenantID, item, diff, avg)
-	return []ledger.EntryInput{entry}, nil
-}
-
-func (s *Service) inventoryDiff(
-	run postingRun,
-	item postingItem,
-) (decimal.Decimal, error) {
-	qty, err := s.ledger.WarehouseStockTx(run.ctx, run.tx, run.tenantID, item.VariantID, run.doc.WarehouseID)
-	if err != nil {
-		return decimal.Zero, err
-	}
-	return item.Qty.Sub(qty), nil
-}
-
-func inventoryEntry(doc Document, tenantID string, item postingItem, diff, avg decimal.Decimal) ledger.EntryInput {
-	entryType, reason, absQty := inventoryMeta(diff)
-	total := absQty.Mul(avg).Round(4)
+func inventoryCountEntry(doc Document, tenantID string, item postingItem) ledger.EntryInput {
 	return makeEntry(tenantID, doc.ID, item.ID, item.VariantID, doc.WarehouseID,
-		mustDate(doc.Date), entryType, reason, absQty, avg, total, nil)
-}
-
-func inventoryMeta(diff decimal.Decimal) (string, string, decimal.Decimal) {
-	entryType := "IN"
-	reason := "SURPLUS"
-	if diff.IsPositive() {
-		return entryType, reason, diff
-	}
-	return "OUT", "SHORTAGE", diff.Neg()
+		mustDate(doc.Date), "SET", "COUNT", item.Qty, decimal.Zero, decimal.Zero, nil)
 }
 
 func (s *Service) buildEntriesForComposite(

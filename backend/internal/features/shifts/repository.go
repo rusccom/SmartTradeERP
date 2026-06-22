@@ -15,14 +15,16 @@ type Repository struct {
 }
 
 type shiftTotals struct {
-	totalSales   decimal.Decimal
-	totalReturns decimal.Decimal
-	salesCash    decimal.Decimal
-	salesCard    decimal.Decimal
-	returnsCash  decimal.Decimal
-	returnsCard  decimal.Decimal
-	totalCashIn  decimal.Decimal
-	totalCashOut decimal.Decimal
+	totalSales      decimal.Decimal
+	totalReturns    decimal.Decimal
+	salesCash       decimal.Decimal
+	salesCard       decimal.Decimal
+	salesTransfer   decimal.Decimal
+	returnsCash     decimal.Decimal
+	returnsCard     decimal.Decimal
+	returnsTransfer decimal.Decimal
+	totalCashIn     decimal.Decimal
+	totalCashOut    decimal.Decimal
 }
 
 func NewRepository(store *db.Store) *Repository {
@@ -126,31 +128,35 @@ func scanCashOps(rows pgx.Rows) ([]CashOp, error) {
 	return items, rows.Err()
 }
 
-func (r *Repository) ShiftTotals(ctx context.Context, tenantID, shiftID string) (shiftTotals, error) {
-	totals := zeroShiftTotals()
-	if err := r.loadDocumentTotals(ctx, tenantID, shiftID, &totals); err != nil {
-		return zeroShiftTotals(), err
+func (r *Repository) ShiftTotals(ctx context.Context, q db.DBTX, tenantID, shiftID string) (shiftTotals, error) {
+	totals := shiftTotals{}
+	if err := loadDocumentTotals(ctx, q, tenantID, shiftID, &totals); err != nil {
+		return shiftTotals{}, err
 	}
-	if err := r.loadPaymentTotals(ctx, tenantID, shiftID, &totals); err != nil {
-		return zeroShiftTotals(), err
+	if err := loadPaymentTotals(ctx, q, tenantID, shiftID, &totals); err != nil {
+		return shiftTotals{}, err
 	}
-	if err := r.loadCashTotals(ctx, shiftID, &totals); err != nil {
-		return zeroShiftTotals(), err
+	if err := loadCashTotals(ctx, q, shiftID, &totals); err != nil {
+		return shiftTotals{}, err
 	}
 	return totals, nil
 }
 
-func zeroShiftTotals() shiftTotals {
-	return shiftTotals{
-		totalSales: decimal.Zero, totalReturns: decimal.Zero,
-		salesCash: decimal.Zero, salesCard: decimal.Zero,
-		returnsCash: decimal.Zero, returnsCard: decimal.Zero,
-		totalCashIn: decimal.Zero, totalCashOut: decimal.Zero,
+func (r *Repository) LockOpenShift(ctx context.Context, tx pgx.Tx, tenantID, shiftID string) error {
+	query := `SELECT 1 FROM documents.shifts
+        WHERE tenant_id=$1 AND id=$2 AND status='open'
+        FOR UPDATE`
+	value := 0
+	err := tx.QueryRow(ctx, query, tenantID, shiftID).Scan(&value)
+	if err == pgx.ErrNoRows {
+		return ErrShiftAlreadyClosed
 	}
+	return err
 }
 
-func (r *Repository) loadDocumentTotals(
+func loadDocumentTotals(
 	ctx context.Context,
+	q db.DBTX,
 	tenantID string,
 	shiftID string,
 	totals *shiftTotals,
@@ -166,34 +172,38 @@ func (r *Repository) loadDocumentTotals(
         COALESCE(SUM(CASE WHEN type='SALE' THEN amount ELSE 0 END),0),
         COALESCE(SUM(CASE WHEN type='RETURN' THEN amount ELSE 0 END),0)
     FROM doc_sums`
-	row := r.store.Pool.QueryRow(ctx, query, tenantID, shiftID)
+	row := q.QueryRow(ctx, query, tenantID, shiftID)
 	return row.Scan(&totals.totalSales, &totals.totalReturns)
 }
 
-func (r *Repository) loadPaymentTotals(
+func loadPaymentTotals(
 	ctx context.Context,
+	q db.DBTX,
 	tenantID string,
 	shiftID string,
 	totals *shiftTotals,
 ) error {
 	query := `SELECT
         COALESCE(SUM(CASE WHEN d.type='SALE' AND p.method='cash' THEN p.amount ELSE 0 END),0),
-        COALESCE(SUM(CASE WHEN d.type='SALE' AND p.method IN ('card','transfer') THEN p.amount ELSE 0 END),0),
+        COALESCE(SUM(CASE WHEN d.type='SALE' AND p.method='card' THEN p.amount ELSE 0 END),0),
+        COALESCE(SUM(CASE WHEN d.type='SALE' AND p.method='transfer' THEN p.amount ELSE 0 END),0),
         COALESCE(SUM(CASE WHEN d.type='RETURN' AND p.method='cash' THEN p.amount ELSE 0 END),0),
-        COALESCE(SUM(CASE WHEN d.type='RETURN' AND p.method IN ('card','transfer') THEN p.amount ELSE 0 END),0)
+        COALESCE(SUM(CASE WHEN d.type='RETURN' AND p.method='card' THEN p.amount ELSE 0 END),0),
+        COALESCE(SUM(CASE WHEN d.type='RETURN' AND p.method='transfer' THEN p.amount ELSE 0 END),0)
         FROM documents.documents d
         JOIN documents.document_payments p ON p.document_id=d.id
         WHERE d.tenant_id=$1 AND d.shift_id=$2 AND d.status='posted'`
-	row := r.store.Pool.QueryRow(ctx, query, tenantID, shiftID)
-	return row.Scan(&totals.salesCash, &totals.salesCard, &totals.returnsCash, &totals.returnsCard)
+	row := q.QueryRow(ctx, query, tenantID, shiftID)
+	return row.Scan(&totals.salesCash, &totals.salesCard, &totals.salesTransfer,
+		&totals.returnsCash, &totals.returnsCard, &totals.returnsTransfer)
 }
 
-func (r *Repository) loadCashTotals(ctx context.Context, shiftID string, totals *shiftTotals) error {
+func loadCashTotals(ctx context.Context, q db.DBTX, shiftID string, totals *shiftTotals) error {
 	query := `SELECT
         COALESCE(SUM(CASE WHEN type='cash_in' THEN amount ELSE 0 END),0),
         COALESCE(SUM(CASE WHEN type='cash_out' THEN amount ELSE 0 END),0)
         FROM documents.shift_cash_ops
         WHERE shift_id=$1`
-	row := r.store.Pool.QueryRow(ctx, query, shiftID)
+	row := q.QueryRow(ctx, query, shiftID)
 	return row.Scan(&totals.totalCashIn, &totals.totalCashOut)
 }

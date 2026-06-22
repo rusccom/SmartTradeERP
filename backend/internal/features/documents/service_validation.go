@@ -42,7 +42,10 @@ func (s *Service) validateRequest(req CreateRequest) error {
 	if err := validateDocument(req); err != nil {
 		return err
 	}
-	if err := validateItems(req.Items); err != nil {
+	if err := validateItems(req.Type, req.Items); err != nil {
+		return err
+	}
+	if err := validateInventoryItems(req.Type, req.Items); err != nil {
 		return err
 	}
 	return validatePayments(req.Type, req.Items, req.Payments)
@@ -58,7 +61,20 @@ func validateDocument(req CreateRequest) error {
 	if err := validateDocumentIDs(req); err != nil {
 		return err
 	}
+	if err := validateShiftBinding(req); err != nil {
+		return err
+	}
 	return validateWarehouseRules(req)
+}
+
+func validateShiftBinding(req CreateRequest) error {
+	if req.ShiftID == "" {
+		return nil
+	}
+	if req.Type != "SALE" && req.Type != "RETURN" {
+		return validation.ErrInvalidData
+	}
+	return nil
 }
 
 func validateDocumentIDs(req CreateRequest) error {
@@ -102,23 +118,43 @@ func validateTransferWarehouses(req CreateRequest) error {
 	return nil
 }
 
-func validateItems(items []ItemInput) error {
+func validateItems(documentType string, items []ItemInput) error {
 	if len(items) == 0 {
 		return validation.ErrInvalidData
 	}
 	for _, item := range items {
-		if invalidItem(item) {
+		if invalidItem(documentType, item) {
 			return validation.ErrInvalidData
 		}
 	}
 	return nil
 }
 
-func invalidItem(item ItemInput) bool {
+func validateInventoryItems(documentType string, items []ItemInput) error {
+	if documentType != "INVENTORY" {
+		return nil
+	}
+	seen := make(map[string]bool, len(items))
+	for _, item := range items {
+		if seen[item.VariantID] {
+			return validation.ErrInvalidData
+		}
+		seen[item.VariantID] = true
+	}
+	return nil
+}
+
+func invalidItem(documentType string, item ItemInput) bool {
 	if !validation.Required(item.VariantID) || !validation.UUID(item.VariantID) {
 		return true
 	}
-	return !validation.Positive(item.Qty) || !validation.NonNegative(item.UnitPrice)
+	if !validation.NonNegative(item.UnitPrice) {
+		return true
+	}
+	if documentType == "INVENTORY" {
+		return !validation.NonNegative(item.Qty)
+	}
+	return !validation.Positive(item.Qty)
 }
 
 func (s *Service) validateReferences(ctx context.Context, tx pgx.Tx, tenantID string, req CreateRequest) error {
@@ -128,7 +164,7 @@ func (s *Service) validateReferences(ctx context.Context, tx pgx.Tx, tenantID st
 	if err := s.validateCustomer(ctx, tx, tenantID, req.CustomerID); err != nil {
 		return err
 	}
-	if err := s.validateShift(ctx, tx, tenantID, req.ShiftID, req.Type); err != nil {
+	if err := s.validateShift(ctx, tx, tenantID, req.ShiftID); err != nil {
 		return err
 	}
 	return s.validateVariants(ctx, tx, tenantID, req.Type, req.Items)
@@ -155,26 +191,15 @@ func (s *Service) validateCustomer(ctx context.Context, tx pgx.Tx, tenantID stri
 	return nil
 }
 
-func (s *Service) validateShift(ctx context.Context, tx pgx.Tx, tenantID string, id string, documentType string) error {
+func (s *Service) validateShift(ctx context.Context, tx pgx.Tx, tenantID string, id string) error {
 	if id == "" {
 		return nil
 	}
-	exists, err := s.shiftExists(ctx, tx, tenantID, id, documentType)
-	if err != nil || !exists {
+	open, err := s.repo.OpenShiftExists(ctx, tx, tenantID, id)
+	if err != nil || !open {
 		return referenceError(err)
 	}
 	return nil
-}
-
-func (s *Service) shiftExists(ctx context.Context, tx pgx.Tx, tenantID, id, documentType string) (bool, error) {
-	if requiresOpenShift(documentType) {
-		return s.repo.OpenShiftExists(ctx, tx, tenantID, id)
-	}
-	return s.repo.ShiftExists(ctx, tx, tenantID, id)
-}
-
-func requiresOpenShift(documentType string) bool {
-	return documentType == "SALE" || documentType == "RETURN"
 }
 
 func (s *Service) validateVariants(

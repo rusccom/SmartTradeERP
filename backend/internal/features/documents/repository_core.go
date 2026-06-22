@@ -239,6 +239,15 @@ func (r *Repository) Status(ctx context.Context, tenantID, documentID string) (s
 	return status, err
 }
 
+func (r *Repository) StatusForUpdate(ctx context.Context, tx pgx.Tx, tenantID, documentID string) (string, error) {
+	row := tx.QueryRow(ctx,
+		`SELECT status FROM documents.documents WHERE tenant_id=$1 AND id=$2 FOR UPDATE`,
+		tenantID, documentID)
+	status := ""
+	err := row.Scan(&status)
+	return status, err
+}
+
 func (r *Repository) SetStatus(ctx context.Context, tx pgx.Tx, tenantID, documentID, status string) error {
 	query := `UPDATE documents.documents SET status=$3, updated_at=now() WHERE tenant_id=$1 AND id=$2`
 	tag, err := tx.Exec(ctx, query, tenantID, documentID, status)

@@ -5,12 +5,14 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"smarterp/backend/internal/features/bundles"
 	"smarterp/backend/internal/features/ledger"
 )
 
 type retroState struct {
 	affected          []ledger.VariantSequence
 	supersededBatchID string
+	snapshots         map[string][]bundles.Component
 }
 
 type repostInput struct {
@@ -18,6 +20,7 @@ type repostInput struct {
 	documentID        string
 	req               UpdateRequest
 	supersededBatchID string
+	snapshots         map[string][]bundles.Component
 }
 
 func (s *Service) retroUpdate(ctx context.Context, tenantID, id string, req UpdateRequest) error {
@@ -33,11 +36,17 @@ func (s *Service) retroUpdateTx(
 	id string,
 	req UpdateRequest,
 ) error {
+	if err := s.lockDocumentStatus(ctx, tx, tenantID, id, "posted"); err != nil {
+		return err
+	}
 	state, err := s.prepareRetroUpdate(ctx, tx, tenantID, id)
 	if err != nil {
 		return err
 	}
-	input := repostInput{tenantID: tenantID, documentID: id, req: req, supersededBatchID: state.supersededBatchID}
+	input := repostInput{
+		tenantID: tenantID, documentID: id, req: req,
+		supersededBatchID: state.supersededBatchID, snapshots: state.snapshots,
+	}
 	newAffected, err := s.repostUpdatedDocument(ctx, tx, input)
 	if err != nil {
 		return err
@@ -56,11 +65,15 @@ func (s *Service) prepareRetroUpdate(
 	if err != nil {
 		return retroState{}, err
 	}
+	snapshots, err := s.bundles.DocumentSnapshots(ctx, tx, tenantID, id)
+	if err != nil {
+		return retroState{}, err
+	}
 	affected, err := s.ledger.SupersedeDocument(ctx, tx, tenantID, id)
 	if err != nil {
 		return retroState{}, err
 	}
-	state := retroState{affected: affected, supersededBatchID: batchID}
+	state := retroState{affected: affected, supersededBatchID: batchID, snapshots: snapshots}
 	return state, s.repo.SetStatus(ctx, tx, tenantID, id, "draft")
 }
 
@@ -72,5 +85,11 @@ func (s *Service) repostUpdatedDocument(
 	if err := s.updateDraftTx(ctx, tx, input.tenantID, input.documentID, input.req); err != nil {
 		return nil, err
 	}
-	return s.postDocumentVersionTx(ctx, tx, input.tenantID, input.documentID, input.supersededBatchID)
+	version := postingVersionInput{
+		tenantID:   input.tenantID,
+		documentID: input.documentID,
+		supersedes: input.supersededBatchID,
+		snapshots:  input.snapshots,
+	}
+	return s.postVersion(ctx, tx, version)
 }

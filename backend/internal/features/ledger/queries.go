@@ -82,46 +82,6 @@ func scanStockPair(row pgx.Row) (decimal.Decimal, decimal.Decimal, error) {
 	return qty, avg, nil
 }
 
-func (s *Service) WarehouseStock(ctx context.Context, tenantID, variantID, warehouseID string) (decimal.Decimal, error) {
-	return s.warehouseStock(ctx, s.store.Pool, tenantID, variantID, warehouseID)
-}
-
-func (s *Service) WarehouseStockTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	tenantID string,
-	variantID string,
-	warehouseID string,
-) (decimal.Decimal, error) {
-	return s.warehouseStock(ctx, tx, tenantID, variantID, warehouseID)
-}
-
-func (s *Service) warehouseStock(
-	ctx context.Context,
-	q db.DBTX,
-	tenantID string,
-	variantID string,
-	warehouseID string,
-) (decimal.Decimal, error) {
-	query := `SELECT COALESCE(SUM(CASE WHEN m.direction='IN' THEN m.qty ELSE -m.qty END), 0)
-        FROM ledger.inventory_movements m
-        JOIN ledger.posting_batches b ON b.id=m.posting_batch_id
-        WHERE m.tenant_id=$1 AND m.variant_id=$2 AND m.warehouse_id=$3
-            AND b.status='active'`
-	return scanWarehouseQty(q.QueryRow(ctx, query, tenantID, variantID, warehouseID))
-}
-
-func scanWarehouseQty(row pgx.Row) (decimal.Decimal, error) {
-	qty := decimal.Zero
-	if err := row.Scan(&qty); err != nil {
-		if err == pgx.ErrNoRows {
-			return decimal.Zero, nil
-		}
-		return decimal.Zero, err
-	}
-	return qty, nil
-}
-
 func (s *Service) ProfitByPeriod(ctx context.Context, filter ProfitFilter) (decimal.Decimal, error) {
 	query, args := buildProfitPeriodQuery(filter)
 	row := s.store.Pool.QueryRow(ctx, query, args...)
@@ -181,7 +141,7 @@ func scanDecimal(row pgx.Row) (decimal.Decimal, error) {
 
 func (s *Service) Movements(ctx context.Context, tenantID, variantID string) ([]Movement, error) {
 	query := `SELECT r.sequence_num, m.movement_date::text, m.direction, m.reason,
-        m.qty, r.running_qty, r.running_avg_cost, COALESCE(r.cogs_amount,0),
+        r.qty_delta, r.running_qty, r.running_avg_cost, COALESCE(r.cogs_amount,0),
         COALESCE(r.gross_profit,0)
         FROM ledger.inventory_movements m
         JOIN ledger.posting_batches b ON b.id=m.posting_batch_id
