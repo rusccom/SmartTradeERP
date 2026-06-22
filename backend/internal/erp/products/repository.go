@@ -42,7 +42,7 @@ func (r *Repository) count(ctx context.Context, tenantID string, query ProductLi
 }
 
 func (r *Repository) load(ctx context.Context, tenantID string, query ProductListQuery) ([]Product, error) {
-	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.created_at::text, p.updated_at::text
+	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.slug, p.seo_title, p.seo_description, p.created_at::text, p.updated_at::text
         FROM catalog.products p WHERE p.tenant_id=$1`
 	args := []any{tenantID}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
@@ -96,7 +96,7 @@ func scanProducts(rows pgx.Rows) ([]Product, error) {
 	items := make([]Product, 0)
 	for rows.Next() {
 		item := Product{}
-		err := rows.Scan(&item.ID, &item.Name, &item.IsComposite, &item.CreatedAt, &item.UpdatedAt)
+		err := rows.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.CreatedAt, &item.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -106,9 +106,9 @@ func scanProducts(rows pgx.Rows) ([]Product, error) {
 }
 
 func (r *Repository) Create(ctx context.Context, tx pgx.Tx, tenantID, productID string, req CreateRequest) error {
-    query := `INSERT INTO catalog.products (id, tenant_id, name, is_composite)
-        VALUES ($1,$2,$3,$4)`
-    _, err := tx.Exec(ctx, query, productID, tenantID, req.Name, req.IsComposite)
+    query := `INSERT INTO catalog.products (id, tenant_id, name, is_composite, slug, seo_title, seo_description)
+        VALUES ($1,$2,$3,$4,$5,$6,$7)`
+    _, err := tx.Exec(ctx, query, productID, tenantID, req.Name, req.IsComposite, req.Slug, req.SEOTitle, req.SEODescription)
     return err
 }
 
@@ -130,12 +130,12 @@ func readDefaultVariantName(req CreateRequest) string {
 }
 
 func (r *Repository) GetByID(ctx context.Context, tenantID, id string) (Product, error) {
-    query := `SELECT id::text, name, is_composite, created_at::text, updated_at::text
+    query := `SELECT id::text, name, is_composite, slug, seo_title, seo_description, created_at::text, updated_at::text
         FROM catalog.products
         WHERE tenant_id=$1 AND id=$2`
     row := r.store.Pool.QueryRow(ctx, query, tenantID, id)
     item := Product{}
-    err := row.Scan(&item.ID, &item.Name, &item.IsComposite, &item.CreatedAt, &item.UpdatedAt)
+    err := row.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.CreatedAt, &item.UpdatedAt)
     return item, err
 }
 
@@ -148,9 +148,9 @@ func (r *Repository) CompositeFlag(ctx context.Context, tenantID, id string) (bo
 
 func (r *Repository) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
     query := `UPDATE catalog.products
-        SET name=$3, is_composite=$4, updated_at=now()
+        SET name=$3, is_composite=$4, slug=$5, seo_title=$6, seo_description=$7, updated_at=now()
         WHERE tenant_id=$1 AND id=$2`
-    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.IsComposite)
+    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.IsComposite, req.Slug, req.SEOTitle, req.SEODescription)
     if err == nil && tag.RowsAffected() == 0 {
         return pgx.ErrNoRows
     }

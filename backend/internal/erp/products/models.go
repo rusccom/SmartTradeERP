@@ -7,22 +7,28 @@ import (
 )
 
 type Product struct {
-    ID          string `json:"id"`
-    Name        string `json:"name"`
-    IsComposite bool   `json:"is_composite"`
-    CreatedAt   string `json:"created_at"`
-    UpdatedAt   string `json:"updated_at"`
+    ID             string `json:"id"`
+    Name           string `json:"name"`
+    IsComposite    bool   `json:"is_composite"`
+    Slug           string `json:"slug"`
+    SEOTitle       string `json:"seo_title"`
+    SEODescription string `json:"seo_description"`
+    CreatedAt      string `json:"created_at"`
+    UpdatedAt      string `json:"updated_at"`
 }
 
 type ProductListItem struct {
-	ID          string               `json:"id"`
-	Name        string               `json:"name"`
-	IsComposite bool                 `json:"is_composite"`
-	GlobalQty   decimal.Decimal      `json:"global_qty"`
-	StockValue  decimal.Decimal      `json:"stock_value"`
-	Variants    []ProductVariantItem `json:"variants"`
-	CreatedAt   string               `json:"created_at"`
-	UpdatedAt   string               `json:"updated_at"`
+	ID             string               `json:"id"`
+	Name           string               `json:"name"`
+	IsComposite    bool                 `json:"is_composite"`
+	Slug           string               `json:"slug"`
+	SEOTitle       string               `json:"seo_title"`
+	SEODescription string               `json:"seo_description"`
+	GlobalQty      decimal.Decimal      `json:"global_qty"`
+	StockValue     decimal.Decimal      `json:"stock_value"`
+	Variants       []ProductVariantItem `json:"variants"`
+	CreatedAt      string               `json:"created_at"`
+	UpdatedAt      string               `json:"updated_at"`
 }
 
 type ProductVariantItem struct {
@@ -66,16 +72,22 @@ type ProductStockFilter struct {
 }
 
 type CreateRequest struct {
-    Name        string          `json:"name"`
-    IsComposite bool            `json:"is_composite"`
-    Unit        string          `json:"unit"`
-    Price       decimal.Decimal `json:"price"`
-    SKUCode     string          `json:"sku_code"`
-    Barcode     string          `json:"barcode"`
-    VariantName string          `json:"variant_name"`
+    Name           string          `json:"name"`
+    IsComposite    bool            `json:"is_composite"`
+    Unit           string          `json:"unit"`
+    Price          decimal.Decimal `json:"price"`
+    SKUCode        string          `json:"sku_code"`
+    Barcode        string          `json:"barcode"`
+    VariantName    string          `json:"variant_name"`
+    Slug           string          `json:"slug"`
+    SEOTitle       string          `json:"seo_title"`
+    SEODescription string          `json:"seo_description"`
 }
 
 type UpdateRequest struct {
-    Name        string `json:"name"`
-    IsComposite bool   `json:"is_composite"`
+    Name           string `json:"name"`
+    IsComposite    bool   `json:"is_composite"`
+    Slug           string `json:"slug"`
+    SEOTitle       string `json:"seo_title"`
+    SEODescription string `json:"seo_description"`
 }

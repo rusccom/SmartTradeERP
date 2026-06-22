@@ -43,7 +43,7 @@ func (r *Repository) loadListItems(
 	tenantID string,
 	query ProductListQuery,
 ) ([]ProductListItem, error) {
-	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.created_at::text, p.updated_at::text
+	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.slug, p.seo_title, p.seo_description, p.created_at::text, p.updated_at::text
         FROM catalog.products p WHERE p.tenant_id=$1`
 	args := []any{tenantID}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
@@ -60,7 +60,7 @@ func scanProductListItems(rows pgx.Rows) ([]ProductListItem, error) {
 	items := make([]ProductListItem, 0)
 	for rows.Next() {
 		item := ProductListItem{}
-		err := rows.Scan(&item.ID, &item.Name, &item.IsComposite, &item.CreatedAt, &item.UpdatedAt)
+		err := rows.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.CreatedAt, &item.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}

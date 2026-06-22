@@ -169,5 +169,9 @@ func (h *Handler) writeMutationError(w http.ResponseWriter, err error, message s
         httpx.WriteError(w, http.StatusConflict, "composite_type_locked", "product composite type is locked", nil)
         return
     }
+    if errors.Is(err, ErrSlugTaken) {
+        httpx.WriteError(w, http.StatusConflict, "slug_taken", "product slug already in use", nil)
+        return
+    }
     httpx.WriteError(w, http.StatusInternalServerError, "internal_error", message, err.Error())
 }

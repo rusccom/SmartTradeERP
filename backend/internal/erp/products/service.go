@@ -3,9 +3,11 @@ package products
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"smarterp/backend/internal/erp/ledger"
 	"smarterp/backend/internal/shared/db"
@@ -15,6 +17,7 @@ import (
 var ErrHasMovements = errors.New("product has movements")
 var ErrCompositeTypeLocked = errors.New("product composite type is locked")
 var ErrUsedInBundle = errors.New("product used in bundle")
+var ErrSlugTaken = errors.New("product slug already in use")
 
 type Service struct {
 	store       *db.Store
@@ -63,7 +66,7 @@ func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest
 		return s.createWithDefaultVariant(ctx, tx, input)
 	})
 	if err != nil {
-		return "", err
+		return "", mapProductWriteError(err)
 	}
 	return productID, nil
 }
@@ -98,7 +101,7 @@ func (s *Service) Update(ctx context.Context, tenantID, id string, req UpdateReq
 	if err := s.ensureCompositeChangeAllowed(ctx, tenantID, id, req.IsComposite); err != nil {
 		return err
 	}
-	return s.repo.Update(ctx, tenantID, id, req)
+	return mapProductWriteError(s.repo.Update(ctx, tenantID, id, req))
 }
 
 func (s *Service) ensureCompositeChangeAllowed(ctx context.Context, tenantID, id string, next bool) error {
@@ -170,11 +173,17 @@ func normalizeCreate(req CreateRequest) CreateRequest {
 	req.SKUCode = validation.Clean(req.SKUCode)
 	req.Barcode = validation.Clean(req.Barcode)
 	req.VariantName = validation.Clean(req.VariantName)
+	req.Slug = normalizeSlug(req.Slug)
+	req.SEOTitle = validation.Clean(req.SEOTitle)
+	req.SEODescription = validation.Clean(req.SEODescription)
 	return req
 }
 
 func normalizeUpdate(req UpdateRequest) UpdateRequest {
 	req.Name = validation.Clean(req.Name)
+	req.Slug = normalizeSlug(req.Slug)
+	req.SEOTitle = validation.Clean(req.SEOTitle)
+	req.SEODescription = validation.Clean(req.SEODescription)
 	return req
 }
 
@@ -185,11 +194,51 @@ func validateCreate(req CreateRequest) error {
 	if !validation.NonNegative(req.Price) || !validation.Max(req.Unit, 24) {
 		return validation.ErrInvalidData
 	}
+	if !validateSEO(req.Slug, req.SEOTitle, req.SEODescription) {
+		return validation.ErrInvalidData
+	}
 	return nil
 }
 
 func validateUpdate(req UpdateRequest) error {
-	return validateName(req.Name)
+	if err := validateName(req.Name); err != nil {
+		return err
+	}
+	if !validateSEO(req.Slug, req.SEOTitle, req.SEODescription) {
+		return validation.ErrInvalidData
+	}
+	return nil
+}
+
+func validateSEO(slug, title, description string) bool {
+	return validation.Max(slug, 200) && validation.Max(title, 255) && validation.Max(description, 320)
+}
+
+// normalizeSlug lowercases the handle and keeps only [a-z0-9], collapsing every
+// other run into a single hyphen so the value is URL-safe and unique per tenant.
+func normalizeSlug(value string) string {
+	var b strings.Builder
+	dash := false
+	for _, r := range strings.ToLower(strings.TrimSpace(value)) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			dash = false
+			continue
+		}
+		if !dash && b.Len() > 0 {
+			b.WriteByte('-')
+			dash = true
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
+func mapProductWriteError(err error) error {
+	pgErr := &pgconn.PgError{}
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		return ErrSlugTaken
+	}
+	return err
 }
 
 func validateName(name string) error {

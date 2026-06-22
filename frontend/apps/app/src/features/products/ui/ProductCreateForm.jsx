@@ -3,6 +3,7 @@ import ProductCreateActions from "./ProductCreateActions";
 import ProductInventorySection from "./ProductInventorySection";
 import ProductMediaSection from "./ProductMediaSection";
 import ProductPriceSection from "./ProductPriceSection";
+import ProductSeoSection from "./ProductSeoSection";
 import ProductVariantsSection from "./ProductVariantsSection";
 import ProductVariantsBuilder from "./ProductVariantsBuilder";
 import { decimalStep } from "../../currencies/model/formatMoney";
@@ -21,6 +22,7 @@ function ProductCreateForm({ state, t }) {
       <ProductVariantsSection hasVariants={hasVariants} onAddVariant={state.handleAddVariant} disabled={state.hasPendingProduct} t={t}>
         {readBottomSlot(state, t, priceStep)}
       </ProductVariantsSection>
+      <ProductSeoSection form={state.form} onChange={state.handleChange} t={t} />
       {state.error && <p className="product-create-error">{state.error}</p>}
       <ProductCreateActions isSaving={state.isSaving} onClose={state.handleClose} state={state} t={t} />
     </form>

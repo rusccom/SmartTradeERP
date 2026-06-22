@@ -12,7 +12,12 @@ export function isDraftVariant(variant) {
 }
 
 export function toProductUpdatePayload(form) {
-  return { name: form.name.trim() };
+  return {
+    name: form.name.trim(),
+    slug: form.slug.trim(),
+    seo_title: form.seoTitle.trim(),
+    seo_description: form.seoDescription.trim(),
+  };
 }
 
 export function toVariantCreatePayload(productId, variant) {
@@ -44,6 +49,7 @@ function createMultiForm(product, variants) {
     price: variants[0]?.price || "0",
     skuCode: "",
     barcode: "",
+    ...readProductSeo(product),
     variantMode: "multiple",
     variants,
   };
@@ -56,8 +62,17 @@ function createSingleForm(product, variant, variants) {
     price: variant.price,
     skuCode: variant.skuCode,
     barcode: variant.barcode,
+    ...readProductSeo(product),
     variantMode: "single",
     variants,
+  };
+}
+
+function readProductSeo(product) {
+  return {
+    slug: product?.slug || "",
+    seoTitle: product?.seo_title || "",
+    seoDescription: product?.seo_description || "",
   };
 }
 

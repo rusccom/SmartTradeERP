@@ -4,6 +4,9 @@ const defaultForm = {
   price: "0",
   skuCode: "",
   barcode: "",
+  slug: "",
+  seoTitle: "",
+  seoDescription: "",
   variantMode: "single",
   variants: [],
 };
@@ -60,6 +63,9 @@ export function toCreateProductPayload(form) {
     price: Number(variant.price) || 0,
     sku_code: variant.skuCode.trim(),
     barcode: variant.barcode.trim(),
+    slug: form.slug.trim(),
+    seo_title: form.seoTitle.trim(),
+    seo_description: form.seoDescription.trim(),
   };
 }
 
