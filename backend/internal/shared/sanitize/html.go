@@ -1,6 +1,9 @@
-// Package sanitize cleans untrusted product description HTML against a strict
-// allow-list before it is persisted, so the storefront can render it directly
-// without any client-side scrubbing.
+// Package sanitize cleans untrusted product description HTML against a
+// safe-but-permissive allow-list before it is persisted, so the storefront can
+// render pasted store HTML (Shopify body_html style) directly without any
+// client-side scrubbing. The editor stores RAW innerHTML, so the policy must
+// preserve structure (div/span/section, classes, a safe subset of inline
+// style) while staying XSS-safe.
 package sanitize
 
 import (
@@ -10,15 +13,29 @@ import (
 )
 
 // embedHostsRe restricts iframe sources to the YouTube and Vimeo embed players
-// only, so the editor's "Video" button can never smuggle in arbitrary frames.
+// only. UGCPolicy strips <iframe> by default, so the embed allow is re-added on
+// top, anchored to these hosts, and nothing else can smuggle in a frame.
 var embedHostsRe = regexp.MustCompile(
 	`^https://(www\.)?(youtube(-nocookie)?\.com|player\.vimeo\.com)/`)
 
-// colorRe constrains the text-color style value to hex / rgb / rgba so the
-// editor's color button survives a save while no other CSS can ride along.
+// colorRe constrains color / background-color values to hex / rgb / rgba so no
+// url() or other CSS can ride along inside the style attribute.
 var colorRe = regexp.MustCompile(
 	`(?i)^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgb\(\s*\d{1,3}(\s*,\s*\d{1,3}){2}\s*\)|` +
 		`rgba\(\s*\d{1,3}(\s*,\s*\d{1,3}){2}\s*,\s*(0|1|0?\.\d+)\s*\))$`)
+
+// sizeRe constrains width / max-width to a plain px or % length (no url(), no
+// calc()), so layout hints survive a save while CSS injection cannot.
+var sizeRe = regexp.MustCompile(`(?i)^\d{1,4}(px|%)$`)
+
+// classElements lists the block/inline tags that may carry a class attribute.
+// Classes are inert without our CSS but harmless, and they preserve the
+// structure of pasted store HTML.
+var classElements = []string{
+	"div", "span", "p", "h1", "h2", "h3", "h4", "h5", "h6",
+	"ul", "ol", "li", "table", "td", "th", "figure", "img", "a",
+	"blockquote", "section",
+}
 
 var intRe = regexp.MustCompile(`^[0-9]+$`)
 
@@ -28,19 +45,24 @@ type Sanitizer struct {
 	policy *bluemonday.Policy
 }
 
-// NewSanitizer builds the description allow-list from an EMPTY policy (not
-// UGCPolicy), so the only image rule is the R2-anchored one below — otherwise
-// UGCPolicy's permissive AllowImages would let any https image through.
-// r2Host is the R2 public base URL (scheme+host).
+// NewSanitizer builds the description allow-list on top of bluemonday's
+// UGCPolicy, which already provides a safe default (formatting, lists, tables,
+// links, http/https images) while stripping script, style elements, on*
+// handlers, iframe, object, embed and form. We broaden it for pasted store HTML
+// by allowing structural containers, class attributes, a safe inline-style
+// subset and YouTube/Vimeo embeds.
+//
+// r2Host is retained in the signature only to keep callers stable; the image
+// rule is no longer R2-anchored (UGCPolicy already restricts images to
+// http/https), so any https image from imported HTML renders.
 func NewSanitizer(r2Host string) *Sanitizer {
-	p := bluemonday.NewPolicy()
+	_ = r2Host // intentionally unused: images are no longer locked to R2.
+	p := bluemonday.UGCPolicy()
 	p.AllowURLSchemes("http", "https", "mailto")
-	allowFormatting(p)
-	allowAlignment(p)
-	allowColor(p)
+	allowStructure(p)
+	allowClasses(p)
+	allowSafeStyles(p)
 	allowLinks(p)
-	allowImages(p, imageSrcRegexp(r2Host))
-	allowTables(p)
 	allowEmbeds(p)
 	return &Sanitizer{policy: p}
 }
@@ -50,63 +72,63 @@ func (s *Sanitizer) Sanitize(raw string) string {
 	return s.policy.Sanitize(raw)
 }
 
-// allowFormatting permits the inline and block text tags the editor emits.
-func allowFormatting(p *bluemonday.Policy) {
-	p.AllowElements("p", "br", "h1", "h2", "h3", "strong", "em", "u", "s",
-		"code", "pre", "span", "blockquote", "hr")
-	p.AllowLists()
+// allowStructure permits the structural containers UGCPolicy omits, so pasted
+// layout blocks keep their shape.
+func allowStructure(p *bluemonday.Policy) {
+	p.AllowElements("div", "span", "section", "figure", "figcaption",
+		"h4", "h5", "h6")
 }
 
-// allowAlignment permits text-align via the "style" attribute on the block
-// elements TipTap applies alignment to. AllowStyles filters the style value, so
-// only the listed property/values survive — no raw style attribute is allowed.
-func allowAlignment(p *bluemonday.Policy) {
+// allowClasses permits an inert class attribute on common block/inline tags so
+// the structure of imported HTML is preserved.
+func allowClasses(p *bluemonday.Policy) {
+	p.AllowAttrs("class").OnElements(classElements...)
+}
+
+// allowSafeStyles permits a constrained subset of inline style. Each property
+// is matched to an enum or value regex, so no url()-bearing or positioning CSS
+// can ride inside the style attribute.
+func allowSafeStyles(p *bluemonday.Policy) {
+	allowTextStyles(p)
+	allowColorStyles(p)
+	allowBoxStyles(p)
+}
+
+// allowTextStyles permits text alignment and font styling globally.
+func allowTextStyles(p *bluemonday.Policy) {
 	p.AllowStyles("text-align").
-		MatchingEnum("left", "center", "right", "justify").
-		OnElements("p", "h1", "h2", "h3", "td", "th")
+		MatchingEnum("left", "center", "right", "justify").Globally()
+	p.AllowStyles("font-weight").MatchingEnum("normal", "bold",
+		"100", "200", "300", "400", "500", "600", "700", "800", "900").
+		Globally()
+	p.AllowStyles("font-style").MatchingEnum("italic", "normal").Globally()
+	p.AllowStyles("text-decoration").
+		MatchingEnum("underline", "line-through", "none").Globally()
 }
 
-// allowColor permits a constrained text color on <span> (TipTap Color mark),
-// matched to hex/rgb/rgba so nothing else can ride inside the style attribute.
-func allowColor(p *bluemonday.Policy) {
-	p.AllowStyles("color").Matching(colorRe).OnElements("span")
+// allowColorStyles permits constrained text and background colors globally.
+func allowColorStyles(p *bluemonday.Policy) {
+	p.AllowStyles("color").Matching(colorRe).Globally()
+	p.AllowStyles("background-color").Matching(colorRe).Globally()
 }
 
-// allowLinks permits safe outbound links and hardens them for UGC.
+// allowBoxStyles permits sizing and float hints globally. position / z-index
+// are never allowed, so styles cannot break out of the content flow.
+func allowBoxStyles(p *bluemonday.Policy) {
+	p.AllowStyles("width", "max-width").Matching(sizeRe).Globally()
+	p.AllowStyles("float").MatchingEnum("left", "right", "none").Globally()
+}
+
+// allowLinks hardens the links UGCPolicy already permits for UGC.
 func allowLinks(p *bluemonday.Policy) {
-	p.AllowAttrs("href").
-		Matching(regexp.MustCompile(`(?i)^(https?|mailto):`)).
-		OnElements("a")
 	p.RequireNoFollowOnLinks(true)
 	p.AddTargetBlankToFullyQualifiedLinks(true)
 }
 
-// allowImages permits images whose src points at the configured R2 host only.
-func allowImages(p *bluemonday.Policy, src *regexp.Regexp) {
-	p.AllowAttrs("src").Matching(src).OnElements("img")
-	p.AllowAttrs("alt").OnElements("img")
-	p.AllowAttrs("width", "height").Matching(intRe).OnElements("img")
-}
-
-// allowTables permits table structure and cell spans.
-func allowTables(p *bluemonday.Policy) {
-	p.AllowElements("table", "thead", "tbody", "tr", "th", "td")
-	p.AllowAttrs("colspan", "rowspan").Matching(intRe).OnElements("th", "td")
-}
-
-// allowEmbeds permits YouTube/Vimeo iframes only, with framing attributes.
+// allowEmbeds re-adds YouTube/Vimeo iframes on top of UGCPolicy (which strips
+// iframe by default), with framing attributes.
 func allowEmbeds(p *bluemonday.Policy) {
 	p.AllowAttrs("src").Matching(embedHostsRe).OnElements("iframe")
 	p.AllowAttrs("width", "height").Matching(intRe).OnElements("iframe")
 	p.AllowAttrs("frameborder", "allowfullscreen", "sandbox").OnElements("iframe")
-}
-
-// imageSrcRegexp anchors image sources to the R2 host; a blank host falls back
-// to a regex that matches nothing, so a misconfigured deploy strips every image
-// rather than silently widening the allow-list to all hosts.
-func imageSrcRegexp(r2Host string) *regexp.Regexp {
-	if r2Host == "" {
-		return regexp.MustCompile(`[^\s\S]`)
-	}
-	return regexp.MustCompile(`^` + regexp.QuoteMeta(r2Host))
 }

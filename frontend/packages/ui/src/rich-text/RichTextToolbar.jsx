@@ -1,3 +1,4 @@
+import { useEffect, useReducer } from "react";
 import { Code2 } from "lucide-react";
 
 import RichTextButton from "./RichTextButton";
@@ -10,6 +11,7 @@ import RichTextLinkControl from "./RichTextLinkControl";
 import RichTextInsertControls from "./RichTextInsertControls";
 
 function RichTextToolbar({ editor, htmlOpen, imageDisabled, onRequestImage, onToggleHtml, t }) {
+  useSelectionRefresh(htmlOpen);
   return (
     <div className="rte-toolbar">
       {!htmlOpen && renderControls({ editor, imageDisabled, onRequestImage, t })}
@@ -18,6 +20,17 @@ function RichTextToolbar({ editor, htmlOpen, imageDisabled, onRequestImage, onTo
       </RichTextButton>
     </div>
   );
+}
+
+// Re-render the toolbar on caret/selection moves so queryCommandState-based
+// active highlights stay in sync. Skipped while the HTML source view is open.
+function useSelectionRefresh(htmlOpen) {
+  const [, refresh] = useReducer((value) => value + 1, 0);
+  useEffect(() => {
+    if (htmlOpen) return undefined;
+    document.addEventListener("selectionchange", refresh);
+    return () => document.removeEventListener("selectionchange", refresh);
+  }, [htmlOpen]);
 }
 
 function renderControls({ editor, imageDisabled, onRequestImage, t }) {

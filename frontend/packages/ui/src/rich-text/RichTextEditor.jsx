@@ -1,46 +1,56 @@
 import { useState } from "react";
-import { EditorContent } from "@tiptap/react";
-import { BubbleMenu } from "@tiptap/react/menus";
 
-import { useRichTextEditor } from "./useRichTextEditor";
+import { useEditableHtml } from "./useEditableHtml";
 import RichTextToolbar from "./RichTextToolbar";
-import RichTextMarkControls from "./RichTextMarkControls";
-import RichTextTableControls from "./RichTextTableControls";
 import RichTextHtmlView from "./RichTextHtmlView";
 import "./rich-text.css";
 
+// Raw-HTML contenteditable editor (Shopify body_html style): the editable
+// element's innerHTML IS the value, pasted HTML is preserved verbatim, and the
+// </> toggle swaps the rendered surface for an editable HTML source view.
 function RichTextEditor({ initialContent, documentKey, onHtmlChange, onRequestImage, imageDisabled, t }) {
-  const editor = useRichTextEditor({ initialContent, documentKey, onHtmlChange });
+  const editor = useEditableHtml({ initialContent, documentKey, onHtmlChange });
   const [source, setSource] = useState(null);
-  if (!editor) return null;
   const sourceOpen = source !== null;
+  const onToggleHtml = () => setSource(toggleSource(editor, source));
   return (
     <div className="rte">
-      <RichTextToolbar editor={editor} htmlOpen={sourceOpen} imageDisabled={imageDisabled} onRequestImage={onRequestImage} onToggleHtml={() => setSource(toggleSource(editor, source))} t={t} />
-      {!sourceOpen && <RichTextTableControls editor={editor} t={t} />}
-      {renderBody({ editor, source, setSource, t })}
+      <RichTextToolbar editor={editor} htmlOpen={sourceOpen} imageDisabled={imageDisabled} onRequestImage={onRequestImage} onToggleHtml={onToggleHtml} t={t} />
+      {renderBody({ editor, source, setSource, onHtmlChange, t })}
     </div>
   );
 }
 
 // toggleSource flips between the rendered editor and the HTML source. Opening
-// seeds the draft from the editor; closing applies the edited draft back.
+// seeds the draft from the live innerHTML; closing applies the edited draft
+// back into the contenteditable (via seed) and reports the new value.
 function toggleSource(editor, source) {
-  if (source === null) return editor.getHTML();
-  editor.commands.setContent(source, { emitUpdate: true });
+  if (source === null) {
+    const el = editor.ref.current;
+    return el ? el.innerHTML : "";
+  }
+  editor.seed(source);
   return null;
 }
 
-function renderBody({ editor, source, setSource, t }) {
-  if (source !== null) return <RichTextHtmlView value={source} onChange={setSource} t={t} />;
+function renderBody({ editor, source, setSource, onHtmlChange, t }) {
+  if (source !== null) return <RichTextHtmlView value={source} onChange={(html) => applySource(html, setSource, onHtmlChange)} t={t} />;
   return (
-    <>
-      <BubbleMenu editor={editor} options={{ placement: "top", offset: 6 }}>
-        <div className="rte-bubble"><RichTextMarkControls editor={editor} t={t} /></div>
-      </BubbleMenu>
-      <EditorContent className="rte-content" editor={editor} />
-    </>
+    <div
+      className="rte-content"
+      contentEditable
+      suppressContentEditableWarning
+      ref={editor.attach}
+      onInput={editor.onInput}
+    />
   );
+}
+
+// applySource keeps the form value live while the HTML source view is open, so
+// editing in </> and clicking Save (without toggling back) never loses edits.
+function applySource(html, setSource, onHtmlChange) {
+  setSource(html);
+  onHtmlChange(html);
 }
 
 export default RichTextEditor;

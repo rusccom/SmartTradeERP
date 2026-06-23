@@ -1,7 +1,7 @@
-import { ImagePlus, Table as TableIcon } from "lucide-react";
+import { ImagePlus } from "lucide-react";
 
 import RichTextButton from "./RichTextButton";
-import RichTextVideoControl from "./RichTextVideoControl";
+import { insertImageUrl } from "./richTextCommands";
 
 function RichTextInsertControls({ editor, imageDisabled, onRequestImage, t }) {
   return (
@@ -13,10 +13,6 @@ function RichTextInsertControls({ editor, imageDisabled, onRequestImage, t }) {
       >
         <ImagePlus size={16} strokeWidth={1.9} aria-hidden="true" />
       </RichTextButton>
-      <RichTextVideoControl editor={editor} t={t} />
-      <RichTextButton label={t("rte.insert.table")} onClick={() => insertTable(editor)}>
-        <TableIcon size={16} strokeWidth={1.9} aria-hidden="true" />
-      </RichTextButton>
     </div>
   );
 }
@@ -24,11 +20,7 @@ function RichTextInsertControls({ editor, imageDisabled, onRequestImage, t }) {
 async function requestImage(editor, onRequestImage) {
   if (!onRequestImage) return;
   const url = await onRequestImage();
-  if (url) editor.chain().focus().setImage({ src: url }).run();
-}
-
-function insertTable(editor) {
-  editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  insertImageUrl(editor, url);
 }
 
 export default RichTextInsertControls;

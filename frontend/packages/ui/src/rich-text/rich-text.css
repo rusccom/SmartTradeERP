@@ -19,12 +19,6 @@
   background: var(--surface-muted);
 }
 
-.rte-table-bar {
-  position: static;
-  background: #eef2f7;
-  border-bottom: 1px solid var(--border);
-}
-
 .rte-group {
   display: inline-flex;
   align-items: center;
@@ -69,12 +63,6 @@
   cursor: not-allowed;
 }
 
-.rte-btn-text {
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 .rte-select {
   height: 30px;
   min-width: 110px;
@@ -88,8 +76,7 @@
 }
 
 .rte-color,
-.rte-link,
-.rte-video {
+.rte-link {
   position: relative;
   display: inline-flex;
 }
@@ -127,17 +114,6 @@
   transform: scale(1.08);
 }
 
-.rte-color-clear {
-  height: 28px;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  background: var(--surface);
-  color: #334155;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .rte-link-popover { width: 260px; }
 
 .rte-link-input {
@@ -159,8 +135,7 @@
   gap: 6px;
 }
 
-.rte-link-apply,
-.rte-html-apply {
+.rte-link-apply {
   flex: 1;
   height: 28px;
   border: 1px solid var(--accent);
@@ -170,28 +145,6 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-}
-
-.rte-link-remove,
-.rte-html-cancel {
-  flex: 1;
-  height: 28px;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  background: var(--surface);
-  color: #334155;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.rte-bubble {
-  display: flex;
-  padding: 4px;
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  background: var(--surface);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.18);
 }
 
 .rte-html {
@@ -211,87 +164,71 @@
   resize: vertical;
 }
 
-.rte-html-actions {
-  display: flex;
-  gap: 8px;
-  max-width: 260px;
-}
-
-.rte .ProseMirror {
+/* The editable surface. Pasted HTML renders here verbatim, so styles stay
+   permissive: only constrain media so wide images/tables do not overflow. */
+.rte-content {
   min-height: 220px;
   padding: 14px 16px;
   font-size: 14px;
   line-height: 1.6;
   color: #1a1a1a;
   outline: none;
+  overflow-wrap: break-word;
 }
 
-.rte .ProseMirror:focus { outline: none; }
+.rte-content:focus { outline: none; }
 
-.rte .ProseMirror h1,
-.rte .ProseMirror h2,
-.rte .ProseMirror h3 {
+.rte-content h1,
+.rte-content h2,
+.rte-content h3 {
   margin: 0.4em 0;
   font-weight: 700;
 }
 
-.rte .ProseMirror h1 { font-size: 1.7em; }
-.rte .ProseMirror h2 { font-size: 1.4em; }
-.rte .ProseMirror h3 { font-size: 1.18em; font-weight: 600; }
-.rte .ProseMirror p { margin: 0.5em 0; }
+.rte-content h1 { font-size: 1.7em; }
+.rte-content h2 { font-size: 1.4em; }
+.rte-content h3 { font-size: 1.18em; font-weight: 600; }
+.rte-content p { margin: 0.5em 0; }
 
-.rte .ProseMirror ul,
-.rte .ProseMirror ol {
+.rte-content ul,
+.rte-content ol {
   margin: 0.5em 0;
   padding-left: 1.5em;
 }
 
-.rte .ProseMirror blockquote {
+.rte-content blockquote {
   margin: 0.6em 0;
   padding: 4px 0 4px 14px;
   border-left: 3px solid var(--border-strong);
   color: #475569;
 }
 
-.rte .ProseMirror a {
+.rte-content a {
   color: var(--accent);
   text-decoration: underline;
 }
 
-.rte .ProseMirror img,
-.rte .ProseMirror iframe {
+.rte-content img,
+.rte-content iframe {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
 }
 
-.rte .ProseMirror table {
-  width: 100%;
+.rte-content table {
   margin: 0.6em 0;
   border-collapse: collapse;
-  table-layout: fixed;
-  overflow: hidden;
 }
 
-.rte .ProseMirror th,
-.rte .ProseMirror td {
-  position: relative;
-  min-width: 60px;
+.rte-content th,
+.rte-content td {
   padding: 6px 8px;
   border: 1px solid var(--border-strong);
   vertical-align: top;
 }
 
-.rte .ProseMirror th {
+.rte-content th {
   background: var(--surface-muted);
   font-weight: 600;
   text-align: left;
-}
-
-.rte .ProseMirror .selectedCell::after {
-  position: absolute;
-  inset: 0;
-  background: var(--focus-ring);
-  pointer-events: none;
-  content: "";
 }

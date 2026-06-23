@@ -4,6 +4,7 @@ function RichTextHtmlView({ value, onChange, t }) {
       <textarea
         className="rte-html-area"
         spellCheck={false}
+        autoFocus
         aria-label={t("rte.html.label")}
         value={value}
         onChange={(event) => onChange(event.target.value)}
