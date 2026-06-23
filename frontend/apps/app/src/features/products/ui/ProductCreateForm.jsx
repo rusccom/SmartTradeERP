@@ -16,7 +16,7 @@ function ProductCreateForm({ state, t }) {
   return (
     <form className="product-create-form" onSubmit={state.handleSubmit}>
       <ProductBasicSection form={state.form} onChange={state.handleChange} t={t} />
-      <ProductMediaSection t={t} />
+      <ProductMediaSection productId={state.productId} t={t} />
       <ProductPriceSection form={state.form} hasVariants={hasVariants} onChange={state.handleChange} priceStep={priceStep} t={t} />
       {!hasVariants && <ProductInventorySection form={state.form} onChange={state.handleChange} t={t} />}
       <ProductVariantsSection hasVariants={hasVariants} onAddVariant={state.handleAddVariant} disabled={state.hasPendingProduct} t={t}>

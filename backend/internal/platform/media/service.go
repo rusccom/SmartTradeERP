@@ -119,12 +119,14 @@ func (s *Service) confirmUploaded(ctx context.Context, req CompleteRequest, item
 		_ = s.repo.Delete(ctx, req.TenantID, item.ID)
 		return Item{}, err
 	}
-	if err := s.markReady(ctx, req, item); err != nil {
+	isPrimary, err := s.markReady(ctx, req, item)
+	if err != nil {
 		return Item{}, err
 	}
 	item.Status = "ready"
-	item.IsPrimary = true
+	item.IsPrimary = isPrimary
 	item.URL = s.objects.PublicURL(item.ObjectKey)
+	item.ThumbURL = thumbURL(item.URL)
 	return item, nil
 }
 
@@ -142,18 +144,26 @@ func (s *Service) ensureUploaded(ctx context.Context, item Item) error {
 	return nil
 }
 
-func (s *Service) markReady(ctx context.Context, req CompleteRequest, item Item) error {
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
-		if err := s.repo.ClearPrimary(ctx, tx, req.TenantID, req.OwnerType, req.OwnerID); err != nil {
+func (s *Service) markReady(ctx context.Context, req CompleteRequest, item Item) (bool, error) {
+	isPrimary := false
+	err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
+		if err := s.repo.LockOwner(ctx, tx, req.TenantID, req.OwnerType, req.OwnerID); err != nil {
 			return err
 		}
-		return s.repo.MarkReady(ctx, tx, req.TenantID, item)
+		has, err := s.repo.HasReady(ctx, tx, req.TenantID, req.OwnerType, req.OwnerID)
+		if err != nil {
+			return err
+		}
+		isPrimary = !has
+		return s.repo.MarkReady(ctx, tx, req.TenantID, item.ID, isPrimary)
 	})
+	return isPrimary, err
 }
 
 func (s *Service) attachURLs(items []Item) []Item {
 	for index := range items {
 		items[index].URL = s.objects.PublicURL(items[index].ObjectKey)
+		items[index].ThumbURL = thumbURL(items[index].URL)
 	}
 	return items
 }
@@ -176,8 +186,19 @@ func newDirectUpload(id string, signed storage.PresignedPut) DirectUpload {
 }
 
 func mediaObjectKey(req DirectUploadRequest, mediaID string) string {
-	return "tenants/" + req.TenantID + "/" + req.OwnerType + "/" +
-		req.OwnerID + "/" + mediaID + fileExtension(req.Input.ContentType)
+	return req.TenantID + "/media/" + ownerFolder(req.OwnerType) + "/" +
+		req.OwnerID + "/photos/" + mediaID + fileExtension(req.Input.ContentType)
+}
+
+func ownerFolder(ownerType string) string {
+	switch ownerType {
+	case "product":
+		return "products"
+	case "variant":
+		return "variants"
+	default:
+		return ownerType
+	}
 }
 
 func formatTime(value time.Time) string {

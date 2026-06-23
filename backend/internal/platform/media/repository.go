@@ -81,11 +81,11 @@ func (r *Repository) ClearPrimary(
 	return err
 }
 
-func (r *Repository) MarkReady(ctx context.Context, tx pgx.Tx, tenantID string, item Item) error {
+func (r *Repository) MarkReady(ctx context.Context, tx pgx.Tx, tenantID, mediaID string, isPrimary bool) error {
 	query := `UPDATE platform.media_objects
-        SET status='ready', is_primary=true, expires_at=NULL, updated_at=now()
+        SET status='ready', is_primary=$3, expires_at=NULL, updated_at=now()
         WHERE tenant_id=$1 AND id=$2 AND status='pending'`
-	tag, err := tx.Exec(ctx, query, tenantID, item.ID)
+	tag, err := tx.Exec(ctx, query, tenantID, mediaID, isPrimary)
 	if err == nil && tag.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}

@@ -1,4 +1,4 @@
-package products
+package variants
 
 import (
 	"errors"
@@ -38,9 +38,7 @@ func (h *Handler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CompleteMediaUpload(w http.ResponseWriter, r *http.Request) {
 	tenantID := tenant.FromContext(r.Context())
-	item, err := h.service.CompleteMediaUpload(
-		r.Context(), tenantID, r.PathValue("id"), r.PathValue("mediaID"),
-	)
+	item, err := h.service.CompleteMediaUpload(r.Context(), tenantID, r.PathValue("id"), r.PathValue("mediaID"))
 	if err != nil {
 		h.writeMediaError(w, err)
 		return
@@ -70,7 +68,7 @@ func (h *Handler) SetPrimaryMedia(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) writeMediaError(w http.ResponseWriter, err error) {
 	if errors.Is(err, mediafeature.ErrInvalidMedia) {
-		httpx.WriteError(w, http.StatusBadRequest, "invalid_media", "invalid product media", nil)
+		httpx.WriteError(w, http.StatusBadRequest, "invalid_media", "invalid variant media", nil)
 		return
 	}
 	if errors.Is(err, mediafeature.ErrStorageNotConfigured) {
@@ -78,8 +76,8 @@ func (h *Handler) writeMediaError(w http.ResponseWriter, err error) {
 		return
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
-		httpx.WriteError(w, http.StatusNotFound, "not_found", "product not found", nil)
+		httpx.WriteError(w, http.StatusNotFound, "not_found", "variant not found", nil)
 		return
 	}
-	httpx.WriteError(w, http.StatusInternalServerError, "media_error", "failed to process product media", err.Error())
+	httpx.WriteError(w, http.StatusInternalServerError, "media_error", "failed to process variant media", err.Error())
 }

@@ -34,6 +34,7 @@ function createEditApi(params) {
     form,
     error,
     isSaving,
+    productId: params.product?.id || "",
     lockedVariantCount: 0,
     hasPendingProduct: false,
     submitLabelKey: "products.form.saveEdit",

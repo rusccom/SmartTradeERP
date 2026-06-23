@@ -6,12 +6,18 @@ type Item struct {
 	OwnerID     string `json:"owner_id"`
 	ObjectKey   string `json:"-"`
 	URL         string `json:"url"`
+	ThumbURL    string `json:"thumb_url"`
 	FileName    string `json:"file_name"`
 	ContentType string `json:"content_type"`
 	SizeBytes   int64  `json:"size_bytes"`
 	IsPrimary   bool   `json:"is_primary"`
 	Status      string `json:"status"`
 	CreatedAt   string `json:"created_at"`
+}
+
+type PrimaryRef struct {
+	OwnerID   string
+	ObjectKey string
 }
 
 type DirectUploadInput struct {

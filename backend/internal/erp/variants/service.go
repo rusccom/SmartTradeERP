@@ -21,6 +21,7 @@ type Service struct {
     repo        *Repository
     ledger      *ledger.Service
     bundleState BundleStateReader
+    media       MediaService
 }
 
 type BundleStateReader interface {

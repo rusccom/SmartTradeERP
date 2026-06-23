@@ -26,25 +26,27 @@ type ProductListItem struct {
 	SEODescription string               `json:"seo_description"`
 	GlobalQty      decimal.Decimal      `json:"global_qty"`
 	StockValue     decimal.Decimal      `json:"stock_value"`
+	ImageThumbURL  string               `json:"image_thumb_url"`
 	Variants       []ProductVariantItem `json:"variants"`
 	CreatedAt      string               `json:"created_at"`
 	UpdatedAt      string               `json:"updated_at"`
 }
 
 type ProductVariantItem struct {
-	ID         string                 `json:"id"`
-	Name       string                 `json:"name"`
-	SKUCode    string                 `json:"sku_code"`
-	Barcode    string                 `json:"barcode"`
-	Option1    string                 `json:"option1"`
-	Option2    string                 `json:"option2"`
-	Option3    string                 `json:"option3"`
-	Unit       string                 `json:"unit"`
-	Price      decimal.Decimal        `json:"price"`
-	GlobalQty  decimal.Decimal        `json:"global_qty"`
-	AvgCost    decimal.Decimal        `json:"avg_cost"`
-	StockValue decimal.Decimal        `json:"stock_value"`
-	Warehouses []ProductWarehouseItem `json:"warehouses"`
+	ID            string                 `json:"id"`
+	Name          string                 `json:"name"`
+	SKUCode       string                 `json:"sku_code"`
+	Barcode       string                 `json:"barcode"`
+	Option1       string                 `json:"option1"`
+	Option2       string                 `json:"option2"`
+	Option3       string                 `json:"option3"`
+	Unit          string                 `json:"unit"`
+	Price         decimal.Decimal        `json:"price"`
+	GlobalQty     decimal.Decimal        `json:"global_qty"`
+	AvgCost       decimal.Decimal        `json:"avg_cost"`
+	StockValue    decimal.Decimal        `json:"stock_value"`
+	ImageThumbURL string                 `json:"image_thumb_url"`
+	Warehouses    []ProductWarehouseItem `json:"warehouses"`
 }
 
 type ProductWarehouseItem struct {

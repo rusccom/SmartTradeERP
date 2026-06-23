@@ -1,17 +1,14 @@
-import { ImagePlus } from "lucide-react";
+import MediaManager from "../../media/ui/MediaManager";
 
-function ProductMediaSection({ t }) {
+function ProductMediaSection({ productId, t }) {
   return (
     <section className="product-create-card">
       <h3 className="product-create-card-title">{t("products.form.sections.media")}</h3>
-      <div className="product-media-placeholder">
-        <ImagePlus aria-hidden="true" size={24} strokeWidth={1.8} />
-        <div className="product-media-actions">
-          <span className="product-media-button">{t("products.form.mediaUpload")}</span>
-          <span className="product-media-button">{t("products.form.mediaSelect")}</span>
-        </div>
-        <p>{t("products.form.mediaHint")}</p>
-      </div>
+      {productId ? (
+        <MediaManager kind="product" ownerId={productId} t={t} />
+      ) : (
+        <p className="product-media-after-save">{t("products.form.mediaAfterSave")}</p>
+      )}
     </section>
   );
 }

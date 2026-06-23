@@ -1,11 +1,15 @@
 import ProductTableMetaList from "./ProductTableMetaList";
+import ProductTableThumb from "./ProductTableThumb";
 
 function ProductTableProductCell({ openLink, row, t, value }) {
   const name = value || row.name || "";
   return (
     <div className="product-table-product">
-      {renderName(name, row, openLink)}
-      <ProductTableMetaList row={row} t={t} />
+      <ProductTableThumb url={row.image_thumb_url} name={name} />
+      <div className="product-table-product-main">
+        {renderName(name, row, openLink)}
+        <ProductTableMetaList row={row} t={t} />
+      </div>
     </div>
   );
 }

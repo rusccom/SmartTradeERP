@@ -27,7 +27,7 @@ func registerCatalog(
 	deps catalogDeps,
 ) {
 	registerProducts(mux, deps)
-	registerVariants(mux, deps.store, deps.tokens, deps.ledger, deps.bundles)
+	registerVariants(mux, deps)
 	registerBundles(mux, deps.tokens, deps.bundles)
 	registerWarehouses(mux, deps.store, deps.tokens, deps.ledger)
 	registerCustomers(mux, deps.store, deps.tokens)
@@ -49,24 +49,29 @@ func registerProducts(
 	handleClient(mux, deps.tokens, "GET /api/client/products/{id}/media", handler.ListMedia)
 	handleClient(mux, deps.tokens, "POST /api/client/products/{id}/media", handler.UploadMedia)
 	handleClient(mux, deps.tokens, "POST /api/client/products/{id}/media/{mediaID}/complete", handler.CompleteMediaUpload)
+	handleClient(mux, deps.tokens, "DELETE /api/client/products/{id}/media/{mediaID}", handler.DeleteMedia)
+	handleClient(mux, deps.tokens, "POST /api/client/products/{id}/media/{mediaID}/primary", handler.SetPrimaryMedia)
 }
 
 func registerVariants(
 	mux *http.ServeMux,
-	store *db.Store,
-	tokens *auth.TokenService,
-	ledgerService *ledger.Service,
-	bundleService *bundles.Service,
+	deps catalogDeps,
 ) {
-	repo := variants.NewRepository(store)
-	service := variants.NewService(store, repo, ledgerService, bundleService)
+	repo := variants.NewRepository(deps.store)
+	service := variants.NewService(deps.store, repo, deps.ledger, deps.bundles)
+	service.SetMediaService(deps.media)
 	handler := variants.NewHandler(service)
-	handleClient(mux, tokens, "GET /api/client/variants", handler.List)
-	handleClient(mux, tokens, "POST /api/client/variants", handler.Create)
-	handleClient(mux, tokens, "GET /api/client/variants/{id}", handler.ByID)
-	handleClient(mux, tokens, "PUT /api/client/variants/{id}", handler.Update)
-	handleClient(mux, tokens, "DELETE /api/client/variants/{id}", handler.Delete)
-	handleClient(mux, tokens, "GET /api/client/variants/{id}/stock", handler.Stock)
+	handleClient(mux, deps.tokens, "GET /api/client/variants", handler.List)
+	handleClient(mux, deps.tokens, "POST /api/client/variants", handler.Create)
+	handleClient(mux, deps.tokens, "GET /api/client/variants/{id}", handler.ByID)
+	handleClient(mux, deps.tokens, "PUT /api/client/variants/{id}", handler.Update)
+	handleClient(mux, deps.tokens, "DELETE /api/client/variants/{id}", handler.Delete)
+	handleClient(mux, deps.tokens, "GET /api/client/variants/{id}/stock", handler.Stock)
+	handleClient(mux, deps.tokens, "GET /api/client/variants/{id}/media", handler.ListMedia)
+	handleClient(mux, deps.tokens, "POST /api/client/variants/{id}/media", handler.UploadMedia)
+	handleClient(mux, deps.tokens, "POST /api/client/variants/{id}/media/{mediaID}/complete", handler.CompleteMediaUpload)
+	handleClient(mux, deps.tokens, "DELETE /api/client/variants/{id}/media/{mediaID}", handler.DeleteMedia)
+	handleClient(mux, deps.tokens, "POST /api/client/variants/{id}/media/{mediaID}/primary", handler.SetPrimaryMedia)
 }
 
 func registerBundles(

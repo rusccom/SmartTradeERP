@@ -51,6 +51,26 @@
   font-size: 14px;
 }
 
+.product-media-after-save {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.product-variant-media {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eef2f7;
+}
+
+.product-variant-media-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
 .product-media-placeholder {
   display: grid;
   min-height: 88px;

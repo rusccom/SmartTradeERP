@@ -23,6 +23,7 @@ export function useProductCreateForm({ open, onClose, onCreated, t }) {
     form,
     error,
     isSaving,
+    productId: createdProductId,
     lockedVariantCount: savedVariantCount,
     hasPendingProduct: createdProductId !== "",
     handleAddVariant: () => setForm(addProductVariant),

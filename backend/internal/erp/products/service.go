@@ -52,7 +52,12 @@ func (s *Service) ListWithIncludes(
 	query ProductListQuery,
 	include ProductListInclude,
 ) ([]ProductListItem, int, error) {
-	return s.repo.ListWithIncludes(ctx, tenantID, query, include)
+	items, total, err := s.repo.ListWithIncludes(ctx, tenantID, query, include)
+	if err != nil {
+		return nil, 0, err
+	}
+	s.attachImages(ctx, tenantID, items, include)
+	return items, total, nil
 }
 
 func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest) (string, error) {
