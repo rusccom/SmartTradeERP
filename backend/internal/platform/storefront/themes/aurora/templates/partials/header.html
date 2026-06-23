@@ -1,0 +1,13 @@
+{{define "header"}}
+<header class="au-header">
+<div class="au-container au-header-inner">
+<a class="au-brand" href="{{.Brand.HomeURL}}">
+{{if .Brand.LogoURL}}<img class="au-logo" src="{{.Brand.LogoURL}}" alt="{{.Brand.TenantName}}">{{else}}<span class="au-brand-name">{{.Brand.TenantName}}</span>{{end}}
+</a>
+<nav class="au-nav">
+{{range .Nav}}<a class="au-nav-link" href="{{.URL}}">{{.Label}}</a>{{end}}
+<a class="au-nav-link" href="/cart">Cart (<span data-sf-cart-count>0</span>)</a>
+</nav>
+</div>
+</header>
+{{end}}

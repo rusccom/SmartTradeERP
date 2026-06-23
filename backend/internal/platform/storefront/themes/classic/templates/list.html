@@ -1,0 +1,10 @@
+{{define "content"}}
+<h1 class="page-title">Products</h1>
+<section class="product-grid">
+{{range .Products}}{{template "product-card" .}}{{else}}<p class="empty">No products.</p>{{end}}
+</section>
+<nav class="pager">
+{{if .HasPrev}}<a class="pager-link" href="{{.PrevURL}}" rel="prev">Previous</a>{{end}}
+{{if .HasNext}}<a class="pager-link" href="{{.NextURL}}" rel="next">Next</a>{{end}}
+</nav>
+{{end}}

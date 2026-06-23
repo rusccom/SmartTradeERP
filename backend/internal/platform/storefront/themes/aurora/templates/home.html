@@ -1,0 +1,15 @@
+{{define "content"}}
+{{range .Sections}}
+{{if eq . "hero"}}
+<section class="au-hero">
+<h1 class="au-hero-title">{{$.Layout.Brand.TenantName}}</h1>
+<p class="au-hero-line">Curated goods, delivered.</p>
+</section>
+{{end}}
+{{if eq . "products"}}
+<section class="au-grid">
+{{range $.Products}}{{template "product-card" .}}{{else}}<p class="au-empty">No products yet.</p>{{end}}
+</section>
+{{end}}
+{{end}}
+{{end}}

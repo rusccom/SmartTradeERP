@@ -1,0 +1,11 @@
+{{define "seo-head"}}
+<title>{{.SEO.Title}}</title>
+{{if .SEO.Description}}<meta name="description" content="{{.SEO.Description}}">{{end}}
+<meta name="robots" content="{{.SEO.Robots}}">
+{{if .SEO.Canonical}}<link rel="canonical" href="{{.SEO.Canonical}}">{{end}}
+<meta property="og:type" content="{{.SEO.OGType}}">
+<meta property="og:title" content="{{.SEO.Title}}">
+{{if .SEO.Description}}<meta property="og:description" content="{{.SEO.Description}}">{{end}}
+{{if .SEO.OGImage}}<meta property="og:image" content="{{.SEO.OGImage}}">{{end}}
+{{.SEO.JSONLD}}
+{{end}}

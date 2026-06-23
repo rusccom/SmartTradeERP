@@ -1,0 +1,11 @@
+{{define "product-card"}}
+<a class="product-card" href="{{.URL}}">
+<div class="product-card-media">
+{{if .ImageURL}}<img class="product-card-img" src="{{.ImageURL}}" alt="{{.Name}}" loading="lazy">{{else}}<div class="product-card-noimg"></div>{{end}}
+</div>
+<div class="product-card-body">
+<h3 class="product-card-title">{{.Name}}</h3>
+{{if .HasPrice}}<div class="product-card-price">{{.Price.Display}}</div>{{end}}
+</div>
+</a>
+{{end}}

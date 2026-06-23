@@ -24,7 +24,10 @@ func Build(ctx context.Context, cfg config.Config) (*http.Server, func(), error)
 	}
 	tokens := auth.NewTokenService(cfg.JWTSecret, cfg.AccessTTL)
 	mux := http.NewServeMux()
-	api.Register(mux, store, tokens, mediaStore)
+	if err := api.Register(mux, store, tokens, mediaStore, cfg.R2.PublicBaseURL); err != nil {
+		pool.Close()
+		return nil, nil, err
+	}
 	server := &http.Server{Addr: cfg.HTTPAddr, Handler: cors(mux)}
 	cleanup := func() { pool.Close() }
 	return server, cleanup, nil

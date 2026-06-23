@@ -3,8 +3,6 @@ package products
 import (
 	"context"
 	"errors"
-	"strconv"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -12,6 +10,7 @@ import (
 
 	"smarterp/backend/internal/erp/ledger"
 	"smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/sanitize"
 	"smarterp/backend/internal/shared/validation"
 )
 
@@ -26,6 +25,13 @@ type Service struct {
 	ledger      *ledger.Service
 	bundleState ComponentStateReader
 	media       MediaService
+	sanitizer   *sanitize.Sanitizer
+}
+
+// SetSanitizer wires the description HTML sanitizer after construction, mirroring
+// the SetMediaService setter so NewService's signature stays stable.
+func (s *Service) SetSanitizer(sanitizer *sanitize.Sanitizer) {
+	s.sanitizer = sanitizer
 }
 
 type ComponentStateReader interface {
@@ -62,6 +68,7 @@ func (s *Service) ListWithIncludes(
 
 func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest) (string, error) {
 	req = normalizeCreate(req)
+	req.DescriptionHTML = sanitizeDescriptionHTML(s.sanitizer, req.DescriptionHTML)
 	if err := validateCreate(req); err != nil {
 		return "", err
 	}
@@ -106,6 +113,7 @@ func (s *Service) ByID(ctx context.Context, tenantID, id string) (Product, error
 
 func (s *Service) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
 	req = normalizeUpdate(req)
+	req.DescriptionHTML = sanitizeDescriptionHTML(s.sanitizer, req.DescriptionHTML)
 	if err := validateUpdate(req); err != nil {
 		return err
 	}
@@ -203,16 +211,6 @@ func normalizeUpdate(req UpdateRequest) UpdateRequest {
 	return req
 }
 
-// resolveSlug normalizes the handle, falling back to the product name so every
-// product gets a products/<handle> URL even when the user leaves it blank.
-func resolveSlug(slug, name string) string {
-	normalized := normalizeSlug(slug)
-	if normalized != "" {
-		return normalized
-	}
-	return normalizeSlug(name)
-}
-
 func validateCreate(req CreateRequest) error {
 	if validateName(req.Name) != nil || !validation.Required(req.Unit) {
 		return validation.ErrInvalidData
@@ -221,6 +219,9 @@ func validateCreate(req CreateRequest) error {
 		return validation.ErrInvalidData
 	}
 	if !validateSEO(req.Slug, req.SEOTitle, req.SEODescription) {
+		return validation.ErrInvalidData
+	}
+	if !validateDescription(req.DescriptionHTML) {
 		return validation.ErrInvalidData
 	}
 	return nil
@@ -233,44 +234,14 @@ func validateUpdate(req UpdateRequest) error {
 	if !validateSEO(req.Slug, req.SEOTitle, req.SEODescription) {
 		return validation.ErrInvalidData
 	}
+	if !validateDescription(req.DescriptionHTML) {
+		return validation.ErrInvalidData
+	}
 	return nil
 }
 
 func validateSEO(slug, title, description string) bool {
 	return validation.Max(slug, 200) && validation.Max(title, 255) && validation.Max(description, 320)
-}
-
-var cyrillicMap = map[rune]string{
-	'а': "a", 'б': "b", 'в': "v", 'г': "g", 'д': "d", 'е': "e", 'ё': "e",
-	'ж': "zh", 'з': "z", 'и': "i", 'й': "i", 'к': "k", 'л': "l", 'м': "m",
-	'н': "n", 'о': "o", 'п': "p", 'р': "r", 'с': "s", 'т': "t", 'у': "u",
-	'ф': "f", 'х': "h", 'ц': "ts", 'ч': "ch", 'ш': "sh", 'щ': "sch",
-	'ъ': "", 'ы': "y", 'ь': "", 'э': "e", 'ю': "yu", 'я': "ya",
-}
-
-// normalizeSlug lowercases the handle, transliterates Cyrillic to Latin, and
-// keeps only [a-z0-9], collapsing every other run into a single hyphen so even
-// a Cyrillic product name yields a URL-safe handle.
-func normalizeSlug(value string) string {
-	var b strings.Builder
-	dash := false
-	for _, r := range strings.ToLower(strings.TrimSpace(value)) {
-		if latin, ok := cyrillicMap[r]; ok {
-			b.WriteString(latin)
-			dash = false
-			continue
-		}
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-			b.WriteRune(r)
-			dash = false
-			continue
-		}
-		if !dash && b.Len() > 0 {
-			b.WriteByte('-')
-			dash = true
-		}
-	}
-	return strings.Trim(b.String(), "-")
 }
 
 func mapProductWriteError(err error) error {
@@ -279,27 +250,6 @@ func mapProductWriteError(err error) error {
 		return ErrSlugTaken
 	}
 	return err
-}
-
-// ensureUniqueSlug keeps the handle unique per tenant by appending -2, -3, ...
-// when the base is already taken, so two products with the same name still get
-// distinct products/<handle> URLs instead of failing.
-func (s *Service) ensureUniqueSlug(ctx context.Context, tenantID, base, excludeID string) (string, error) {
-	if base == "" {
-		return "", nil
-	}
-	candidate := base
-	for i := 2; i < 1000; i++ {
-		taken, err := s.repo.SlugExists(ctx, tenantID, candidate, excludeID)
-		if err != nil {
-			return "", err
-		}
-		if !taken {
-			return candidate, nil
-		}
-		candidate = base + "-" + strconv.Itoa(i)
-	}
-	return candidate, nil
 }
 
 func validateName(name string) error {

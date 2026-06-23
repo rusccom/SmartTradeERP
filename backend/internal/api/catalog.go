@@ -12,14 +12,16 @@ import (
 	"smarterp/backend/internal/erp/warehouses"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/shared/sanitize"
 )
 
 type catalogDeps struct {
-	store   *db.Store
-	tokens  *auth.TokenService
-	ledger  *ledger.Service
-	bundles *bundles.Service
-	media   *mediafeature.Service
+	store    *db.Store
+	tokens   *auth.TokenService
+	ledger   *ledger.Service
+	bundles  *bundles.Service
+	media    *mediafeature.Service
+	mediaURL string
 }
 
 func registerCatalog(
@@ -40,6 +42,7 @@ func registerProducts(
 	repo := products.NewRepository(deps.store)
 	service := products.NewService(deps.store, repo, deps.ledger, deps.bundles)
 	service.SetMediaService(deps.media)
+	service.SetSanitizer(sanitize.NewSanitizer(deps.mediaURL))
 	handler := products.NewHandler(service)
 	handleClient(mux, deps.tokens, "GET /api/client/products", handler.List)
 	handleClient(mux, deps.tokens, "POST /api/client/products", handler.Create)

@@ -14,6 +14,7 @@ export function isDraftVariant(variant) {
 export function toProductUpdatePayload(form) {
   return {
     name: form.name.trim(),
+    description_html: form.descriptionHtml,
     slug: form.slug.trim(),
     seo_title: form.seoTitle.trim(),
     seo_description: form.seoDescription.trim(),
@@ -45,6 +46,7 @@ export function readSingleVariant(form) {
 function createMultiForm(product, variants) {
   return {
     name: product?.name || "",
+    descriptionHtml: product?.description_html || "",
     unit: readSharedUnit(variants),
     price: variants[0]?.price || "0",
     skuCode: "",
@@ -58,6 +60,7 @@ function createMultiForm(product, variants) {
 function createSingleForm(product, variant, variants) {
   return {
     name: product?.name || "",
+    descriptionHtml: product?.description_html || "",
     unit: variant.unit,
     price: variant.price,
     skuCode: variant.skuCode,

@@ -106,9 +106,9 @@ func scanProducts(rows pgx.Rows) ([]Product, error) {
 }
 
 func (r *Repository) Create(ctx context.Context, tx pgx.Tx, tenantID, productID string, req CreateRequest) error {
-    query := `INSERT INTO catalog.products (id, tenant_id, name, is_composite, slug, seo_title, seo_description)
-        VALUES ($1,$2,$3,$4,$5,$6,$7)`
-    _, err := tx.Exec(ctx, query, productID, tenantID, req.Name, req.IsComposite, req.Slug, req.SEOTitle, req.SEODescription)
+    query := `INSERT INTO catalog.products (id, tenant_id, name, is_composite, slug, seo_title, seo_description, description_html)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
+    _, err := tx.Exec(ctx, query, productID, tenantID, req.Name, req.IsComposite, req.Slug, req.SEOTitle, req.SEODescription, req.DescriptionHTML)
     return err
 }
 
@@ -130,12 +130,12 @@ func readDefaultVariantName(req CreateRequest) string {
 }
 
 func (r *Repository) GetByID(ctx context.Context, tenantID, id string) (Product, error) {
-    query := `SELECT id::text, name, is_composite, slug, seo_title, seo_description, created_at::text, updated_at::text
+    query := `SELECT id::text, name, is_composite, slug, seo_title, seo_description, COALESCE(description_html,''), created_at::text, updated_at::text
         FROM catalog.products
         WHERE tenant_id=$1 AND id=$2`
     row := r.store.Pool.QueryRow(ctx, query, tenantID, id)
     item := Product{}
-    err := row.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.CreatedAt, &item.UpdatedAt)
+    err := row.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.DescriptionHTML, &item.CreatedAt, &item.UpdatedAt)
     return item, err
 }
 
@@ -157,9 +157,9 @@ func (r *Repository) SlugExists(ctx context.Context, tenantID, slug, excludeID s
 
 func (r *Repository) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
     query := `UPDATE catalog.products
-        SET name=$3, is_composite=$4, slug=$5, seo_title=$6, seo_description=$7, updated_at=now()
+        SET name=$3, is_composite=$4, slug=$5, seo_title=$6, seo_description=$7, description_html=$8, updated_at=now()
         WHERE tenant_id=$1 AND id=$2`
-    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.IsComposite, req.Slug, req.SEOTitle, req.SEODescription)
+    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.IsComposite, req.Slug, req.SEOTitle, req.SEODescription, req.DescriptionHTML)
     if err == nil && tag.RowsAffected() == 0 {
         return pgx.ErrNoRows
     }

@@ -13,6 +13,10 @@ export function createMenuSections(t) {
       items: [createItem("documents", "/dashboard/documents", t("dashboard.menu.documents"))],
     },
     {
+      label: t("dashboard.menu.onlineStore"),
+      items: [createItem("storefront", "/dashboard/storefront", t("dashboard.menu.storefront"))],
+    },
+    {
       label: t("dashboard.menu.system"),
       items: [
         createItem("reports", "/dashboard/reports", t("dashboard.menu.reports")),

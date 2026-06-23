@@ -36,6 +36,12 @@ func (s *TokenService) Issue(userID, tenantID, role, scope string) (TokenRespons
 	return TokenResponse{AccessToken: token}, nil
 }
 
+// IssuePreview mints a short-lived, tenant-scoped token the storefront accepts
+// to render a tenant's unpublished draft. It carries no user or role.
+func (s *TokenService) IssuePreview(tenantID string, ttl time.Duration) (string, error) {
+	return s.issueToken("", tenantID, "", "storefront_preview", "preview", ttl)
+}
+
 func (s *TokenService) Parse(tokenRaw string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenRaw, &Claims{}, s.keyFunc, jwt.WithValidMethods([]string{"HS256"}))
 	if err != nil {

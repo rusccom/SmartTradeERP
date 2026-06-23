@@ -1,0 +1,25 @@
+{{define "content"}}
+<article class="product">
+<div class="product-gallery">
+{{range .Images}}<img class="product-image" src="{{.}}" alt="" loading="lazy">{{else}}<div class="product-noimg"></div>{{end}}
+</div>
+<div class="product-info">
+<h1 class="product-name">{{.Name}}</h1>
+{{if .HasPrice}}<div class="product-price">{{.Price.Display}}</div>{{end}}
+{{if .Description}}<p class="product-desc">{{.Description}}</p>{{end}}
+{{if eq (len .Variants) 1}}
+{{with index .Variants 0}}<button class="add-btn" type="button" data-sf-add="{{.VariantID}}" data-added="Added ✓">Add to cart</button>{{end}}
+{{else if .Variants}}
+<ul class="variant-list">
+{{range .Variants}}
+<li class="variant">
+<span class="variant-name">{{.Name}}</span>
+{{if .HasPrice}}<span class="variant-price">{{.Price.Display}}</span>{{end}}
+<button class="add-btn add-btn-sm" type="button" data-sf-add="{{.VariantID}}" data-added="Added ✓">Add</button>
+</li>
+{{end}}
+</ul>
+{{end}}
+</div>
+</article>
+{{end}}

@@ -2,6 +2,7 @@ import { slugify } from "./slugify";
 
 const defaultForm = {
   name: "",
+  descriptionHtml: "",
   unit: "pcs",
   price: "0",
   skuCode: "",
@@ -67,6 +68,7 @@ export function toCreateProductPayload(form) {
   const variant = readPrimaryVariant(form);
   return {
     name: form.name.trim(),
+    description_html: form.descriptionHtml,
     variant_name: readPrimaryVariantName(form),
     unit: variant.unit.trim(),
     price: Number(variant.price) || 0,

@@ -1,0 +1,21 @@
+{{define "content"}}
+<section class="cart" data-sf-cart>
+<h1 class="au-page-title">Your cart</h1>
+<p class="cart-empty" data-sf-cart-empty hidden>Your cart is empty.</p>
+<div class="cart-summary" data-sf-cart-summary hidden>
+<div class="cart-lines" data-sf-cart-lines></div>
+<div class="cart-total-row"><span>Total</span><span class="cart-total" data-sf-cart-total></span></div>
+<form class="checkout-form" data-sf-checkout>
+<h2 class="checkout-title">Checkout</h2>
+<input name="name" placeholder="Full name" required>
+<input name="email" type="email" placeholder="Email" required>
+<input name="phone" placeholder="Phone">
+<textarea name="address" placeholder="Shipping address" rows="2"></textarea>
+<textarea name="note" placeholder="Order note (optional)" rows="2"></textarea>
+<button type="submit" class="checkout-btn">Place order</button>
+<p class="checkout-msg" data-sf-checkout-msg></p>
+</form>
+</div>
+<div class="cart-confirmation" data-sf-confirmation data-label="Order placed:" hidden></div>
+</section>
+{{end}}

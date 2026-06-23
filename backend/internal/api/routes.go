@@ -21,7 +21,8 @@ func Register(
 	store *db.Store,
 	tokens *auth.TokenService,
 	mediaStore storage.ObjectStore,
-) {
+	mediaURL string,
+) error {
 	mux.HandleFunc("GET /health", health(store))
 	ledgerService := ledger.NewService(store)
 	bundleService := newBundleService(store)
@@ -29,14 +30,16 @@ func Register(
 	registerAdmin(mux, store, tokens)
 	registerClientAuth(mux, store, tokens)
 	registerCatalog(mux, catalogDeps{
-		store:   store,
-		tokens:  tokens,
-		ledger:  ledgerService,
-		bundles: bundleService,
-		media:   mediaService,
+		store:    store,
+		tokens:   tokens,
+		ledger:   ledgerService,
+		bundles:  bundleService,
+		media:    mediaService,
+		mediaURL: mediaURL,
 	})
 	registerOperations(mux, store, tokens, ledgerService, bundleService)
 	registerSettings(mux, store, tokens)
+	return registerStorefrontAdmin(mux, store, tokens)
 }
 
 func newBundleService(store *db.Store) *bundles.Service {

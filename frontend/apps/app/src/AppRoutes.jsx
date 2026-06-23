@@ -19,6 +19,7 @@ import WarehousesPage from "./features/dashboard/pages/WarehousesPage";
 import ProductCatalogPage from "./features/products/pages/ProductCatalogPage";
 import ProductsPage from "./features/products/pages/ProductsPage";
 import BundlesPage from "./features/bundles/pages/BundlesPage";
+import StorefrontPage from "./features/storefront/pages/StorefrontPage";
 
 function AppRoutes() {
   return (
@@ -41,6 +42,7 @@ function AppRoutes() {
           <Route path="/dashboard/documents" element={<DocumentsPage />} />
           <Route path="/dashboard/warehouses" element={<WarehousesPage />} />
           <Route path="/dashboard/bundles" element={<Navigate to="/dashboard/products/bundles" replace />} />
+          <Route path="/dashboard/storefront" element={<StorefrontPage />} />
           <Route path="/dashboard/reports" element={<ReportsPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
           <Route path="/dashboard/groups" element={<Navigate to="/dashboard/products/bundles" replace />} />

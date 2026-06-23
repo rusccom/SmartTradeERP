@@ -1,0 +1,15 @@
+{
+  "id": "aurora",
+  "name": "Aurora",
+  "preview_url": "",
+  "tokens": {
+    "color-bg": "#0f1020",
+    "color-fg": "#f5f5f7",
+    "color-muted": "#9aa0b4",
+    "color-primary": "#7c5cff",
+    "color-border": "#23253b",
+    "font-sans": "Georgia, Cambria, Times New Roman, serif",
+    "radius": "18px",
+    "container": "1180px"
+  }
+}

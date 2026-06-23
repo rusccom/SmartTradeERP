@@ -1,0 +1,10 @@
+{{define "content"}}
+<h1 class="au-page-title">Products</h1>
+<section class="au-grid">
+{{range .Products}}{{template "product-card" .}}{{else}}<p class="au-empty">No products.</p>{{end}}
+</section>
+<nav class="au-pager">
+{{if .HasPrev}}<a class="au-pager-link" href="{{.PrevURL}}" rel="prev">Previous</a>{{end}}
+{{if .HasNext}}<a class="au-pager-link" href="{{.NextURL}}" rel="next">Next</a>{{end}}
+</nav>
+{{end}}

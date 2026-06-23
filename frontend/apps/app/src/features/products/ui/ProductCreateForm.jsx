@@ -1,4 +1,5 @@
 import ProductBasicSection from "./ProductBasicSection";
+import ProductDescriptionSection from "./ProductDescriptionSection";
 import ProductInventorySection from "./ProductInventorySection";
 import ProductMediaSection from "./ProductMediaSection";
 import ProductPriceSection from "./ProductPriceSection";
@@ -15,6 +16,7 @@ function ProductCreateForm({ formId, state, t }) {
   return (
     <form id={formId} className="product-create-form" data-density="compact" onSubmit={state.handleSubmit}>
       <ProductBasicSection form={state.form} onChange={state.handleChange} t={t} />
+      <ProductDescriptionSection form={state.form} onChange={state.handleChange} productId={state.productId} t={t} />
       <ProductMediaSection productId={state.productId} t={t} />
       <ProductPriceSection form={state.form} hasVariants={hasVariants} onChange={state.handleChange} priceStep={priceStep} t={t} />
       {!hasVariants && <ProductInventorySection form={state.form} onChange={state.handleChange} t={t} />}

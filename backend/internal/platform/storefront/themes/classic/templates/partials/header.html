@@ -1,0 +1,13 @@
+{{define "header"}}
+<header class="site-header">
+<div class="container header-inner">
+<a class="brand" href="{{.Brand.HomeURL}}">
+{{if .Brand.LogoURL}}<img class="brand-logo" src="{{.Brand.LogoURL}}" alt="{{.Brand.TenantName}}">{{else}}<span class="brand-name">{{.Brand.TenantName}}</span>{{end}}
+</a>
+<nav class="site-nav">
+{{range .Nav}}<a class="nav-link" href="{{.URL}}">{{.Label}}</a>{{end}}
+<a class="nav-link nav-cart" href="/cart">Cart (<span data-sf-cart-count>0</span>)</a>
+</nav>
+</div>
+</header>
+{{end}}
