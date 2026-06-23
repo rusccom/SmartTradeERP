@@ -61,6 +61,28 @@
   resize: vertical;
 }
 
+[data-density="compact"] .shared-form-field {
+  gap: var(--gap-field, 8px);
+}
+
+[data-density="compact"] .shared-form-field-label {
+  font-size: var(--field-label-size, 13px);
+  font-weight: var(--field-label-weight, 600);
+  color: #303030;
+}
+
+[data-density="compact"] .shared-form-field-input {
+  min-height: var(--field-h, 38px);
+  border-radius: var(--field-radius, 8px);
+  padding: 0 12px;
+  font-size: var(--field-font, 14px);
+}
+
+[data-density="compact"] .shared-form-field-textarea {
+  min-height: calc(var(--field-h, 38px) * 2);
+  padding: 10px 12px;
+}
+
 .shared-form-checkbox {
   display: flex;
   align-items: center;

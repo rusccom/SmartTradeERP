@@ -3,11 +3,13 @@ import { useEffect, useId } from "react";
 import "./modal.css";
 
 function Modal({
+  bodyTone = "plain",
   children,
   closeLabel,
   closeOnBackdrop = false,
   closeOnEscape = false,
   description,
+  footer,
   onClose,
   open,
   size = "md",
@@ -20,17 +22,24 @@ function Modal({
   if (!open) return null;
   return (
     <div className="ui-modal-backdrop" role="presentation" onMouseDown={createBackdropHandler({ closeOnBackdrop, onClose })}>
-      <section className={`ui-modal-surface ui-modal-${size}`} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={readDescriptionId(description, descriptionId)}>
-        <header className="ui-modal-header">
-          <div className="ui-modal-copy">
-            <h2 id={titleId} className="ui-modal-title">{title}</h2>
-            {description && <p id={descriptionId} className="ui-modal-description">{description}</p>}
-          </div>
-          <button className="ui-modal-close" type="button" aria-label={closeLabel} onClick={onClose}>&times;</button>
-        </header>
+      <section className={`ui-modal-surface ui-modal-${size}`} data-tone={bodyTone} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={readDescriptionId(description, descriptionId)}>
+        {renderHeader({ closeLabel, description, descriptionId, onClose, title, titleId })}
         <div className="ui-modal-body">{children}</div>
+        {footer ? <footer className="ui-modal-footer">{footer}</footer> : null}
       </section>
     </div>
+  );
+}
+
+function renderHeader({ closeLabel, description, descriptionId, onClose, title, titleId }) {
+  return (
+    <header className="ui-modal-header">
+      <div className="ui-modal-copy">
+        <h2 id={titleId} className="ui-modal-title">{title}</h2>
+        {description && <p id={descriptionId} className="ui-modal-description">{description}</p>}
+      </div>
+      <button className="ui-modal-close" type="button" aria-label={closeLabel} onClick={onClose}>&times;</button>
+    </header>
   );
 }
 

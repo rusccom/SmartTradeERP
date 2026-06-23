@@ -7,8 +7,8 @@ const descriptionField = { name: "seoDescription", labelKey: "products.form.seoD
 
 function ProductSeoSection({ form, onChange, t }) {
   return (
-    <section className="product-create-card product-seo-section">
-      <h3 className="product-create-card-title">{t("products.form.sections.seo")}</h3>
+    <section className="product-card product-card--seo">
+      <h3 className="product-card__title">{t("products.form.sections.seo")}</h3>
       <SeoField field={titleField} value={form.seoTitle} onChange={onChange} t={t} />
       <SeoField field={descriptionField} value={form.seoDescription} onChange={onChange} t={t} />
       <SlugField value={form.slug} onChange={onChange} t={t} />

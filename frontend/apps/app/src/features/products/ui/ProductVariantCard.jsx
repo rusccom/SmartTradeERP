@@ -6,7 +6,7 @@ function ProductVariantCard({ canRemove, fields, index, locked, onChange, onRemo
     <article className={`product-variant-card ${locked ? "is-locked" : ""}`.trim()}>
       <header className="product-variant-card-head">
         <div>
-          <h3 className="product-variant-card-title">{t("products.form.variantCardTitle", { index: index + 1 })}</h3>
+          <h4 className="product-variant-card-title">{t("products.form.variantCardTitle", { index: index + 1 })}</h4>
           {locked && <p className="product-variant-card-note">{t("products.form.variantSavedHint")}</p>}
         </div>
         <button className="product-variant-remove" type="button" onClick={() => onRemove(variant.id)} disabled={!canRemove || locked}>{t("products.form.removeVariant")}</button>

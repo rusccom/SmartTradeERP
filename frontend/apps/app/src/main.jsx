@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import I18nProvider from "@smarterp/i18n/I18nProvider";
 import AppRoutes from "./AppRoutes";
 import "./tailwind.css";
+import "../../../packages/ui/styles/tokens.css";
 import "../../../packages/ui/styles/global.css";
 
 createRoot(document.getElementById("root")).render(

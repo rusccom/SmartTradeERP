@@ -1,0 +1,20 @@
+:root {
+  --field-h: 38px;
+  --field-h-sm: 32px;
+  --field-radius: 8px;
+  --control-h: 38px;
+  --control-radius: 8px;
+  --field-label-size: 13px;
+  --field-label-weight: 600;
+  --field-font: 14px;
+  --gap-section: 14px;
+  --gap-field: 8px;
+  --pad-card: 16px;
+  --card-radius: 12px;
+  --surface: #ffffff;
+  --surface-muted: #f6f6f7;
+  --border: #e1e3e5;
+  --border-strong: #cbd5e1;
+  --accent: #2563eb;
+  --focus-ring: rgba(37, 99, 235, 0.12);
+}

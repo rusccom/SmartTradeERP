@@ -1,5 +1,4 @@
 import ProductBasicSection from "./ProductBasicSection";
-import ProductCreateActions from "./ProductCreateActions";
 import ProductInventorySection from "./ProductInventorySection";
 import ProductMediaSection from "./ProductMediaSection";
 import ProductPriceSection from "./ProductPriceSection";
@@ -9,12 +8,12 @@ import ProductVariantsBuilder from "./ProductVariantsBuilder";
 import { decimalStep } from "../../currencies/model/formatMoney";
 import { useCurrencies } from "../../currencies/model/useCurrencies";
 
-function ProductCreateForm({ state, t }) {
+function ProductCreateForm({ formId, state, t }) {
   const { defaultCurrency } = useCurrencies();
   const hasVariants = state.form.variantMode === "multiple";
   const priceStep = decimalStep(defaultCurrency);
   return (
-    <form className="product-create-form" onSubmit={state.handleSubmit}>
+    <form id={formId} className="product-create-form" data-density="compact" onSubmit={state.handleSubmit}>
       <ProductBasicSection form={state.form} onChange={state.handleChange} t={t} />
       <ProductMediaSection productId={state.productId} t={t} />
       <ProductPriceSection form={state.form} hasVariants={hasVariants} onChange={state.handleChange} priceStep={priceStep} t={t} />
@@ -23,8 +22,6 @@ function ProductCreateForm({ state, t }) {
         {readBottomSlot(state, t, priceStep)}
       </ProductVariantsSection>
       <ProductSeoSection form={state.form} onChange={state.handleChange} t={t} />
-      {state.error && <p className="product-create-error">{state.error}</p>}
-      <ProductCreateActions isSaving={state.isSaving} onClose={state.handleClose} state={state} t={t} />
     </form>
   );
 }

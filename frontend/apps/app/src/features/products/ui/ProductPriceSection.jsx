@@ -14,8 +14,8 @@ const unitFields = [
 function ProductPriceSection({ form, hasVariants, onChange, priceStep, t }) {
   const fields = hasVariants ? unitFields : priceFields(priceStep);
   return (
-    <section className="product-create-card">
-      <h3 className="product-create-card-title">{t(readTitleKey(hasVariants))}</h3>
+    <section className="product-card">
+      <h3 className="product-card__title">{t(readTitleKey(hasVariants))}</h3>
       <div className="product-create-grid">
         {fields.map((field) => <FormField key={field.name} field={field} value={form[field.name]} onChange={onChange} t={t} />)}
       </div>
