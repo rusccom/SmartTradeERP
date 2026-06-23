@@ -13,6 +13,7 @@ function ProductCreateModal({ onClose, onCreated, open }) {
       onClose={state.handleClose}
       closeLabel={t("common.close")}
       title={t("products.createModal.title")}
+      size="lg"
     >
       <ProductCreateForm state={state} t={t} />
     </Modal>

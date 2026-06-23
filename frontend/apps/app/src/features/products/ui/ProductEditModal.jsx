@@ -9,7 +9,7 @@ function ProductEditModal({ onClose, onSaved, open, product }) {
   const state = useProductEditForm({ open, onClose, onSaved, product });
   if (!open || !product) return null;
   return (
-    <Modal open={open} onClose={state.handleClose} closeLabel={t("common.close")} title={t("products.editModal.title")}>
+    <Modal open={open} onClose={state.handleClose} closeLabel={t("common.close")} title={t("products.editModal.title")} size="lg">
       <ProductCreateForm state={state} t={t} />
     </Modal>
   );

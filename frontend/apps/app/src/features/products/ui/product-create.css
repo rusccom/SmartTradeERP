@@ -289,9 +289,16 @@
 }
 
 .product-create-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 12px 0 2px;
+  background: #f6f6f7;
+  box-shadow: 0 -1px 0 #e5e7eb, 0 -10px 14px -8px rgba(246, 247, 247, 0.95);
 }
 
 @media (max-width: 768px) {

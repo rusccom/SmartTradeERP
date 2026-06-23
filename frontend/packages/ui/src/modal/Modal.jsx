@@ -10,6 +10,7 @@ function Modal({
   description,
   onClose,
   open,
+  size = "md",
   title,
 }) {
   const titleId = useId();
@@ -19,7 +20,7 @@ function Modal({
   if (!open) return null;
   return (
     <div className="ui-modal-backdrop" role="presentation" onMouseDown={createBackdropHandler({ closeOnBackdrop, onClose })}>
-      <section className="ui-modal-surface" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={readDescriptionId(description, descriptionId)}>
+      <section className={`ui-modal-surface ui-modal-${size}`} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={readDescriptionId(description, descriptionId)}>
         <header className="ui-modal-header">
           <div className="ui-modal-copy">
             <h2 id={titleId} className="ui-modal-title">{title}</h2>
