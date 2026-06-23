@@ -12,6 +12,17 @@ import RichTextInsertControls from "./RichTextInsertControls";
 function RichTextToolbar({ editor, htmlOpen, imageDisabled, onRequestImage, onToggleHtml, t }) {
   return (
     <div className="rte-toolbar">
+      {!htmlOpen && renderControls({ editor, imageDisabled, onRequestImage, t })}
+      <RichTextButton label={t("rte.html.label")} active={htmlOpen} onClick={onToggleHtml}>
+        <Code2 size={16} strokeWidth={1.9} aria-hidden="true" />
+      </RichTextButton>
+    </div>
+  );
+}
+
+function renderControls({ editor, imageDisabled, onRequestImage, t }) {
+  return (
+    <>
       <RichTextFormatSelect editor={editor} t={t} />
       <RichTextMarkControls editor={editor} t={t} />
       <RichTextColorControl editor={editor} t={t} />
@@ -19,10 +30,7 @@ function RichTextToolbar({ editor, htmlOpen, imageDisabled, onRequestImage, onTo
       <RichTextListControls editor={editor} t={t} />
       <RichTextLinkControl editor={editor} t={t} />
       <RichTextInsertControls editor={editor} imageDisabled={imageDisabled} onRequestImage={onRequestImage} t={t} />
-      <RichTextButton label={t("rte.html.label")} active={htmlOpen} onClick={onToggleHtml}>
-        <Code2 size={16} strokeWidth={1.9} aria-hidden="true" />
-      </RichTextButton>
-    </div>
+    </>
   );
 }
 
