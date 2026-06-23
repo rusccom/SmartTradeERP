@@ -71,6 +71,7 @@ function createSingleForm(product, variant, variants) {
 function readProductSeo(product) {
   return {
     slug: product?.slug || "",
+    slugEdited: Boolean(product?.slug),
     seoTitle: product?.seo_title || "",
     seoDescription: product?.seo_description || "",
   };

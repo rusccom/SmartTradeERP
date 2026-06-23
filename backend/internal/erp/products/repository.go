@@ -146,6 +146,15 @@ func (r *Repository) CompositeFlag(ctx context.Context, tenantID, id string) (bo
 	return value, err
 }
 
+func (r *Repository) SlugExists(ctx context.Context, tenantID, slug, excludeID string) (bool, error) {
+	query := `SELECT EXISTS(
+        SELECT 1 FROM catalog.products
+        WHERE tenant_id=$1 AND slug=$2 AND id::text <> $3)`
+	exists := false
+	err := r.store.Pool.QueryRow(ctx, query, tenantID, slug, excludeID).Scan(&exists)
+	return exists, err
+}
+
 func (r *Repository) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
     query := `UPDATE catalog.products
         SET name=$3, is_composite=$4, slug=$5, seo_title=$6, seo_description=$7, updated_at=now()

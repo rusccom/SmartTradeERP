@@ -3,6 +3,7 @@ package products
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -59,9 +60,14 @@ func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest
 	if err := validateCreate(req); err != nil {
 		return "", err
 	}
+	slug, err := s.ensureUniqueSlug(ctx, tenantID, req.Slug, "")
+	if err != nil {
+		return "", err
+	}
+	req.Slug = slug
 	productID := uuid.NewString()
 	variantID := uuid.NewString()
-	err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	err = s.store.WithTx(ctx, func(tx pgx.Tx) error {
 		input := createProductTx{tenantID: tenantID, productID: productID, variantID: variantID, req: req}
 		return s.createWithDefaultVariant(ctx, tx, input)
 	})
@@ -101,6 +107,11 @@ func (s *Service) Update(ctx context.Context, tenantID, id string, req UpdateReq
 	if err := s.ensureCompositeChangeAllowed(ctx, tenantID, id, req.IsComposite); err != nil {
 		return err
 	}
+	slug, err := s.ensureUniqueSlug(ctx, tenantID, req.Slug, id)
+	if err != nil {
+		return err
+	}
+	req.Slug = slug
 	return mapProductWriteError(s.repo.Update(ctx, tenantID, id, req))
 }
 
@@ -173,7 +184,7 @@ func normalizeCreate(req CreateRequest) CreateRequest {
 	req.SKUCode = validation.Clean(req.SKUCode)
 	req.Barcode = validation.Clean(req.Barcode)
 	req.VariantName = validation.Clean(req.VariantName)
-	req.Slug = normalizeSlug(req.Slug)
+	req.Slug = resolveSlug(req.Slug, req.Name)
 	req.SEOTitle = validation.Clean(req.SEOTitle)
 	req.SEODescription = validation.Clean(req.SEODescription)
 	return req
@@ -181,10 +192,20 @@ func normalizeCreate(req CreateRequest) CreateRequest {
 
 func normalizeUpdate(req UpdateRequest) UpdateRequest {
 	req.Name = validation.Clean(req.Name)
-	req.Slug = normalizeSlug(req.Slug)
+	req.Slug = resolveSlug(req.Slug, req.Name)
 	req.SEOTitle = validation.Clean(req.SEOTitle)
 	req.SEODescription = validation.Clean(req.SEODescription)
 	return req
+}
+
+// resolveSlug normalizes the handle, falling back to the product name so every
+// product gets a products/<handle> URL even when the user leaves it blank.
+func resolveSlug(slug, name string) string {
+	normalized := normalizeSlug(slug)
+	if normalized != "" {
+		return normalized
+	}
+	return normalizeSlug(name)
 }
 
 func validateCreate(req CreateRequest) error {
@@ -239,6 +260,27 @@ func mapProductWriteError(err error) error {
 		return ErrSlugTaken
 	}
 	return err
+}
+
+// ensureUniqueSlug keeps the handle unique per tenant by appending -2, -3, ...
+// when the base is already taken, so two products with the same name still get
+// distinct products/<handle> URLs instead of failing.
+func (s *Service) ensureUniqueSlug(ctx context.Context, tenantID, base, excludeID string) (string, error) {
+	if base == "" {
+		return "", nil
+	}
+	candidate := base
+	for i := 2; i < 1000; i++ {
+		taken, err := s.repo.SlugExists(ctx, tenantID, candidate, excludeID)
+		if err != nil {
+			return "", err
+		}
+		if !taken {
+			return candidate, nil
+		}
+		candidate = base + "-" + strconv.Itoa(i)
+	}
+	return candidate, nil
 }
 
 func validateName(name string) error {

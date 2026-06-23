@@ -1,3 +1,5 @@
+import { slugify } from "./slugify";
+
 const defaultForm = {
   name: "",
   unit: "pcs",
@@ -5,6 +7,7 @@ const defaultForm = {
   skuCode: "",
   barcode: "",
   slug: "",
+  slugEdited: false,
   seoTitle: "",
   seoDescription: "",
   variantMode: "single",
@@ -34,7 +37,13 @@ export function createProductFormState() {
 export function patchProductForm(form, event) {
   const { checked, name, type, value } = event.target;
   const next = { ...form, [name]: type === "checkbox" ? checked : value };
-  return syncCommonVariantFields(next, name);
+  return syncCommonVariantFields(syncSlugFromName(next, name, value), name);
+}
+
+function syncSlugFromName(form, name, value) {
+  if (name === "slug") return { ...form, slugEdited: true };
+  if (name === "name" && !form.slugEdited) return { ...form, slug: slugify(value) };
+  return form;
 }
 
 export function patchProductVariant(form, variantId, event) {
