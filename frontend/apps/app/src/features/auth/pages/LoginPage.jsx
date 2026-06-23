@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { setClientToken } from "@smarterp/auth/session";
 import { useI18n } from "@smarterp/i18n/useI18n";
 import { loginClient } from "../api/loginClient";
-import "./login.css";
 
 const initialForm = { email: "", password: "" };
 
