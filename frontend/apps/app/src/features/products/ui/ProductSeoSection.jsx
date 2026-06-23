@@ -9,12 +9,10 @@ function ProductSeoSection({ form, onChange, t }) {
   return (
     <section className="product-create-card product-seo-section">
       <h3 className="product-create-card-title">{t("products.form.sections.seo")}</h3>
-      <ProductSeoPreview form={form} t={t} />
-      <div className="product-create-grid">
-        <SlugField value={form.slug} onChange={onChange} t={t} />
-        <SeoField field={titleField} value={form.seoTitle} onChange={onChange} t={t} />
-      </div>
+      <SeoField field={titleField} value={form.seoTitle} onChange={onChange} t={t} />
       <SeoField field={descriptionField} value={form.seoDescription} onChange={onChange} t={t} />
+      <SlugField value={form.slug} onChange={onChange} t={t} />
+      <ProductSeoPreview form={form} t={t} />
     </section>
   );
 }
