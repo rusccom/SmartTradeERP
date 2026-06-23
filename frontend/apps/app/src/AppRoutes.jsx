@@ -2,10 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import RouteSeo from "@smarterp/ui/seo/RouteSeo";
 import RequireClientAuth from "@smarterp/auth/guards/RequireClientAuth";
-import RequireNoSession from "@smarterp/auth/guards/RequireNoSession";
 import FallbackRoute from "@smarterp/auth/guards/FallbackRoute";
-import { hasClientSession } from "@smarterp/auth/session";
-import LoginPage from "./features/auth/pages/LoginPage";
 import ClientLayout from "./features/dashboard/layout/ClientLayout";
 import DashboardPage from "./features/dashboard/pages/DashboardPage";
 import CustomersPage from "./features/dashboard/pages/CustomersPage";
@@ -22,8 +19,6 @@ function AppRoutes() {
     <>
       <RouteSeo />
       <Routes>
-        <Route path="/" element={<Navigate to={hasClientSession() ? "/dashboard" : "/login"} replace />} />
-        <Route path="/login" element={<RequireNoSession><LoginPage /></RequireNoSession>} />
         <Route element={<RequireClientAuth><ClientLayout /></RequireClientAuth>}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/dashboard/products" element={<ProductCatalogPage />}>
