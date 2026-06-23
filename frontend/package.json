@@ -8,7 +8,6 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace @smarterp/app",
-    "dev:landing": "npm run dev --workspace @smarterp/landing",
     "dev:console": "npm run dev --workspace @smarterp/console",
     "build": "npm run build --workspace @smarterp/app",
     "build:all": "npm run build --workspaces --if-present"
