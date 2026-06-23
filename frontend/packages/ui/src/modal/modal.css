@@ -25,7 +25,7 @@
 
 .ui-modal-sm { width: min(460px, calc(100vw - 40px)); }
 .ui-modal-md { width: min(640px, calc(100vw - 40px)); }
-.ui-modal-lg { width: min(840px, calc(100vw - 40px)); }
+.ui-modal-lg { width: min(720px, calc(100vw - 40px)); }
 
 .ui-modal-header {
   flex: 0 0 auto;
