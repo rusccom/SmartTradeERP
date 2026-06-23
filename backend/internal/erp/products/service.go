@@ -235,12 +235,26 @@ func validateSEO(slug, title, description string) bool {
 	return validation.Max(slug, 200) && validation.Max(title, 255) && validation.Max(description, 320)
 }
 
-// normalizeSlug lowercases the handle and keeps only [a-z0-9], collapsing every
-// other run into a single hyphen so the value is URL-safe and unique per tenant.
+var cyrillicMap = map[rune]string{
+	'а': "a", 'б': "b", 'в': "v", 'г': "g", 'д': "d", 'е': "e", 'ё': "e",
+	'ж': "zh", 'з': "z", 'и': "i", 'й': "i", 'к': "k", 'л': "l", 'м': "m",
+	'н': "n", 'о': "o", 'п': "p", 'р': "r", 'с': "s", 'т': "t", 'у': "u",
+	'ф': "f", 'х': "h", 'ц': "ts", 'ч': "ch", 'ш': "sh", 'щ': "sch",
+	'ъ': "", 'ы': "y", 'ь': "", 'э': "e", 'ю': "yu", 'я': "ya",
+}
+
+// normalizeSlug lowercases the handle, transliterates Cyrillic to Latin, and
+// keeps only [a-z0-9], collapsing every other run into a single hyphen so even
+// a Cyrillic product name yields a URL-safe handle.
 func normalizeSlug(value string) string {
 	var b strings.Builder
 	dash := false
 	for _, r := range strings.ToLower(strings.TrimSpace(value)) {
+		if latin, ok := cyrillicMap[r]; ok {
+			b.WriteString(latin)
+			dash = false
+			continue
+		}
 		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
 			b.WriteRune(r)
 			dash = false
