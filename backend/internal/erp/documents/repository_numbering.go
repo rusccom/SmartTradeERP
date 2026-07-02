@@ -66,8 +66,8 @@ func formatDocumentNumber(input documentNumberInput, sequence int) string {
 func (r *Repository) DocumentNumber(ctx context.Context, tx pgx.Tx, tenantID, id string) (string, error) {
 	query := `SELECT COALESCE(number,'')
         FROM documents.documents
-        WHERE tenant_id=$1 AND id=$2`
-	row := tx.QueryRow(ctx, query, tenantID, id)
+        WHERE id=$1`
+	row := tx.QueryRow(ctx, query, id)
 	number := ""
 	err := row.Scan(&number)
 	return number, err

@@ -79,7 +79,7 @@ func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest
 	req.Slug = slug
 	productID := uuid.NewString()
 	variantID := uuid.NewString()
-	err = s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	err = s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		input := createProductTx{tenantID: tenantID, productID: productID, variantID: variantID, req: req}
 		return s.createWithDefaultVariant(ctx, tx, input)
 	})

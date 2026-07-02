@@ -146,7 +146,7 @@ func (s *Service) ensureUploaded(ctx context.Context, item Item) error {
 
 func (s *Service) markReady(ctx context.Context, req CompleteRequest, item Item) (bool, error) {
 	isPrimary := false
-	err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	err := s.store.WithTenantTx(ctx, req.TenantID, func(tx pgx.Tx) error {
 		if err := s.repo.LockOwner(ctx, tx, req.TenantID, req.OwnerType, req.OwnerID); err != nil {
 			return err
 		}

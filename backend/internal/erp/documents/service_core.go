@@ -39,7 +39,7 @@ func (s *Service) Create(ctx context.Context, tenantID string, req CreateRequest
 	}
 	id := uuid.NewString()
 	result := CreateResult{ID: id}
-	err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	err := s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		numbered, err := s.createDraftTx(ctx, tx, tenantID, id, req)
 		result.Number = numbered.Number
 		if err != nil {
@@ -102,7 +102,7 @@ func (s *Service) ByID(ctx context.Context, tenantID, id string) (Document, erro
 	if err != nil {
 		return Document{}, err
 	}
-	payments, err := s.repo.LoadPayments(ctx, id)
+	payments, err := s.repo.LoadPayments(ctx, tenantID, id)
 	if err != nil {
 		return Document{}, err
 	}
@@ -144,7 +144,7 @@ func ensureMutable(current Document, req UpdateRequest) error {
 }
 
 func (s *Service) updateDraft(ctx context.Context, tenantID, id string, req UpdateRequest) error {
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	return s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		if err := s.lockDocumentStatus(ctx, tx, tenantID, id, "draft"); err != nil {
 			return err
 		}
@@ -191,7 +191,7 @@ func (s *Service) Post(ctx context.Context, tenantID, id string) error {
 	if doc.ShiftID != "" {
 		return ErrShiftDocumentLocked
 	}
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	return s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		if err := s.lockDocumentStatus(ctx, tx, tenantID, id, "draft"); err != nil {
 			return err
 		}
@@ -207,7 +207,7 @@ func (s *Service) Cancel(ctx context.Context, tenantID, id string) error {
 	if doc.Status != "posted" {
 		return ErrPostedOnly
 	}
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	return s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		if err := s.lockDocumentStatus(ctx, tx, tenantID, id, "posted"); err != nil {
 			return err
 		}

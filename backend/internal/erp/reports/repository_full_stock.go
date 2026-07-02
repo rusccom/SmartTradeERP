@@ -28,9 +28,9 @@ func (r *Repository) FullStockRows(
 
 func (r *Repository) countFullStock(ctx context.Context, tenantID string, list httpx.ListQuery) (int, error) {
 	query := fullStockCountSQL()
-	args := []any{tenantID}
+	args := []any{}
 	query, args = appendFullStockFilters(query, args, list)
-	row := r.store.Pool.QueryRow(ctx, query, args...)
+	row := r.store.QueryRow(ctx, tenantID, query, args...)
 	total := 0
 	err := row.Scan(&total)
 	return total, err
@@ -38,10 +38,10 @@ func (r *Repository) countFullStock(ctx context.Context, tenantID string, list h
 
 func (r *Repository) loadFullStock(ctx context.Context, tenantID string, list httpx.ListQuery) ([]FullStockRow, error) {
 	query := fullStockSelectSQL()
-	args := []any{tenantID}
+	args := []any{}
 	query, args = appendFullStockFilters(query, args, list)
 	query, args = appendFullStockPaging(query, args, list)
-	rows, err := r.store.Pool.Query(ctx, query, args...)
+	rows, err := r.store.Query(ctx, tenantID, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +52,7 @@ func (r *Repository) loadFullStock(ctx context.Context, tenantID string, list ht
 func fullStockCountSQL() string {
 	return `SELECT COUNT(*)
         FROM catalog.product_variants v
-        JOIN catalog.products p ON p.id=v.product_id
-        WHERE v.tenant_id=$1 AND p.tenant_id=$1`
+        JOIN catalog.products p ON p.id=v.product_id`
 }
 
 func fullStockSelectSQL() string {
@@ -62,40 +61,44 @@ func fullStockSelectSQL() string {
         COALESCE(latest.running_qty,0), COALESCE(latest.running_avg_cost,0)
         FROM catalog.product_variants v
         JOIN catalog.products p ON p.id=v.product_id
-        LEFT JOIN LATERAL (` + latestStockSQL() + `) latest ON true
-        WHERE v.tenant_id=$1 AND p.tenant_id=$1`
+        LEFT JOIN LATERAL (` + latestStockSQL() + `) latest ON true`
 }
 
 func latestStockSQL() string {
 	return `SELECT running_qty, running_avg_cost
             FROM ledger.cost_movement_results r
-            WHERE r.tenant_id=$1 AND r.variant_id=v.id
+            WHERE r.variant_id=v.id
             ORDER BY r.sequence_num DESC
             LIMIT 1`
 }
 
 func appendFullStockFilters(query string, args []any, list httpx.ListQuery) (string, []any) {
-	query, args = appendTextFilter(query, args, "p.id::text", list.Filters["product_id"])
-	query, args = appendTextFilter(query, args, "v.id::text", list.Filters["variant_id"])
-	return appendFullStockSearch(query, args, list.Search)
+	clauses := make([]string, 0, 3)
+	clauses, args = appendTextClause(clauses, args, "p.id::text", list.Filters["product_id"])
+	clauses, args = appendTextClause(clauses, args, "v.id::text", list.Filters["variant_id"])
+	clauses, args = appendSearchClause(clauses, args, list.Search)
+	if len(clauses) == 0 {
+		return query, args
+	}
+	return query + ` WHERE ` + strings.Join(clauses, ` AND `), args
 }
 
-func appendTextFilter(query string, args []any, field string, value string) (string, []any) {
+func appendTextClause(clauses []string, args []any, field string, value string) ([]string, []any) {
 	if value == "" {
-		return query, args
+		return clauses, args
 	}
-	query += ` AND ` + field + `=$` + argPosition(args)
+	clauses = append(clauses, field+`=$`+argPosition(args))
 	args = append(args, value)
-	return query, args
+	return clauses, args
 }
 
-func appendFullStockSearch(query string, args []any, search string) (string, []any) {
+func appendSearchClause(clauses []string, args []any, search string) ([]string, []any) {
 	if search == "" {
-		return query, args
+		return clauses, args
 	}
-	query += ` AND ` + fullStockSearchSQL(argPosition(args))
+	clauses = append(clauses, fullStockSearchSQL(argPosition(args)))
 	args = append(args, search)
-	return query, args
+	return clauses, args
 }
 
 func fullStockSearchSQL(position string) string {
@@ -178,8 +181,8 @@ func (r *Repository) fullStockWarehouses(
 	if len(ids) == 0 {
 		return map[string][]FullStockWarehouse{}, nil
 	}
-	query, args := fullStockWarehousesQuery(tenantID, ids, list.Filters["warehouse_id"])
-	rows, err := r.store.Pool.Query(ctx, query, args...)
+	query, args := fullStockWarehousesQuery(ids, list.Filters["warehouse_id"])
+	rows, err := r.store.Query(ctx, tenantID, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -195,11 +198,12 @@ func fullStockVariantIDs(items []FullStockRow) []string {
 	return ids
 }
 
-func fullStockWarehousesQuery(tenantID string, ids []string, warehouseID string) (string, []any) {
-	query := fullStockWarehousesSQL()
-	args := []any{tenantID}
-	query, args = appendVariantList(query, args, ids)
-	query, args = appendTextFilter(query, args, "w.id::text", warehouseID)
+func fullStockWarehousesQuery(ids []string, warehouseID string) (string, []any) {
+	clauses := make([]string, 0, 2)
+	args := []any{}
+	clauses, args = appendVariantClause(clauses, args, ids)
+	clauses, args = appendTextClause(clauses, args, "w.id::text", warehouseID)
+	query := fullStockWarehousesSQL() + ` WHERE ` + strings.Join(clauses, ` AND `)
 	query += ` GROUP BY v.id, w.id, w.name, w.created_at, sb.qty ORDER BY v.id, w.created_at`
 	return query, args
 }
@@ -208,20 +212,18 @@ func fullStockWarehousesSQL() string {
 	return `SELECT v.id::text, w.id::text, w.name,
         COALESCE(sb.qty,0)
         FROM catalog.product_variants v
-        JOIN catalog.warehouses w ON w.tenant_id=$1
-        LEFT JOIN ledger.stock_balances sb ON sb.tenant_id=$1
-            AND sb.variant_id=v.id AND sb.warehouse_id=w.id
-        WHERE v.tenant_id=$1`
+        CROSS JOIN catalog.warehouses w
+        LEFT JOIN ledger.stock_balances sb ON sb.variant_id=v.id AND sb.warehouse_id=w.id`
 }
 
-func appendVariantList(query string, args []any, ids []string) (string, []any) {
+func appendVariantClause(clauses []string, args []any, ids []string) ([]string, []any) {
 	positions := make([]string, 0, len(ids))
 	for _, id := range ids {
 		positions = append(positions, "$"+argPosition(args))
 		args = append(args, id)
 	}
-	query += ` AND v.id::text IN (` + strings.Join(positions, ",") + `)`
-	return query, args
+	clauses = append(clauses, `v.id::text IN (`+strings.Join(positions, ",")+`)`)
+	return clauses, args
 }
 
 func scanFullStockWarehouses(rows pgx.Rows) (map[string][]FullStockWarehouse, error) {

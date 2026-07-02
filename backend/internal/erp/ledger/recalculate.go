@@ -90,15 +90,15 @@ func (s *Service) clearVariant(run rebuildRun) error {
 		return err
 	}
 	query := `DELETE FROM ledger.stock_balances
-        WHERE tenant_id=$1 AND variant_id=$2`
-	_, err := run.tx.Exec(run.ctx, query, run.tenantID, run.variantID)
+        WHERE variant_id=$1`
+	_, err := run.tx.Exec(run.ctx, query, run.variantID)
 	return err
 }
 
 func (s *Service) deleteResults(run rebuildRun) error {
 	query := `DELETE FROM ledger.cost_movement_results
-        WHERE tenant_id=$1 AND variant_id=$2`
-	_, err := run.tx.Exec(run.ctx, query, run.tenantID, run.variantID)
+        WHERE variant_id=$1`
+	_, err := run.tx.Exec(run.ctx, query, run.variantID)
 	return err
 }
 
@@ -107,10 +107,10 @@ func (s *Service) loadEvents(run rebuildRun) ([]replayEvent, error) {
         m.revenue_amount, m.warehouse_id::text
         FROM ledger.inventory_movements m
         JOIN ledger.posting_batches b ON b.id=m.posting_batch_id
-        WHERE m.tenant_id=$1 AND m.variant_id=$2 AND b.status='active'
+        WHERE m.variant_id=$1 AND b.status='active'
         ORDER BY m.movement_date, b.posted_at, m.posting_order, m.created_at, m.id
         FOR UPDATE OF m`
-	rows, err := run.tx.Query(run.ctx, query, run.tenantID, run.variantID)
+	rows, err := run.tx.Query(run.ctx, query, run.variantID)
 	if err != nil {
 		return nil, err
 	}

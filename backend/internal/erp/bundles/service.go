@@ -47,7 +47,7 @@ func (s *Service) SetComponents(ctx context.Context, tenantID, variantID string,
 	if err := s.validateState(ctx, tenantID, variantID, items); err != nil {
 		return err
 	}
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	return s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		return s.repo.ReplaceComponents(ctx, tx, variantID, items)
 	})
 }

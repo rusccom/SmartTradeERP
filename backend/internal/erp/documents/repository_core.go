@@ -33,10 +33,10 @@ func (r *Repository) List(ctx context.Context, tenantID string, query httpx.List
 }
 
 func (r *Repository) count(ctx context.Context, tenantID string, query httpx.ListQuery) (int, error) {
-	sqlQuery := `SELECT COUNT(*) FROM documents.documents d WHERE d.tenant_id=$1`
-	args := []any{tenantID}
+	sqlQuery := `SELECT COUNT(*) FROM documents.documents d`
+	args := []any{}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
-	row := r.store.Pool.QueryRow(ctx, sqlQuery, args...)
+	row := r.store.QueryRow(ctx, tenantID, sqlQuery, args...)
 	total := 0
 	err := row.Scan(&total)
 	return total, err
@@ -46,11 +46,11 @@ func (r *Repository) load(ctx context.Context, tenantID string, query httpx.List
 	sqlQuery := `SELECT d.id::text, d.type, d.date::text, COALESCE(d.number,''), d.status,
         COALESCE(d.customer_id::text,''), COALESCE(d.note,''),
         ` + totalCostSQL() + `::text AS total_cost
-        FROM documents.documents d WHERE d.tenant_id=$1`
-	args := []any{tenantID}
+        FROM documents.documents d`
+	args := []any{}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
 	sqlQuery, args = appendSortAndPaging(sqlQuery, args, query)
-	rows, err := r.store.Pool.Query(ctx, sqlQuery, args...)
+	rows, err := r.store.Query(ctx, tenantID, sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func appendFilter(query string, args []any, field, value string) (string, []any)
 	if value == "" {
 		return query, args
 	}
-	query += ` AND ` + field + `=$` + nextPosition(args)
+	query += filterJoiner(args) + field + `=$` + nextPosition(args)
 	args = append(args, value)
 	return query, args
 }
@@ -79,9 +79,16 @@ func appendSearch(query string, args []any, search string) (string, []any) {
 	if search == "" {
 		return query, args
 	}
-	query += ` AND COALESCE(d.number,'') ILIKE '%' || $` + nextPosition(args) + ` || '%'`
+	query += filterJoiner(args) + `COALESCE(d.number,'') ILIKE '%' || $` + nextPosition(args) + ` || '%'`
 	args = append(args, search)
 	return query, args
+}
+
+func filterJoiner(args []any) string {
+	if len(args) == 0 {
+		return ` WHERE `
+	}
+	return ` AND `
 }
 
 func appendSortAndPaging(query string, args []any, listQuery httpx.ListQuery) (string, []any) {
@@ -140,8 +147,8 @@ func (r *Repository) ByID(ctx context.Context, tenantID, id string) (Document, e
         COALESCE(target_warehouse_id::text,''), COALESCE(shift_id::text,''),
         COALESCE(customer_id::text,''), COALESCE(created_by::text,''), COALESCE(note,'')
         FROM documents.documents
-        WHERE tenant_id=$1 AND id=$2`
-	row := r.store.Pool.QueryRow(ctx, query, tenantID, id)
+        WHERE id=$1`
+	row := r.store.QueryRow(ctx, tenantID, query, id)
 	item := Document{}
 	err := row.Scan(&item.ID, &item.Type, &item.Date, &item.Number, &item.Status,
 		&item.WarehouseID, &item.SourceWarehouseID, &item.TargetWarehouseID,
@@ -156,10 +163,10 @@ func (r *Repository) LoadItemsWithProfit(ctx context.Context, tenantID, document
         JOIN documents.documents d ON d.id=i.document_id
         LEFT JOIN ledger.document_item_financials f
             ON f.document_item_id=i.id AND f.tenant_id=d.tenant_id
-        WHERE d.tenant_id=$1 AND d.id=$2
+        WHERE d.id=$1
         GROUP BY i.id, i.variant_id, i.qty, i.unit_price, i.total_amount, f.gross_profit
         ORDER BY i.id`
-	rows, err := r.store.Pool.Query(ctx, query, tenantID, documentID)
+	rows, err := r.store.Query(ctx, tenantID, query, documentID)
 	if err != nil {
 		return nil, decimal.Zero, err
 	}
@@ -194,11 +201,11 @@ func (r *Repository) InsertDocument(ctx context.Context, tx pgx.Tx, tenantID, do
 
 func (r *Repository) UpdateDocument(ctx context.Context, tx pgx.Tx, tenantID, documentID string, req UpdateRequest) error {
 	query := `UPDATE documents.documents
-        SET type=$3, date=$4, number=$5, warehouse_id=NULLIF($6,''),
-            source_warehouse_id=NULLIF($7,''), target_warehouse_id=NULLIF($8,''),
-            shift_id=NULLIF($9,''), customer_id=NULLIF($10,''), note=$11, updated_at=now()
-        WHERE tenant_id=$1 AND id=$2`
-	_, err := tx.Exec(ctx, query, tenantID, documentID, req.Type, req.Date, req.Number,
+        SET type=$2, date=$3, number=$4, warehouse_id=NULLIF($5,''),
+            source_warehouse_id=NULLIF($6,''), target_warehouse_id=NULLIF($7,''),
+            shift_id=NULLIF($8,''), customer_id=NULLIF($9,''), note=$10, updated_at=now()
+        WHERE id=$1`
+	_, err := tx.Exec(ctx, query, documentID, req.Type, req.Date, req.Number,
 		req.WarehouseID, req.SourceWarehouseID, req.TargetWarehouseID,
 		req.ShiftID, req.CustomerID, req.Note)
 	return err
@@ -232,8 +239,8 @@ func (r *Repository) insertItem(ctx context.Context, tx pgx.Tx, documentID strin
 }
 
 func (r *Repository) Status(ctx context.Context, tenantID, documentID string) (string, error) {
-	row := r.store.Pool.QueryRow(ctx,
-		`SELECT status FROM documents.documents WHERE tenant_id=$1 AND id=$2`, tenantID, documentID)
+	row := r.store.QueryRow(ctx, tenantID,
+		`SELECT status FROM documents.documents WHERE id=$1`, documentID)
 	status := ""
 	err := row.Scan(&status)
 	return status, err
@@ -241,16 +248,16 @@ func (r *Repository) Status(ctx context.Context, tenantID, documentID string) (s
 
 func (r *Repository) StatusForUpdate(ctx context.Context, tx pgx.Tx, tenantID, documentID string) (string, error) {
 	row := tx.QueryRow(ctx,
-		`SELECT status FROM documents.documents WHERE tenant_id=$1 AND id=$2 FOR UPDATE`,
-		tenantID, documentID)
+		`SELECT status FROM documents.documents WHERE id=$1 FOR UPDATE`,
+		documentID)
 	status := ""
 	err := row.Scan(&status)
 	return status, err
 }
 
 func (r *Repository) SetStatus(ctx context.Context, tx pgx.Tx, tenantID, documentID, status string) error {
-	query := `UPDATE documents.documents SET status=$3, updated_at=now() WHERE tenant_id=$1 AND id=$2`
-	tag, err := tx.Exec(ctx, query, tenantID, documentID, status)
+	query := `UPDATE documents.documents SET status=$2, updated_at=now() WHERE id=$1`
+	tag, err := tx.Exec(ctx, query, documentID, status)
 	if err == nil && tag.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}
@@ -258,8 +265,8 @@ func (r *Repository) SetStatus(ctx context.Context, tx pgx.Tx, tenantID, documen
 }
 
 func (r *Repository) DeleteDraft(ctx context.Context, tenantID, id string) error {
-	query := `DELETE FROM documents.documents WHERE tenant_id=$1 AND id=$2 AND status='draft'`
-	tag, err := r.store.Pool.Exec(ctx, query, tenantID, id)
+	query := `DELETE FROM documents.documents WHERE id=$1 AND status='draft'`
+	tag, err := r.store.Exec(ctx, tenantID, query, id)
 	if err == nil && tag.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}

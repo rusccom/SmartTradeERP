@@ -25,7 +25,7 @@ func (s *Service) Delete(ctx context.Context, tenantID, ownerType, ownerID, medi
 
 func (s *Service) deleteRow(ctx context.Context, tenantID, ownerType, ownerID, mediaID string) (string, error) {
 	objectKey := ""
-	err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	err := s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		if err := s.repo.LockOwner(ctx, tx, tenantID, ownerType, ownerID); err != nil {
 			return err
 		}
@@ -49,7 +49,7 @@ func (s *Service) SetPrimary(ctx context.Context, tenantID, ownerType, ownerID, 
 	if !validScope(tenantID, ownerType, ownerID) || !validation.UUID(mediaID) {
 		return ErrInvalidMedia
 	}
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	return s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		if err := s.repo.LockOwner(ctx, tx, tenantID, ownerType, ownerID); err != nil {
 			return err
 		}

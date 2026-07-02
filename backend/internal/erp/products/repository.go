@@ -32,10 +32,10 @@ func (r *Repository) List(ctx context.Context, tenantID string, query ProductLis
 }
 
 func (r *Repository) count(ctx context.Context, tenantID string, query ProductListQuery) (int, error) {
-	sqlQuery := `SELECT COUNT(*) FROM catalog.products p WHERE p.tenant_id=$1`
-	args := []any{tenantID}
+	sqlQuery := `SELECT COUNT(*) FROM catalog.products p`
+	args := []any{}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
-	row := r.store.Pool.QueryRow(ctx, sqlQuery, args...)
+	row := r.store.QueryRow(ctx, tenantID, sqlQuery, args...)
 	total := 0
 	err := row.Scan(&total)
 	return total, err
@@ -43,11 +43,11 @@ func (r *Repository) count(ctx context.Context, tenantID string, query ProductLi
 
 func (r *Repository) load(ctx context.Context, tenantID string, query ProductListQuery) ([]Product, error) {
 	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.slug, p.seo_title, p.seo_description, p.created_at::text, p.updated_at::text
-        FROM catalog.products p WHERE p.tenant_id=$1`
-	args := []any{tenantID}
+        FROM catalog.products p`
+	args := []any{}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
 	sqlQuery, args = appendSortAndPaging(sqlQuery, args, query)
-	rows, err := r.store.Pool.Query(ctx, sqlQuery, args...)
+	rows, err := r.store.Query(ctx, tenantID, sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func appendListFilters(query string, args []any, productQuery ProductListQuery) 
 }
 
 func addProductScopeFilter(query string) string {
-	return query + ` AND p.is_composite=false`
+	return query + ` WHERE p.is_composite=false`
 }
 
 func appendSortAndPaging(query string, args []any, productQuery ProductListQuery) (string, []any) {
@@ -132,34 +132,34 @@ func readDefaultVariantName(req CreateRequest) string {
 func (r *Repository) GetByID(ctx context.Context, tenantID, id string) (Product, error) {
     query := `SELECT id::text, name, is_composite, slug, seo_title, seo_description, COALESCE(description_html,''), created_at::text, updated_at::text
         FROM catalog.products
-        WHERE tenant_id=$1 AND id=$2`
-    row := r.store.Pool.QueryRow(ctx, query, tenantID, id)
+        WHERE id=$1`
+    row := r.store.QueryRow(ctx, tenantID, query, id)
     item := Product{}
     err := row.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.DescriptionHTML, &item.CreatedAt, &item.UpdatedAt)
     return item, err
 }
 
 func (r *Repository) CompositeFlag(ctx context.Context, tenantID, id string) (bool, error) {
-	query := `SELECT is_composite FROM catalog.products WHERE tenant_id=$1 AND id=$2`
+	query := `SELECT is_composite FROM catalog.products WHERE id=$1`
 	value := false
-	err := r.store.Pool.QueryRow(ctx, query, tenantID, id).Scan(&value)
+	err := r.store.QueryRow(ctx, tenantID, query, id).Scan(&value)
 	return value, err
 }
 
 func (r *Repository) SlugExists(ctx context.Context, tenantID, slug, excludeID string) (bool, error) {
 	query := `SELECT EXISTS(
         SELECT 1 FROM catalog.products
-        WHERE tenant_id=$1 AND slug=$2 AND id::text <> $3)`
+        WHERE slug=$1 AND id::text <> $2)`
 	exists := false
-	err := r.store.Pool.QueryRow(ctx, query, tenantID, slug, excludeID).Scan(&exists)
+	err := r.store.QueryRow(ctx, tenantID, query, slug, excludeID).Scan(&exists)
 	return exists, err
 }
 
 func (r *Repository) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
     query := `UPDATE catalog.products
-        SET name=$3, is_composite=$4, slug=$5, seo_title=$6, seo_description=$7, description_html=$8, updated_at=now()
-        WHERE tenant_id=$1 AND id=$2`
-    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id, req.Name, req.IsComposite, req.Slug, req.SEOTitle, req.SEODescription, req.DescriptionHTML)
+        SET name=$2, is_composite=$3, slug=$4, seo_title=$5, seo_description=$6, description_html=$7, updated_at=now()
+        WHERE id=$1`
+    tag, err := r.store.Exec(ctx, tenantID, query, id, req.Name, req.IsComposite, req.Slug, req.SEOTitle, req.SEODescription, req.DescriptionHTML)
     if err == nil && tag.RowsAffected() == 0 {
         return pgx.ErrNoRows
     }
@@ -167,8 +167,8 @@ func (r *Repository) Update(ctx context.Context, tenantID, id string, req Update
 }
 
 func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {
-    query := `DELETE FROM catalog.products WHERE tenant_id=$1 AND id=$2`
-    tag, err := r.store.Pool.Exec(ctx, query, tenantID, id)
+    query := `DELETE FROM catalog.products WHERE id=$1`
+    tag, err := r.store.Exec(ctx, tenantID, query, id)
     if err == nil && tag.RowsAffected() == 0 {
         return pgx.ErrNoRows
     }

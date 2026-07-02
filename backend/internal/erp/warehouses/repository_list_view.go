@@ -31,9 +31,8 @@ func (r *Repository) ListWithIncludes(
 func (r *Repository) loadListItems(ctx context.Context, tenantID string) ([]WarehouseListItem, error) {
 	query := `SELECT id::text, name, COALESCE(address,''), is_default, is_active, created_at::text
         FROM catalog.warehouses
-        WHERE tenant_id=$1
         ORDER BY created_at`
-	rows, err := r.store.Pool.Query(ctx, query, tenantID)
+	rows, err := r.store.Query(ctx, tenantID, query)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +74,7 @@ func (r *Repository) loadWarehouseStockRows(
 		return []warehouseStockRow{}, nil
 	}
 	query, args := warehouseStockRowsQuery(tenantID, items)
-	rows, err := r.store.Pool.Query(ctx, query, args...)
+	rows, err := r.store.Query(ctx, tenantID, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +84,7 @@ func (r *Repository) loadWarehouseStockRows(
 
 func warehouseStockRowsQuery(tenantID string, items []WarehouseListItem) (string, []any) {
 	query := warehouseStockRowsSQL()
-	args := []any{tenantID}
+	args := []any{}
 	query, args = appendWarehouseIDList(query, args, items)
 	query += warehouseStockRowsGroup()
 	return query, args
@@ -97,18 +96,16 @@ func warehouseStockRowsSQL() string {
         COALESCE(sb.qty,0),
         COALESCE(latest.running_avg_cost,0)
         FROM catalog.warehouses w
-        JOIN catalog.product_variants v ON v.tenant_id=$1
-        JOIN catalog.products p ON p.id=v.product_id AND p.tenant_id=$1
-        LEFT JOIN ledger.stock_balances sb ON sb.tenant_id=$1
-            AND sb.warehouse_id=w.id AND sb.variant_id=v.id
-        LEFT JOIN LATERAL (` + latestWarehouseStockSQL() + `) latest ON true
-        WHERE w.tenant_id=$1`
+        JOIN catalog.product_variants v ON true
+        JOIN catalog.products p ON p.id=v.product_id
+        LEFT JOIN ledger.stock_balances sb ON sb.warehouse_id=w.id AND sb.variant_id=v.id
+        LEFT JOIN LATERAL (` + latestWarehouseStockSQL() + `) latest ON true`
 }
 
 func latestWarehouseStockSQL() string {
 	return `SELECT running_avg_cost
             FROM ledger.cost_movement_results r
-            WHERE r.tenant_id=$1 AND r.variant_id=v.id
+            WHERE r.variant_id=v.id
             ORDER BY r.sequence_num DESC
             LIMIT 1`
 }
@@ -123,7 +120,7 @@ func appendWarehouseIDList(
 		positions = append(positions, "$"+warehouseArgPosition(args))
 		args = append(args, item.ID)
 	}
-	query += ` AND w.id::text IN (` + strings.Join(positions, ",") + `)`
+	query += ` WHERE w.id::text IN (` + strings.Join(positions, ",") + `)`
 	return query, args
 }
 

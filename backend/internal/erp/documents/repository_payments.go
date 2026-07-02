@@ -41,12 +41,12 @@ func (r *Repository) insertPayment(
 	return err
 }
 
-func (r *Repository) LoadPayments(ctx context.Context, documentID string) ([]Payment, error) {
+func (r *Repository) LoadPayments(ctx context.Context, tenantID, documentID string) ([]Payment, error) {
 	query := `SELECT id::text, method, amount
         FROM documents.document_payments
         WHERE document_id=$1
         ORDER BY id`
-	rows, err := r.store.Pool.Query(ctx, query, documentID)
+	rows, err := r.store.Query(ctx, tenantID, query, documentID)
 	if err != nil {
 		return nil, err
 	}

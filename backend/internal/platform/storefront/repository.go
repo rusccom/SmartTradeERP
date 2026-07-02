@@ -24,6 +24,7 @@ func (r *Repository) FindTenantByHost(ctx context.Context, host string) (Resolve
         FROM platform.storefront_domains d
         JOIN platform.tenants t ON t.id = d.tenant_id
         WHERE d.host = $1 AND d.status = 'active'`
+	// global/pre-tenant: raw pool access
 	row := r.store.Pool.QueryRow(ctx, query, host)
 	resolved := ResolvedTenant{}
 	if err := row.Scan(&resolved.TenantID, &resolved.Status); err != nil {

@@ -135,7 +135,7 @@ func (c *Commerce) orderItem(ctx context.Context, tenantID string, item cartItem
 
 func (c *Commerce) persistOrder(ctx context.Context, tenantID string, cur currency, req checkoutRequest, items []orderItemRecord, total decimal.Decimal) (orderResult, error) {
 	order := buildOrderRecord(tenantID, cur, req, total)
-	err := c.store.WithTx(ctx, func(tx pgx.Tx) error {
+	err := c.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		return c.repo.InsertOrder(ctx, tx, order, items)
 	})
 	if err != nil {

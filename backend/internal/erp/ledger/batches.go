@@ -34,10 +34,10 @@ func (s *Service) ReverseDocument(ctx context.Context, tx pgx.Tx, tenantID, docu
 
 func (s *Service) ActiveBatchID(ctx context.Context, tx pgx.Tx, tenantID, documentID string) (string, error) {
 	query := `SELECT id::text FROM ledger.posting_batches
-        WHERE tenant_id=$1 AND document_id=$2 AND status='active'
+        WHERE document_id=$1 AND status='active'
         ORDER BY posted_at DESC LIMIT 1`
 	id := ""
-	err := tx.QueryRow(ctx, query, tenantID, documentID).Scan(&id)
+	err := tx.QueryRow(ctx, query, documentID).Scan(&id)
 	if err == pgx.ErrNoRows {
 		return "", ErrActiveBatchRequired
 	}
@@ -66,9 +66,9 @@ func (s *Service) updateBatchStatus(
 	status string,
 ) error {
 	query := `UPDATE ledger.posting_batches
-        SET status=$3, updated_at=now()
-        WHERE tenant_id=$1 AND document_id=$2 AND status='active'`
-	tag, err := tx.Exec(ctx, query, tenantID, documentID, status)
+        SET status=$2, updated_at=now()
+        WHERE document_id=$1 AND status='active'`
+	tag, err := tx.Exec(ctx, query, documentID, status)
 	if err != nil {
 		return err
 	}
@@ -87,8 +87,8 @@ func (s *Service) activeDocumentVariants(
 	query := `SELECT DISTINCT m.variant_id::text
         FROM ledger.inventory_movements m
         JOIN ledger.posting_batches b ON b.id=m.posting_batch_id
-        WHERE m.tenant_id=$1 AND m.document_id=$2 AND b.status='active'`
-	rows, err := tx.Query(ctx, query, tenantID, documentID)
+        WHERE m.document_id=$1 AND b.status='active'`
+	rows, err := tx.Query(ctx, query, documentID)
 	if err != nil {
 		return nil, err
 	}

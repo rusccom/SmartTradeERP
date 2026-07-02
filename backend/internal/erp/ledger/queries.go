@@ -14,26 +14,26 @@ import (
 func (s *Service) HasVariantMovements(ctx context.Context, tenantID, variantID string) (bool, error) {
 	query := `SELECT EXISTS(
         SELECT 1 FROM ledger.inventory_movements
-        WHERE tenant_id=$1 AND variant_id=$2
+        WHERE variant_id=$1
 	)`
-	return scanExists(s.store.Pool.QueryRow(ctx, query, tenantID, variantID))
+	return scanExists(s.store.QueryRow(ctx, tenantID, query, variantID))
 }
 
 func (s *Service) HasWarehouseMovements(ctx context.Context, tenantID, warehouseID string) (bool, error) {
 	query := `SELECT EXISTS(
         SELECT 1 FROM ledger.inventory_movements
-        WHERE tenant_id=$1 AND warehouse_id=$2
+        WHERE warehouse_id=$1
 	)`
-	return scanExists(s.store.Pool.QueryRow(ctx, query, tenantID, warehouseID))
+	return scanExists(s.store.QueryRow(ctx, tenantID, query, warehouseID))
 }
 
 func (s *Service) HasProductMovements(ctx context.Context, tenantID, productID string) (bool, error) {
 	query := `SELECT EXISTS(
         SELECT 1 FROM ledger.inventory_movements m
         JOIN catalog.product_variants v ON v.id=m.variant_id
-        WHERE m.tenant_id=$1 AND v.tenant_id=$1 AND v.product_id=$2
+        WHERE v.product_id=$1
 	)`
-	return scanExists(s.store.Pool.QueryRow(ctx, query, tenantID, productID))
+	return scanExists(s.store.QueryRow(ctx, tenantID, query, productID))
 }
 
 func scanExists(row pgx.Row) (bool, error) {
@@ -42,8 +42,15 @@ func scanExists(row pgx.Row) (bool, error) {
 	return exists, err
 }
 
+const globalStockQuery = `SELECT COALESCE(running_qty,0), COALESCE(running_avg_cost,0)
+        FROM ledger.cost_movement_results r
+        JOIN ledger.inventory_movements m ON m.id=r.movement_id
+        JOIN ledger.posting_batches b ON b.id=m.posting_batch_id
+        WHERE r.variant_id=$1 AND b.status='active'
+        ORDER BY r.sequence_num DESC LIMIT 1`
+
 func (s *Service) GlobalStock(ctx context.Context, tenantID, variantID string) (decimal.Decimal, decimal.Decimal, error) {
-	return s.globalStock(ctx, s.store.Pool, tenantID, variantID)
+	return scanStockPair(s.store.QueryRow(ctx, tenantID, globalStockQuery, variantID))
 }
 
 func (s *Service) GlobalStockTx(
@@ -61,13 +68,7 @@ func (s *Service) globalStock(
 	tenantID string,
 	variantID string,
 ) (decimal.Decimal, decimal.Decimal, error) {
-	query := `SELECT COALESCE(running_qty,0), COALESCE(running_avg_cost,0)
-        FROM ledger.cost_movement_results r
-        JOIN ledger.inventory_movements m ON m.id=r.movement_id
-        JOIN ledger.posting_batches b ON b.id=m.posting_batch_id
-        WHERE r.tenant_id=$1 AND r.variant_id=$2 AND b.status='active'
-        ORDER BY r.sequence_num DESC LIMIT 1`
-	return scanStockPair(q.QueryRow(ctx, query, tenantID, variantID))
+	return scanStockPair(q.QueryRow(ctx, globalStockQuery, variantID))
 }
 
 func scanStockPair(row pgx.Row) (decimal.Decimal, decimal.Decimal, error) {
@@ -84,15 +85,15 @@ func scanStockPair(row pgx.Row) (decimal.Decimal, decimal.Decimal, error) {
 
 func (s *Service) ProfitByPeriod(ctx context.Context, filter ProfitFilter) (decimal.Decimal, error) {
 	query, args := buildProfitPeriodQuery(filter)
-	row := s.store.Pool.QueryRow(ctx, query, args...)
+	row := s.store.QueryRow(ctx, filter.TenantID, query, args...)
 	profit := decimal.Zero
 	err := row.Scan(&profit)
 	return profit, err
 }
 
 func buildProfitPeriodQuery(filter ProfitFilter) (string, []any) {
-	parts := []string{"m.tenant_id=$1", "b.status='active'", "m.movement_date BETWEEN $2 AND $3"}
-	args := []any{filter.TenantID, filter.FromDate, filter.ToDate}
+	parts := []string{"b.status='active'", "m.movement_date BETWEEN $1 AND $2"}
+	args := []any{filter.FromDate, filter.ToDate}
 	parts, args = appendProfitFilter(parts, args, "m.warehouse_id", filter.WarehouseID)
 	parts, args = appendProfitFilter(parts, args, "m.variant_id", filter.VariantID)
 	query := `SELECT COALESCE(SUM(COALESCE(r.gross_profit,0)), 0)
@@ -115,16 +116,16 @@ func appendProfitFilter(parts []string, args []any, field string, value string) 
 func (s *Service) ProfitByDocumentItem(ctx context.Context, tenantID, documentItemID string) (decimal.Decimal, error) {
 	query := `SELECT COALESCE(gross_profit,0)
         FROM ledger.document_item_financials
-        WHERE tenant_id=$1 AND document_item_id=$2`
-	row := s.store.Pool.QueryRow(ctx, query, tenantID, documentItemID)
+        WHERE document_item_id=$1`
+	row := s.store.QueryRow(ctx, tenantID, query, documentItemID)
 	return scanDecimal(row)
 }
 
 func (s *Service) ProfitByDocument(ctx context.Context, tenantID, documentID string) (decimal.Decimal, error) {
 	query := `SELECT COALESCE(SUM(gross_profit),0)
         FROM ledger.document_item_financials
-        WHERE tenant_id=$1 AND document_id=$2`
-	row := s.store.Pool.QueryRow(ctx, query, tenantID, documentID)
+        WHERE document_id=$1`
+	row := s.store.QueryRow(ctx, tenantID, query, documentID)
 	return scanDecimal(row)
 }
 
@@ -146,9 +147,9 @@ func (s *Service) Movements(ctx context.Context, tenantID, variantID string) ([]
         FROM ledger.inventory_movements m
         JOIN ledger.posting_batches b ON b.id=m.posting_batch_id
         JOIN ledger.cost_movement_results r ON r.movement_id=m.id
-        WHERE m.tenant_id=$1 AND m.variant_id=$2 AND b.status='active'
+        WHERE m.variant_id=$1 AND b.status='active'
         ORDER BY r.sequence_num`
-	rows, err := s.store.Pool.Query(ctx, query, tenantID, variantID)
+	rows, err := s.store.Query(ctx, tenantID, query, variantID)
 	if err != nil {
 		return nil, err
 	}

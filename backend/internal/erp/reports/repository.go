@@ -20,9 +20,8 @@ const topProductsSQL = `SELECT p.id::text, p.name, COALESCE(SUM(f.gross_profit),
         JOIN documents.documents d ON d.id=f.document_id
         JOIN catalog.product_variants v ON v.id=i.variant_id
         JOIN catalog.products p ON p.id=v.product_id
-        WHERE f.tenant_id=$1 AND d.tenant_id=$1 AND v.tenant_id=$1
-            AND p.tenant_id=$1 AND d.status='posted'
-            AND d.type IN ('SALE','RETURN') AND d.date BETWEEN $2 AND $3
+        WHERE d.status='posted'
+            AND d.type IN ('SALE','RETURN') AND d.date BETWEEN $1 AND $2
         GROUP BY p.id, p.name
         ORDER BY profit DESC
         LIMIT 20`
@@ -32,8 +31,8 @@ func NewRepository(store *db.Store) *Repository {
 }
 
 func (r *Repository) StockRows(ctx context.Context, tenantID, warehouseID string) ([]StockRow, error) {
-	query, args := stockRowsQuery(tenantID, warehouseID)
-	rows, err := r.store.Pool.Query(ctx, query, args...)
+	query, args := stockRowsQuery(warehouseID)
+	rows, err := r.store.Query(ctx, tenantID, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +40,9 @@ func (r *Repository) StockRows(ctx context.Context, tenantID, warehouseID string
 	return scanStock(rows)
 }
 
-func stockRowsQuery(tenantID, warehouseID string) (string, []any) {
+func stockRowsQuery(warehouseID string) (string, []any) {
 	query := stockRowsSelect()
-	args := []any{tenantID}
+	args := []any{}
 	query, args = appendWarehouseStockJoin(query, args, warehouseID)
 	query += stockRowsGroup()
 	return query, args
@@ -54,22 +53,21 @@ func stockRowsSelect() string {
         COALESCE(SUM(sb.qty),0),
         ` + stockAverageSQL() + `
         FROM catalog.product_variants v
-        LEFT JOIN ledger.stock_balances sb ON sb.tenant_id=$1 AND sb.variant_id=v.id`
+        LEFT JOIN ledger.stock_balances sb ON sb.variant_id=v.id`
 }
 
 func stockAverageSQL() string {
 	return `COALESCE((
             SELECT r.running_avg_cost
             FROM ledger.cost_movement_results r
-            WHERE r.tenant_id=$1 AND r.variant_id=v.id
+            WHERE r.variant_id=v.id
             ORDER BY r.sequence_num DESC
             LIMIT 1
         ),0)`
 }
 
 func stockRowsGroup() string {
-	return ` WHERE v.tenant_id=$1
-        GROUP BY v.id, v.name
+	return ` GROUP BY v.id, v.name
         ORDER BY COALESCE(v.name, 'Default')`
 }
 
@@ -95,7 +93,7 @@ func scanStock(rows pgx.Rows) ([]StockRow, error) {
 }
 
 func (r *Repository) TopProducts(ctx context.Context, tenantID string, fromDate, toDate time.Time) ([]TopProduct, error) {
-	rows, err := r.store.Pool.Query(ctx, topProductsSQL, tenantID, fromDate, toDate)
+	rows, err := r.store.Query(ctx, tenantID, topProductsSQL, fromDate, toDate)
 	if err != nil {
 		return nil, err
 	}

@@ -11,8 +11,8 @@ func (r *Repository) PostingDocument(ctx context.Context, tx pgx.Tx, tenantID, d
         COALESCE(warehouse_id::text,''), COALESCE(source_warehouse_id::text,''),
         COALESCE(target_warehouse_id::text,''), COALESCE(shift_id::text,''), COALESCE(note,'')
         FROM documents.documents
-        WHERE tenant_id=$1 AND id=$2`
-	row := tx.QueryRow(ctx, query, tenantID, documentID)
+        WHERE id=$1`
+	row := tx.QueryRow(ctx, query, documentID)
 	doc := Document{}
 	err := row.Scan(&doc.ID, &doc.Type, &doc.Date, &doc.Number, &doc.Status,
 		&doc.WarehouseID, &doc.SourceWarehouseID, &doc.TargetWarehouseID, &doc.ShiftID, &doc.Note)
@@ -25,8 +25,8 @@ func (r *Repository) PostingItems(ctx context.Context, tx pgx.Tx, tenantID, docu
         JOIN documents.documents d ON d.id=i.document_id
         JOIN catalog.product_variants v ON v.id=i.variant_id
         JOIN catalog.products p ON p.id=v.product_id
-        WHERE d.tenant_id=$1 AND v.tenant_id=$1 AND p.tenant_id=$1 AND d.id=$2`
-	rows, err := tx.Query(ctx, query, tenantID, documentID)
+        WHERE d.id=$1`
+	rows, err := tx.Query(ctx, query, documentID)
 	if err != nil {
 		return nil, err
 	}

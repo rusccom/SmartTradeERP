@@ -36,13 +36,14 @@ func (r *Repository) Options(ctx context.Context, page, perPage int) ([]Currency
 }
 
 func (r *Repository) countTenant(ctx context.Context, tenantID string) (int, error) {
-	row := r.store.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM platform.tenant_currencies WHERE tenant_id=$1`, tenantID)
+	row := r.store.QueryRow(ctx, tenantID, `SELECT COUNT(*) FROM platform.tenant_currencies`)
 	count := 0
 	err := row.Scan(&count)
 	return count, err
 }
 
 func (r *Repository) countOptions(ctx context.Context) (int, error) {
+	// global/pre-tenant: raw pool access
 	row := r.store.Pool.QueryRow(ctx, `SELECT COUNT(*) FROM platform.currencies WHERE is_active=true`)
 	count := 0
 	err := row.Scan(&count)
@@ -55,10 +56,9 @@ func (r *Repository) loadTenant(ctx context.Context, tenantID string, page, perP
 		tc.is_enabled, tc.created_at::text, tc.updated_at::text
 		FROM platform.tenant_currencies tc
 		JOIN platform.currencies c ON c.id=tc.currency_id
-		WHERE tc.tenant_id=$1
 		ORDER BY tc.is_base DESC, c.code ASC
-		LIMIT $2 OFFSET $3`
-	rows, err := r.store.Pool.Query(ctx, query, tenantID, perPage, httpx.Offset(page, perPage))
+		LIMIT $1 OFFSET $2`
+	rows, err := r.store.Query(ctx, tenantID, query, perPage, httpx.Offset(page, perPage))
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +87,7 @@ func (r *Repository) loadOptions(ctx context.Context, page, perPage int) ([]Curr
 		WHERE is_active=true
 		ORDER BY code ASC
 		LIMIT $1 OFFSET $2`
+	// global/pre-tenant: raw pool access
 	rows, err := r.store.Pool.Query(ctx, query, perPage, httpx.Offset(page, perPage))
 	if err != nil {
 		return nil, err
@@ -109,7 +110,7 @@ func scanOptions(rows pgx.Rows) ([]CurrencyOption, error) {
 }
 
 func (r *Repository) ClearBase(ctx context.Context, tx db.DBTX, tenantID string) error {
-	_, err := tx.Exec(ctx, `UPDATE platform.tenant_currencies SET is_base=false WHERE tenant_id=$1`, tenantID)
+	_, err := tx.Exec(ctx, `UPDATE platform.tenant_currencies SET is_base=false`)
 	return err
 }
 

@@ -35,7 +35,7 @@ func (s *Service) SetBase(ctx context.Context, tenantID string, req BaseRequest)
 	if err := validateBaseRequest(req); err != nil {
 		return err
 	}
-	err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	err := s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		return s.setBaseCurrency(ctx, tx, tenantID, req)
 	})
 	if err != nil {

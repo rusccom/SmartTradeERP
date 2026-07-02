@@ -36,7 +36,7 @@ func (r *Repository) loadVariantWarehouses(
 		return map[string][]ProductWarehouseItem{}, nil
 	}
 	query, args := variantWarehousesQuery(tenantID, variants, filter)
-	rows, err := r.store.Pool.Query(ctx, query, args...)
+	rows, err := r.store.Query(ctx, tenantID, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func variantWarehousesQuery(
 	filter ProductStockFilter,
 ) (string, []any) {
 	query := variantWarehousesSQL()
-	args := []any{tenantID}
+	args := []any{}
 	query, args = appendVariantIDList(query, args, variants)
 	query, args = appendWarehouseScope(query, args, filter)
 	query += ` GROUP BY v.id, w.id, w.name, w.created_at, sb.qty ORDER BY v.id, w.created_at`
@@ -61,10 +61,9 @@ func variantWarehousesSQL() string {
 	return `SELECT v.id::text, w.id::text, w.name,
         COALESCE(sb.qty,0)
         FROM catalog.product_variants v
-        JOIN catalog.warehouses w ON w.tenant_id=$1
-        LEFT JOIN ledger.stock_balances sb ON sb.tenant_id=$1
-            AND sb.variant_id=v.id AND sb.warehouse_id=w.id
-        WHERE v.tenant_id=$1`
+        JOIN catalog.warehouses w ON true
+        LEFT JOIN ledger.stock_balances sb ON sb.variant_id=v.id
+            AND sb.warehouse_id=w.id`
 }
 
 func appendVariantIDList(
@@ -77,7 +76,7 @@ func appendVariantIDList(
 		positions = append(positions, "$"+position(len(args)+1))
 		args = append(args, item.Item.ID)
 	}
-	query += ` AND v.id::text IN (` + strings.Join(positions, ",") + `)`
+	query += ` WHERE v.id::text IN (` + strings.Join(positions, ",") + `)`
 	return query, args
 }
 

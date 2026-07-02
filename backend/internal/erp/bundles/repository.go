@@ -31,16 +31,16 @@ func (r *Repository) count(ctx context.Context, tenantID string) (int, error) {
 	query := `SELECT COUNT(*)
         FROM catalog.product_variants v
         JOIN catalog.products p ON p.id=v.product_id
-        WHERE v.tenant_id=$1 AND p.tenant_id=$1 AND p.is_composite=true`
+        WHERE p.is_composite=true`
 	total := 0
-	err := r.store.Pool.QueryRow(ctx, query, tenantID).Scan(&total)
+	err := r.store.QueryRow(ctx, tenantID, query).Scan(&total)
 	return total, err
 }
 
 func (r *Repository) load(ctx context.Context, tenantID string, page, perPage int) ([]Bundle, error) {
-	query := bundleSelect() + ` ORDER BY p.created_at DESC, v.created_at DESC LIMIT $2 OFFSET $3`
+	query := bundleSelect() + ` ORDER BY p.created_at DESC, v.created_at DESC LIMIT $1 OFFSET $2`
 	offset := httpx.Offset(page, perPage)
-	rows, err := r.store.Pool.Query(ctx, query, tenantID, perPage, offset)
+	rows, err := r.store.Query(ctx, tenantID, query, perPage, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +49,8 @@ func (r *Repository) load(ctx context.Context, tenantID string, page, perPage in
 }
 
 func (r *Repository) ByVariantID(ctx context.Context, tenantID, variantID string) (Bundle, error) {
-	query := bundleSelect() + ` AND v.id::text=$2`
-	row := r.store.Pool.QueryRow(ctx, query, tenantID, variantID)
+	query := bundleSelect() + ` AND v.id::text=$1`
+	row := r.store.QueryRow(ctx, tenantID, query, variantID)
 	return scanBundle(row)
 }
 
@@ -59,7 +59,7 @@ func bundleSelect() string {
         COALESCE(v.sku_code,''), v.unit, COALESCE(v.price,0)
         FROM catalog.product_variants v
         JOIN catalog.products p ON p.id=v.product_id
-        WHERE v.tenant_id=$1 AND p.tenant_id=$1 AND p.is_composite=true`
+        WHERE p.is_composite=true`
 }
 
 func scanBundles(rows pgx.Rows) ([]Bundle, error) {
@@ -82,7 +82,7 @@ func scanBundle(row pgx.Row) (Bundle, error) {
 }
 
 func (r *Repository) Components(ctx context.Context, tenantID, variantID string) ([]Component, error) {
-	rows, err := r.store.Pool.Query(ctx, componentsSQL(), tenantID, variantID)
+	rows, err := r.store.Query(ctx, tenantID, componentsSQL(), variantID)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (r *Repository) ComponentsTx(
 	tenantID string,
 	variantID string,
 ) ([]Component, error) {
-	rows, err := tx.Query(ctx, componentsSQL(), tenantID, variantID)
+	rows, err := tx.Query(ctx, componentsSQL(), variantID)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func componentsSQL() string {
         JOIN catalog.product_variants parent ON parent.id=vc.variant_id
         JOIN catalog.product_variants component ON component.id=vc.component_variant_id
         JOIN catalog.products p ON p.id=component.product_id
-        WHERE parent.tenant_id=$1 AND component.tenant_id=$1 AND vc.variant_id=$2
+        WHERE vc.variant_id=$1
         ORDER BY vc.id`
 }
 
@@ -133,9 +133,9 @@ func (r *Repository) VariantComposite(ctx context.Context, tenantID, variantID s
 	query := `SELECT p.is_composite
         FROM catalog.product_variants v
         JOIN catalog.products p ON p.id=v.product_id
-        WHERE v.tenant_id=$1 AND v.id=$2`
+        WHERE v.id=$1`
 	value := false
-	err := r.store.Pool.QueryRow(ctx, query, tenantID, variantID).Scan(&value)
+	err := r.store.QueryRow(ctx, tenantID, query, variantID).Scan(&value)
 	return value, err
 }
 
@@ -143,10 +143,10 @@ func (r *Repository) ComponentUsable(ctx context.Context, tenantID, variantID st
 	query := `SELECT EXISTS(
         SELECT 1 FROM catalog.product_variants v
         JOIN catalog.products p ON p.id=v.product_id
-        WHERE v.tenant_id=$1 AND v.id=$2 AND p.is_composite=false
+        WHERE v.id=$1 AND p.is_composite=false
     )`
 	exists := false
-	err := r.store.Pool.QueryRow(ctx, query, tenantID, variantID).Scan(&exists)
+	err := r.store.QueryRow(ctx, tenantID, query, variantID).Scan(&exists)
 	return exists, err
 }
 
@@ -154,10 +154,10 @@ func (r *Repository) ProductHasComponents(ctx context.Context, tenantID, product
 	query := `SELECT EXISTS(
         SELECT 1 FROM catalog.variant_components c
         JOIN catalog.product_variants v ON v.id=c.variant_id
-        WHERE v.tenant_id=$1 AND v.product_id=$2
+        WHERE v.product_id=$1
     )`
 	exists := false
-	err := r.store.Pool.QueryRow(ctx, query, tenantID, productID).Scan(&exists)
+	err := r.store.QueryRow(ctx, tenantID, query, productID).Scan(&exists)
 	return exists, err
 }
 
@@ -165,10 +165,10 @@ func (r *Repository) ProductUsedAsComponent(ctx context.Context, tenantID, produ
 	query := `SELECT EXISTS(
         SELECT 1 FROM catalog.variant_components c
         JOIN catalog.product_variants v ON v.id=c.component_variant_id
-        WHERE v.tenant_id=$1 AND v.product_id=$2
+        WHERE v.product_id=$1
     )`
 	exists := false
-	err := r.store.Pool.QueryRow(ctx, query, tenantID, productID).Scan(&exists)
+	err := r.store.QueryRow(ctx, tenantID, query, productID).Scan(&exists)
 	return exists, err
 }
 
@@ -176,10 +176,10 @@ func (r *Repository) VariantHasComponents(ctx context.Context, tenantID, variant
 	query := `SELECT EXISTS(
         SELECT 1 FROM catalog.variant_components c
         JOIN catalog.product_variants v ON v.id=c.variant_id
-        WHERE v.tenant_id=$1 AND c.variant_id=$2
+        WHERE c.variant_id=$1
     )`
 	exists := false
-	err := r.store.Pool.QueryRow(ctx, query, tenantID, variantID).Scan(&exists)
+	err := r.store.QueryRow(ctx, tenantID, query, variantID).Scan(&exists)
 	return exists, err
 }
 
@@ -187,10 +187,10 @@ func (r *Repository) VariantUsedAsComponent(ctx context.Context, tenantID, varia
 	query := `SELECT EXISTS(
         SELECT 1 FROM catalog.variant_components c
         JOIN catalog.product_variants v ON v.id=c.component_variant_id
-        WHERE v.tenant_id=$1 AND c.component_variant_id=$2
+        WHERE c.component_variant_id=$1
     )`
 	exists := false
-	err := r.store.Pool.QueryRow(ctx, query, tenantID, variantID).Scan(&exists)
+	err := r.store.QueryRow(ctx, tenantID, query, variantID).Scan(&exists)
 	return exists, err
 }
 
@@ -229,8 +229,8 @@ func (r *Repository) DocumentSnapshots(
         FROM documents.document_item_components c
         JOIN documents.document_items i ON i.id=c.document_item_id
         JOIN documents.documents d ON d.id=i.document_id
-        WHERE d.tenant_id=$1 AND d.id=$2`
-	rows, err := tx.Query(ctx, query, tenantID, documentID)
+        WHERE d.id=$1`
+	rows, err := tx.Query(ctx, query, documentID)
 	if err != nil {
 		return nil, err
 	}

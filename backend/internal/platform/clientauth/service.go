@@ -89,6 +89,11 @@ func (s *Service) createTenantGraph(
 	if err := insertTenant(ctx, tx, ids.tenantID, req.TenantName); err != nil {
 		return err
 	}
+	// The default graph below hits RLS-guarded tables; scope the transaction
+	// to the tenant that was just created.
+	if err := db.SetTenant(ctx, tx, ids.tenantID); err != nil {
+		return err
+	}
 	if err := insertOwner(ctx, tx, ids, req.Email, hash); err != nil {
 		return err
 	}

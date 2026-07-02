@@ -8,10 +8,10 @@ import (
 )
 
 const financialsDeleteSQL = `DELETE FROM ledger.document_item_financials
-        WHERE tenant_id=$1 AND document_item_id IN (
+        WHERE document_item_id IN (
             SELECT DISTINCT m.document_item_id
             FROM ledger.inventory_movements m
-            WHERE m.tenant_id=$1 AND m.variant_id = ANY($2::uuid[])
+            WHERE m.variant_id = ANY($1::uuid[])
         )`
 
 const financialsInsertSQL = `INSERT INTO ledger.document_item_financials
@@ -20,15 +20,15 @@ const financialsInsertSQL = `INSERT INTO ledger.document_item_financials
         SELECT m.tenant_id, m.document_id, m.document_item_id,
             COALESCE(SUM(COALESCE(r.revenue_amount,0)),0),
             COALESCE(SUM(COALESCE(r.cogs_amount,0)),0),
-            COALESCE(SUM(COALESCE(r.gross_profit,0)),0), $3
+            COALESCE(SUM(COALESCE(r.gross_profit,0)),0), $2
         FROM ledger.inventory_movements m
         JOIN ledger.posting_batches b ON b.id=m.posting_batch_id
         JOIN ledger.cost_movement_results r ON r.movement_id=m.id
-        WHERE m.tenant_id=$1 AND b.status='active'
+        WHERE b.status='active'
             AND m.document_item_id IN (
                 SELECT DISTINCT m2.document_item_id
                 FROM ledger.inventory_movements m2
-                WHERE m2.tenant_id=$1 AND m2.variant_id = ANY($2::uuid[])
+                WHERE m2.variant_id = ANY($1::uuid[])
             )
         GROUP BY m.tenant_id, m.document_id, m.document_item_id
         ON CONFLICT (tenant_id, document_item_id) DO UPDATE SET
@@ -39,7 +39,7 @@ const financialsInsertSQL = `INSERT INTO ledger.document_item_financials
             updated_at=now()`
 
 const dailyMetricsDeleteSQL = `DELETE FROM ledger.daily_variant_metrics
-        WHERE tenant_id=$1 AND variant_id = ANY($2::uuid[])`
+        WHERE variant_id = ANY($1::uuid[])`
 
 const dailyMetricsInsertSQL = `WITH rows AS (
             SELECT m.tenant_id, m.movement_date, m.variant_id, m.warehouse_id,
@@ -48,8 +48,8 @@ const dailyMetricsInsertSQL = `WITH rows AS (
             FROM ledger.inventory_movements m
             JOIN ledger.posting_batches b ON b.id=m.posting_batch_id
             JOIN ledger.cost_movement_results r ON r.movement_id=m.id
-            WHERE m.tenant_id=$1 AND b.status='active'
-                AND m.variant_id = ANY($2::uuid[])
+            WHERE b.status='active'
+                AND m.variant_id = ANY($1::uuid[])
         ), latest AS (
             SELECT DISTINCT ON (tenant_id, movement_date, variant_id)
                 tenant_id, movement_date, variant_id, running_qty, running_avg_cost
@@ -90,10 +90,10 @@ func (s *Service) refreshDocumentFinancials(
 	tenantID string,
 	variantIDs []string,
 ) error {
-	if _, err := tx.Exec(ctx, financialsDeleteSQL, tenantID, variantIDs); err != nil {
+	if _, err := tx.Exec(ctx, financialsDeleteSQL, variantIDs); err != nil {
 		return err
 	}
-	_, err := tx.Exec(ctx, financialsInsertSQL, tenantID, variantIDs, uuid.NewString())
+	_, err := tx.Exec(ctx, financialsInsertSQL, variantIDs, uuid.NewString())
 	return err
 }
 
@@ -103,9 +103,9 @@ func (s *Service) refreshDailyMetrics(
 	tenantID string,
 	variantIDs []string,
 ) error {
-	if _, err := tx.Exec(ctx, dailyMetricsDeleteSQL, tenantID, variantIDs); err != nil {
+	if _, err := tx.Exec(ctx, dailyMetricsDeleteSQL, variantIDs); err != nil {
 		return err
 	}
-	_, err := tx.Exec(ctx, dailyMetricsInsertSQL, tenantID, variantIDs)
+	_, err := tx.Exec(ctx, dailyMetricsInsertSQL, variantIDs)
 	return err
 }

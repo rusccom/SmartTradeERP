@@ -24,7 +24,7 @@ type repostInput struct {
 }
 
 func (s *Service) retroUpdate(ctx context.Context, tenantID, id string, req UpdateRequest) error {
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	return s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		return s.retroUpdateTx(ctx, tx, tenantID, id, req)
 	})
 }

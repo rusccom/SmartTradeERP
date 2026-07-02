@@ -19,9 +19,8 @@ func NewRepository(store *db.Store) *Repository {
 func (r *Repository) List(ctx context.Context, tenantID string) ([]Warehouse, error) {
     query := `SELECT id::text, name, COALESCE(address,''), is_default, is_active, created_at::text
         FROM catalog.warehouses
-        WHERE tenant_id=$1
         ORDER BY created_at`
-    rows, err := r.store.Pool.Query(ctx, query, tenantID)
+    rows, err := r.store.Query(ctx, tenantID, query)
     if err != nil {
         return nil, err
     }
@@ -43,7 +42,7 @@ func scan(rows pgx.Rows) ([]Warehouse, error) {
 }
 
 func (r *Repository) Create(ctx context.Context, tenantID, id string, req CreateRequest) error {
-    return r.store.WithTx(ctx, func(tx pgx.Tx) error {
+    return r.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
         if err := clearOtherDefaults(ctx, tx, tenantID, id, req.IsDefault); err != nil {
             return err
         }
@@ -60,7 +59,7 @@ func insertWarehouse(ctx context.Context, tx pgx.Tx, tenantID, id string, req Cr
 }
 
 func (r *Repository) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
-    return r.store.WithTx(ctx, func(tx pgx.Tx) error {
+    return r.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
         if err := clearOtherDefaults(ctx, tx, tenantID, id, req.IsDefault); err != nil {
             return err
         }
@@ -70,9 +69,9 @@ func (r *Repository) Update(ctx context.Context, tenantID, id string, req Update
 
 func updateWarehouse(ctx context.Context, tx pgx.Tx, tenantID, id string, req UpdateRequest) error {
     query := `UPDATE catalog.warehouses
-        SET name=$3, address=$4, is_default=$5, is_active=$6
-        WHERE tenant_id=$1 AND id=$2`
-    tag, err := tx.Exec(ctx, query, tenantID, id, req.Name, req.Address, req.IsDefault, req.IsActive)
+        SET name=$2, address=$3, is_default=$4, is_active=$5
+        WHERE id=$1`
+    tag, err := tx.Exec(ctx, query, id, req.Name, req.Address, req.IsDefault, req.IsActive)
     if err == nil && tag.RowsAffected() == 0 {
         return pgx.ErrNoRows
     }
@@ -85,13 +84,13 @@ func clearOtherDefaults(ctx context.Context, tx pgx.Tx, tenantID, keepID string,
     }
     query := `UPDATE catalog.warehouses
         SET is_default=false
-        WHERE tenant_id=$1 AND is_default=true AND id<>$2`
-    _, err := tx.Exec(ctx, query, tenantID, keepID)
+        WHERE is_default=true AND id<>$1`
+    _, err := tx.Exec(ctx, query, keepID)
     return err
 }
 
 func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {
-    tag, err := r.store.Pool.Exec(ctx, `DELETE FROM catalog.warehouses WHERE tenant_id=$1 AND id=$2`, tenantID, id)
+    tag, err := r.store.Exec(ctx, tenantID, `DELETE FROM catalog.warehouses WHERE id=$1`, id)
     if err == nil && tag.RowsAffected() == 0 {
         return pgx.ErrNoRows
     }
@@ -99,16 +98,16 @@ func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {
 }
 
 func (r *Repository) CountDefaults(ctx context.Context, tenantID string) (int, error) {
-    row := r.store.Pool.QueryRow(ctx,
-        `SELECT COUNT(*) FROM catalog.warehouses WHERE tenant_id=$1 AND is_default=true`, tenantID)
+    row := r.store.QueryRow(ctx, tenantID,
+        `SELECT COUNT(*) FROM catalog.warehouses WHERE is_default=true`)
     count := 0
     err := row.Scan(&count)
     return count, err
 }
 
 func (r *Repository) IsDefault(ctx context.Context, tenantID, id string) (bool, error) {
-    row := r.store.Pool.QueryRow(ctx,
-        `SELECT is_default FROM catalog.warehouses WHERE tenant_id=$1 AND id=$2`, tenantID, id)
+    row := r.store.QueryRow(ctx, tenantID,
+        `SELECT is_default FROM catalog.warehouses WHERE id=$1`, id)
     isDefault := false
     err := row.Scan(&isDefault)
     return isDefault, err

@@ -31,10 +31,10 @@ func (r *Repository) List(ctx context.Context, tenantID string, query httpx.List
 }
 
 func (r *Repository) count(ctx context.Context, tenantID string, query httpx.ListQuery) (int, error) {
-	sql := `SELECT COUNT(*) FROM catalog.customers WHERE tenant_id=$1`
-	args := []any{tenantID}
+	sql := `SELECT COUNT(*) FROM catalog.customers`
+	args := []any{}
 	sql, args = addSearchFilter(sql, args, query.Search)
-	row := r.store.Pool.QueryRow(ctx, sql, args...)
+	row := r.store.QueryRow(ctx, tenantID, sql, args...)
 	total := 0
 	err := row.Scan(&total)
 	return total, err
@@ -43,11 +43,11 @@ func (r *Repository) count(ctx context.Context, tenantID string, query httpx.Lis
 func (r *Repository) load(ctx context.Context, tenantID string, query httpx.ListQuery) ([]Customer, error) {
 	sql := `SELECT id::text, name, COALESCE(phone,''), COALESCE(email,''),
 		is_default, created_at::text, updated_at::text
-		FROM catalog.customers WHERE tenant_id=$1`
-	args := []any{tenantID}
+		FROM catalog.customers`
+	args := []any{}
 	sql, args = addSearchFilter(sql, args, query.Search)
 	sql, args = appendSortAndPaging(sql, args, query)
-	rows, err := r.store.Pool.Query(ctx, sql, args...)
+	rows, err := r.store.Query(ctx, tenantID, sql, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func addSearchFilter(sql string, args []any, search string) (string, []any) {
 		return sql, args
 	}
 	p := pos(len(args) + 1)
-	sql += ` AND (name ILIKE '%' || $` + p + ` || '%' OR phone ILIKE '%' || $` + p + ` || '%')`
+	sql += ` WHERE (name ILIKE '%' || $` + p + ` || '%' OR phone ILIKE '%' || $` + p + ` || '%')`
 	args = append(args, search)
 	return sql, args
 }
@@ -98,24 +98,24 @@ func scanCustomers(rows pgx.Rows) ([]Customer, error) {
 func (r *Repository) Create(ctx context.Context, tenantID, id string, req CreateRequest) error {
 	sql := `INSERT INTO catalog.customers (id, tenant_id, name, phone, email)
 		VALUES ($1,$2,$3,$4,$5)`
-	_, err := r.store.Pool.Exec(ctx, sql, id, tenantID, req.Name, req.Phone, req.Email)
+	_, err := r.store.Exec(ctx, tenantID, sql, id, tenantID, req.Name, req.Phone, req.Email)
 	return err
 }
 
 func (r *Repository) GetByID(ctx context.Context, tenantID, id string) (Customer, error) {
 	sql := `SELECT id::text, name, COALESCE(phone,''), COALESCE(email,''),
 		is_default, created_at::text, updated_at::text
-		FROM catalog.customers WHERE tenant_id=$1 AND id=$2`
-	row := r.store.Pool.QueryRow(ctx, sql, tenantID, id)
+		FROM catalog.customers WHERE id=$1`
+	row := r.store.QueryRow(ctx, tenantID, sql, id)
 	c := Customer{}
 	err := row.Scan(&c.ID, &c.Name, &c.Phone, &c.Email, &c.IsDefault, &c.CreatedAt, &c.UpdatedAt)
 	return c, err
 }
 
 func (r *Repository) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
-	sql := `UPDATE catalog.customers SET name=$3, phone=$4, email=$5, updated_at=now()
-		WHERE tenant_id=$1 AND id=$2`
-	tag, err := r.store.Pool.Exec(ctx, sql, tenantID, id, req.Name, req.Phone, req.Email)
+	sql := `UPDATE catalog.customers SET name=$2, phone=$3, email=$4, updated_at=now()
+		WHERE id=$1`
+	tag, err := r.store.Exec(ctx, tenantID, sql, id, req.Name, req.Phone, req.Email)
 	if err == nil && tag.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}
@@ -123,8 +123,8 @@ func (r *Repository) Update(ctx context.Context, tenantID, id string, req Update
 }
 
 func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {
-	sql := `DELETE FROM catalog.customers WHERE tenant_id=$1 AND id=$2 AND is_default=false`
-	tag, err := r.store.Pool.Exec(ctx, sql, tenantID, id)
+	sql := `DELETE FROM catalog.customers WHERE id=$1 AND is_default=false`
+	tag, err := r.store.Exec(ctx, tenantID, sql, id)
 	if err == nil && tag.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}
@@ -132,16 +132,16 @@ func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {
 }
 
 func (r *Repository) IsDefault(ctx context.Context, tenantID, id string) (bool, error) {
-	sql := `SELECT is_default FROM catalog.customers WHERE tenant_id=$1 AND id=$2`
-	row := r.store.Pool.QueryRow(ctx, sql, tenantID, id)
+	sql := `SELECT is_default FROM catalog.customers WHERE id=$1`
+	row := r.store.QueryRow(ctx, tenantID, sql, id)
 	var isDefault bool
 	err := row.Scan(&isDefault)
 	return isDefault, err
 }
 
 func (r *Repository) HasDocuments(ctx context.Context, tenantID, customerID string) (bool, error) {
-	sql := `SELECT EXISTS(SELECT 1 FROM documents.documents WHERE tenant_id=$1 AND customer_id=$2)`
-	row := r.store.Pool.QueryRow(ctx, sql, tenantID, customerID)
+	sql := `SELECT EXISTS(SELECT 1 FROM documents.documents WHERE customer_id=$1)`
+	row := r.store.QueryRow(ctx, tenantID, sql, customerID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err

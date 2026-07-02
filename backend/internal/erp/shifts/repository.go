@@ -41,9 +41,9 @@ func (r *Repository) Insert(ctx context.Context, tx pgx.Tx, tenantID string, shi
 
 func (r *Repository) WarehouseExists(ctx context.Context, tenantID string, id string) (bool, error) {
 	query := `SELECT EXISTS(
-        SELECT 1 FROM catalog.warehouses WHERE tenant_id=$1 AND id=$2
+        SELECT 1 FROM catalog.warehouses WHERE id=$1
     )`
-	row := r.store.Pool.QueryRow(ctx, query, tenantID, id)
+	row := r.store.QueryRow(ctx, tenantID, query, id)
 	exists := false
 	err := row.Scan(&exists)
 	return exists, err
@@ -53,10 +53,10 @@ func (r *Repository) FindOpen(ctx context.Context, tenantID, userID string) (Shi
 	query := `SELECT id::text, user_id::text, warehouse_id::text, opened_at::text,
         COALESCE(closed_at::text,''), opening_cash, COALESCE(closing_cash,0), status
         FROM documents.shifts
-        WHERE tenant_id=$1 AND user_id=$2 AND status='open'
+        WHERE user_id=$1 AND status='open'
         ORDER BY opened_at DESC
         LIMIT 1`
-	row := r.store.Pool.QueryRow(ctx, query, tenantID, userID)
+	row := r.store.QueryRow(ctx, tenantID, query, userID)
 	return scanShiftRow(row)
 }
 
@@ -68,9 +68,9 @@ func (r *Repository) Close(
 	closingCash decimal.Decimal,
 ) error {
 	query := `UPDATE documents.shifts
-        SET status='closed', closed_at=now(), closing_cash=$3, updated_at=now()
-        WHERE tenant_id=$1 AND id=$2 AND status='open'`
-	tag, err := tx.Exec(ctx, query, tenantID, shiftID, closingCash)
+        SET status='closed', closed_at=now(), closing_cash=$2, updated_at=now()
+        WHERE id=$1 AND status='open'`
+	tag, err := tx.Exec(ctx, query, shiftID, closingCash)
 	if err != nil {
 		return err
 	}
@@ -84,8 +84,8 @@ func (r *Repository) ByID(ctx context.Context, tenantID, shiftID string) (Shift,
 	query := `SELECT id::text, user_id::text, warehouse_id::text, opened_at::text,
         COALESCE(closed_at::text,''), opening_cash, COALESCE(closing_cash,0), status
         FROM documents.shifts
-        WHERE tenant_id=$1 AND id=$2`
-	row := r.store.Pool.QueryRow(ctx, query, tenantID, shiftID)
+        WHERE id=$1`
+	row := r.store.QueryRow(ctx, tenantID, query, shiftID)
 	return scanShiftRow(row)
 }
 
@@ -103,12 +103,12 @@ func (r *Repository) InsertCashOp(ctx context.Context, tx pgx.Tx, shiftID string
 	return err
 }
 
-func (r *Repository) CashOps(ctx context.Context, shiftID string) ([]CashOp, error) {
+func (r *Repository) CashOps(ctx context.Context, tenantID, shiftID string) ([]CashOp, error) {
 	query := `SELECT id::text, type, amount, COALESCE(note,''), created_at::text
         FROM documents.shift_cash_ops
         WHERE shift_id=$1
         ORDER BY created_at`
-	rows, err := r.store.Pool.Query(ctx, query, shiftID)
+	rows, err := r.store.Query(ctx, tenantID, query, shiftID)
 	if err != nil {
 		return nil, err
 	}
@@ -144,10 +144,10 @@ func (r *Repository) ShiftTotals(ctx context.Context, q db.DBTX, tenantID, shift
 
 func (r *Repository) LockOpenShift(ctx context.Context, tx pgx.Tx, tenantID, shiftID string) error {
 	query := `SELECT 1 FROM documents.shifts
-        WHERE tenant_id=$1 AND id=$2 AND status='open'
+        WHERE id=$1 AND status='open'
         FOR UPDATE`
 	value := 0
-	err := tx.QueryRow(ctx, query, tenantID, shiftID).Scan(&value)
+	err := tx.QueryRow(ctx, query, shiftID).Scan(&value)
 	if err == pgx.ErrNoRows {
 		return ErrShiftAlreadyClosed
 	}
@@ -165,14 +165,14 @@ func loadDocumentTotals(
         SELECT d.type, SUM(i.total_amount) AS amount
         FROM documents.documents d
         JOIN documents.document_items i ON i.document_id=d.id
-        WHERE d.tenant_id=$1 AND d.shift_id=$2 AND d.status='posted'
+        WHERE d.shift_id=$1 AND d.status='posted'
         GROUP BY d.type
     )
     SELECT
         COALESCE(SUM(CASE WHEN type='SALE' THEN amount ELSE 0 END),0),
         COALESCE(SUM(CASE WHEN type='RETURN' THEN amount ELSE 0 END),0)
     FROM doc_sums`
-	row := q.QueryRow(ctx, query, tenantID, shiftID)
+	row := q.QueryRow(ctx, query, shiftID)
 	return row.Scan(&totals.totalSales, &totals.totalReturns)
 }
 
@@ -192,8 +192,8 @@ func loadPaymentTotals(
         COALESCE(SUM(CASE WHEN d.type='RETURN' AND p.method='transfer' THEN p.amount ELSE 0 END),0)
         FROM documents.documents d
         JOIN documents.document_payments p ON p.document_id=d.id
-        WHERE d.tenant_id=$1 AND d.shift_id=$2 AND d.status='posted'`
-	row := q.QueryRow(ctx, query, tenantID, shiftID)
+        WHERE d.shift_id=$1 AND d.status='posted'`
+	row := q.QueryRow(ctx, query, shiftID)
 	return row.Scan(&totals.salesCash, &totals.salesCard, &totals.salesTransfer,
 		&totals.returnsCash, &totals.returnsCard, &totals.returnsTransfer)
 }

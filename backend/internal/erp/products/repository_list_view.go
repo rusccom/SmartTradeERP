@@ -44,11 +44,11 @@ func (r *Repository) loadListItems(
 	query ProductListQuery,
 ) ([]ProductListItem, error) {
 	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.slug, p.seo_title, p.seo_description, COALESCE(p.description_html,''), p.created_at::text, p.updated_at::text
-        FROM catalog.products p WHERE p.tenant_id=$1`
-	args := []any{tenantID}
+        FROM catalog.products p`
+	args := []any{}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
 	sqlQuery, args = appendSortAndPaging(sqlQuery, args, query)
-	rows, err := r.store.Pool.Query(ctx, sqlQuery, args...)
+	rows, err := r.store.Query(ctx, tenantID, sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,11 +92,11 @@ func (r *Repository) loadProductVariantRows(
 	req productIncludeRequest,
 ) ([]productVariantRow, error) {
 	query := productVariantRowsSQL()
-	args := []any{req.tenantID}
+	args := []any{}
 	query, args = appendProductIDList(query, args, req.items)
 	query, args = appendVariantStockFilter(query, args, req.query.Stock)
 	query += ` ORDER BY v.created_at`
-	rows, err := r.store.Pool.Query(ctx, query, args...)
+	rows, err := r.store.Query(ctx, req.tenantID, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -111,14 +111,13 @@ func productVariantRowsSQL() string {
         v.unit, COALESCE(v.price,0),
         COALESCE(latest.running_qty,0), COALESCE(latest.running_avg_cost,0)
         FROM catalog.product_variants v
-        LEFT JOIN LATERAL (` + latestVariantStockSQL() + `) latest ON true
-        WHERE v.tenant_id=$1`
+        LEFT JOIN LATERAL (` + latestVariantStockSQL() + `) latest ON true`
 }
 
 func latestVariantStockSQL() string {
 	return `SELECT running_qty, running_avg_cost
             FROM ledger.cost_movement_results r
-            WHERE r.tenant_id=$1 AND r.variant_id=v.id
+            WHERE r.variant_id=v.id
             ORDER BY r.sequence_num DESC
             LIMIT 1`
 }
@@ -133,7 +132,7 @@ func appendProductIDList(
 		positions = append(positions, "$"+position(len(args)+1))
 		args = append(args, item.ID)
 	}
-	query += ` AND v.product_id::text IN (` + strings.Join(positions, ",") + `)`
+	query += ` WHERE v.product_id::text IN (` + strings.Join(positions, ",") + `)`
 	return query, args
 }
 

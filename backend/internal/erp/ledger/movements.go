@@ -16,7 +16,7 @@ func (s *Service) Append(ctx context.Context, tx pgx.Tx, batchID string, input E
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
             (SELECT COALESCE(MAX(posting_order), 0) + 1
              FROM ledger.inventory_movements
-             WHERE tenant_id=$2 AND posting_batch_id=$3))`
+             WHERE posting_batch_id=$3))`
 	_, err := tx.Exec(ctx, query, id, input.TenantID, batchID, input.DocumentID,
 		input.DocumentItemID, input.VariantID, input.WarehouseID, input.Date,
 		input.Type, input.Reason, input.Qty, input.UnitPrice, input.TotalAmount,

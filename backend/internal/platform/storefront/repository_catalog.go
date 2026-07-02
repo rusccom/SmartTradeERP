@@ -75,7 +75,7 @@ func (r *Repository) LoadBrand(ctx context.Context, tenantID string, preview boo
 	out := brandRow{}
 	var code, symbol string
 	var places int
-	err := r.store.Pool.QueryRow(ctx, query, tenantID).Scan(
+	err := r.store.QueryRow(ctx, tenantID, query, tenantID).Scan(
 		&out.TenantName, &out.ThemeID, &out.TokensJSON, &out.Sections, &out.LogoKey, &code, &symbol, &places)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -101,12 +101,12 @@ const listProductsSQL = `SELECT p.name, p.slug,
         SELECT MIN(v.price) AS min_price FROM catalog.product_variants v
         WHERE v.tenant_id = p.tenant_id AND v.product_id = p.id AND v.is_published AND v.price IS NOT NULL
     ) pr ON true
-    WHERE p.tenant_id = $1 AND p.is_published
+    WHERE p.is_published
     ORDER BY p.created_at DESC
-    LIMIT $2 OFFSET $3`
+    LIMIT $1 OFFSET $2`
 
 func (r *Repository) ListPublishedProducts(ctx context.Context, tenantID string, limit, offset int) ([]productCardRow, error) {
-	rows, err := r.store.Pool.Query(ctx, listProductsSQL, tenantID, limit, offset)
+	rows, err := r.store.Query(ctx, tenantID, listProductsSQL, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -127,20 +127,20 @@ func scanCards(rows pgx.Rows) ([]productCardRow, error) {
 }
 
 func (r *Repository) CountPublishedProducts(ctx context.Context, tenantID string) (int, error) {
-	const query = `SELECT COUNT(*) FROM catalog.products WHERE tenant_id = $1 AND is_published`
+	const query = `SELECT COUNT(*) FROM catalog.products WHERE is_published`
 	total := 0
-	err := r.store.Pool.QueryRow(ctx, query, tenantID).Scan(&total)
+	err := r.store.QueryRow(ctx, tenantID, query).Scan(&total)
 	return total, err
 }
 
 const productBySlugSQL = `SELECT p.id::text, p.name, p.slug, COALESCE(p.seo_title, ''), COALESCE(p.seo_description, '')
     FROM catalog.products p
-    WHERE p.tenant_id = $1 AND p.slug = $2 AND p.is_published
+    WHERE p.slug = $1 AND p.is_published
     LIMIT 1`
 
 func (r *Repository) ProductBySlug(ctx context.Context, tenantID, slug string) (productDetailRow, error) {
 	out := productDetailRow{}
-	err := r.store.Pool.QueryRow(ctx, productBySlugSQL, tenantID, slug).Scan(
+	err := r.store.QueryRow(ctx, tenantID, productBySlugSQL, slug).Scan(
 		&out.ID, &out.Name, &out.Slug, &out.SEOTitle, &out.SEODescription)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -153,11 +153,11 @@ func (r *Repository) ProductBySlug(ctx context.Context, tenantID, slug string) (
 
 const variantsSQL = `SELECT v.id::text, COALESCE(v.name, 'Default'), COALESCE(v.sku_code, ''), COALESCE(v.price, 0), (v.price IS NOT NULL)
     FROM catalog.product_variants v
-    WHERE v.tenant_id = $1 AND v.product_id = $2 AND v.is_published
+    WHERE v.product_id = $1 AND v.is_published
     ORDER BY v.created_at`
 
 func (r *Repository) VariantsForProduct(ctx context.Context, tenantID, productID string) ([]variantRow, error) {
-	rows, err := r.store.Pool.Query(ctx, variantsSQL, tenantID, productID)
+	rows, err := r.store.Query(ctx, tenantID, variantsSQL, productID)
 	if err != nil {
 		return nil, err
 	}
@@ -178,11 +178,11 @@ func scanVariants(rows pgx.Rows) ([]variantRow, error) {
 }
 
 const productImagesSQL = `SELECT m.object_key FROM platform.media_objects m
-    WHERE m.tenant_id = $1 AND m.owner_type = 'product' AND m.owner_id = $2 AND m.status = 'ready'
+    WHERE m.owner_type = 'product' AND m.owner_id = $1 AND m.status = 'ready'
     ORDER BY m.is_primary DESC, m.sort_order, m.created_at`
 
 func (r *Repository) ProductImageKeys(ctx context.Context, tenantID, productID string) ([]string, error) {
-	rows, err := r.store.Pool.Query(ctx, productImagesSQL, tenantID, productID)
+	rows, err := r.store.Query(ctx, tenantID, productImagesSQL, productID)
 	if err != nil {
 		return nil, err
 	}
@@ -191,11 +191,11 @@ func (r *Repository) ProductImageKeys(ctx context.Context, tenantID, productID s
 }
 
 const slugsSQL = `SELECT slug FROM catalog.products
-    WHERE tenant_id = $1 AND is_published AND slug <> ''
-    ORDER BY updated_at DESC LIMIT $2`
+    WHERE is_published AND slug <> ''
+    ORDER BY updated_at DESC LIMIT $1`
 
 func (r *Repository) PublishedProductSlugs(ctx context.Context, tenantID string, limit int) ([]string, error) {
-	rows, err := r.store.Pool.Query(ctx, slugsSQL, tenantID, limit)
+	rows, err := r.store.Query(ctx, tenantID, slugsSQL, limit)
 	if err != nil {
 		return nil, err
 	}

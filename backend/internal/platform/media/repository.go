@@ -26,9 +26,9 @@ func (r *Repository) List(
 	query := `SELECT id::text, owner_type, owner_id::text, object_key, file_name,
         content_type, size_bytes, is_primary, status, created_at::text
         FROM platform.media_objects
-        WHERE tenant_id=$1 AND owner_type=$2 AND owner_id=$3 AND status='ready'
+        WHERE owner_type=$1 AND owner_id=$2 AND status='ready'
         ORDER BY is_primary DESC, sort_order, created_at`
-	rows, err := r.store.Pool.Query(ctx, query, tenantID, ownerType, ownerID)
+	rows, err := r.store.Query(ctx, tenantID, query, ownerType, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -46,9 +46,9 @@ func (r *Repository) GetPending(
 	query := `SELECT id::text, owner_type, owner_id::text, object_key, file_name,
         content_type, size_bytes, is_primary, status, created_at::text
         FROM platform.media_objects
-        WHERE tenant_id=$1 AND owner_type=$2 AND owner_id=$3
-        AND id=$4 AND status='pending' AND expires_at > now()`
-	row := r.store.Pool.QueryRow(ctx, query, tenantID, ownerType, ownerID, mediaID)
+        WHERE owner_type=$1 AND owner_id=$2
+        AND id=$3 AND status='pending' AND expires_at > now()`
+	row := r.store.QueryRow(ctx, tenantID, query, ownerType, ownerID, mediaID)
 	return scanRow(row)
 }
 
@@ -62,7 +62,7 @@ func (r *Repository) CreatePending(
         (id, tenant_id, owner_type, owner_id, object_key, file_name,
         content_type, size_bytes, status, expires_at)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9)`
-	_, err := r.store.Pool.Exec(ctx, query, item.ID, tenantID, item.OwnerType,
+	_, err := r.store.Exec(ctx, tenantID, query, item.ID, tenantID, item.OwnerType,
 		item.OwnerID, item.ObjectKey, item.FileName, item.ContentType,
 		item.SizeBytes, expiresAt)
 	return err
@@ -76,16 +76,16 @@ func (r *Repository) ClearPrimary(
 	ownerID string,
 ) error {
 	query := `UPDATE platform.media_objects SET is_primary=false, updated_at=now()
-        WHERE tenant_id=$1 AND owner_type=$2 AND owner_id=$3 AND is_primary=true`
-	_, err := tx.Exec(ctx, query, tenantID, ownerType, ownerID)
+        WHERE owner_type=$1 AND owner_id=$2 AND is_primary=true`
+	_, err := tx.Exec(ctx, query, ownerType, ownerID)
 	return err
 }
 
 func (r *Repository) MarkReady(ctx context.Context, tx pgx.Tx, tenantID, mediaID string, isPrimary bool) error {
 	query := `UPDATE platform.media_objects
-        SET status='ready', is_primary=$3, expires_at=NULL, updated_at=now()
-        WHERE tenant_id=$1 AND id=$2 AND status='pending'`
-	tag, err := tx.Exec(ctx, query, tenantID, mediaID, isPrimary)
+        SET status='ready', is_primary=$2, expires_at=NULL, updated_at=now()
+        WHERE id=$1 AND status='pending'`
+	tag, err := tx.Exec(ctx, query, mediaID, isPrimary)
 	if err == nil && tag.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}
@@ -93,8 +93,8 @@ func (r *Repository) MarkReady(ctx context.Context, tx pgx.Tx, tenantID, mediaID
 }
 
 func (r *Repository) Delete(ctx context.Context, tenantID string, mediaID string) error {
-	query := `DELETE FROM platform.media_objects WHERE tenant_id=$1 AND id=$2`
-	_, err := r.store.Pool.Exec(ctx, query, tenantID, mediaID)
+	query := `DELETE FROM platform.media_objects WHERE id=$1`
+	_, err := r.store.Exec(ctx, tenantID, query, mediaID)
 	return err
 }
 

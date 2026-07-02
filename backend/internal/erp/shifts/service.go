@@ -34,7 +34,7 @@ func (s *Service) Open(ctx context.Context, tenantID, userID string, req OpenReq
 		return "", err
 	}
 	shift := makeOpenShift(userID, req)
-	err := s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	err := s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		return s.repo.Insert(ctx, tx, tenantID, shift)
 	})
 	if err != nil {
@@ -120,7 +120,7 @@ func (s *Service) CashOp(ctx context.Context, tenantID, userID string, req CashO
 	if err := validateCashOp(req); err != nil {
 		return err
 	}
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	return s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		if err := s.repo.LockOpenShift(ctx, tx, tenantID, shift.ID); err != nil {
 			return err
 		}
@@ -159,7 +159,7 @@ func (s *Service) Close(ctx context.Context, tenantID, userID string) (ShiftRepo
 }
 
 func (s *Service) closeWithExpectedCash(ctx context.Context, tenantID string, shift Shift) error {
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	return s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		if err := s.repo.LockOpenShift(ctx, tx, tenantID, shift.ID); err != nil {
 			return err
 		}
@@ -177,15 +177,25 @@ func (s *Service) Report(ctx context.Context, tenantID, shiftID string) (ShiftRe
 	if err != nil {
 		return ShiftReport{}, err
 	}
-	cashOps, err := s.repo.CashOps(ctx, shiftID)
+	cashOps, err := s.repo.CashOps(ctx, tenantID, shiftID)
 	if err != nil {
 		return ShiftReport{}, err
 	}
-	totals, err := s.repo.ShiftTotals(ctx, s.store.Pool, tenantID, shiftID)
+	totals, err := s.reportTotals(ctx, tenantID, shiftID)
 	if err != nil {
 		return ShiftReport{}, err
 	}
 	return buildReport(shift, cashOps, totals), nil
+}
+
+func (s *Service) reportTotals(ctx context.Context, tenantID, shiftID string) (shiftTotals, error) {
+	totals := shiftTotals{}
+	err := s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
+		var txErr error
+		totals, txErr = s.repo.ShiftTotals(ctx, tx, tenantID, shiftID)
+		return txErr
+	})
+	return totals, err
 }
 
 func buildReport(shift Shift, cashOps []CashOp, totals shiftTotals) ShiftReport {
