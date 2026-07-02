@@ -14,6 +14,10 @@ type Config struct {
 	JWTSecret   string
 	AccessTTL   time.Duration
 	R2          storage.R2Options
+	// ShopsBaseDomain is the wildcard domain tenant shops live under
+	// (e.g. "nanobananas.app" -> myshop.nanobananas.app). Empty disables
+	// automatic subdomain provisioning.
+	ShopsBaseDomain string
 }
 
 func Load() (Config, error) {
@@ -23,6 +27,7 @@ func Load() (Config, error) {
 	cfg.JWTSecret = os.Getenv("JWT_SECRET")
 	cfg.AccessTTL = parseDuration("JWT_ACCESS_TTL", "8760h")
 	cfg.R2 = loadR2Options()
+	cfg.ShopsBaseDomain = os.Getenv("SHOPS_BASE_DOMAIN")
 	return cfg, validate(cfg)
 }
 

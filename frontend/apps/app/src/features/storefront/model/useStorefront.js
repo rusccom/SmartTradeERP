@@ -6,7 +6,7 @@ import { loadStorefrontPreview } from "../api/loadStorefrontPreview";
 import { saveStorefrontDraft } from "../api/saveStorefrontDraft";
 import { publishStorefront } from "../api/publishStorefront";
 
-const INITIAL_META = { loading: true, busy: false, error: "", notice: "", previewUrl: "" };
+const INITIAL_META = { loading: true, busy: false, error: "", notice: "", previewUrl: "", shopUrl: "" };
 
 export function useStorefront() {
   const [themes, setThemes] = useState([]);
@@ -50,6 +50,7 @@ function applySettings(themes, settings, setters) {
   setters.setThemeId(id);
   setters.setTokens(effectiveTokens(themes, id, settings?.draft_tokens));
   setters.setSections(settings?.draft_sections || []);
+  setters.setMeta((meta) => ({ ...meta, shopUrl: settings?.shop_url || "" }));
 }
 
 function effectiveTokens(themes, id, overrides) {
@@ -68,6 +69,7 @@ function buildApi(state) {
     error: state.meta.error,
     notice: state.meta.notice,
     previewUrl: state.meta.previewUrl,
+    shopUrl: state.meta.shopUrl,
     themes: state.themes,
     themeId: state.themeId,
     tokens: state.tokens,

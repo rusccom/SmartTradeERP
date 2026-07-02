@@ -15,6 +15,7 @@ type Settings struct {
 	DraftTokens     map[string]string `json:"draft_tokens"`
 	Sections        []SectionInput    `json:"sections"`
 	DraftSections   []SectionInput    `json:"draft_sections"`
+	ShopURL         string            `json:"shop_url"`
 }
 
 // DraftRequest saves the in-progress theme choice, token overrides and sections.

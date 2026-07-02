@@ -24,7 +24,7 @@ func Build(ctx context.Context, cfg config.Config) (*http.Server, func(), error)
 	}
 	tokens := auth.NewTokenService(cfg.JWTSecret, cfg.AccessTTL)
 	mux := http.NewServeMux()
-	if err := api.Register(mux, store, tokens, mediaStore, cfg.R2.PublicBaseURL); err != nil {
+	if err := api.Register(mux, store, tokens, mediaStore, cfg); err != nil {
 		pool.Close()
 		return nil, nil, err
 	}

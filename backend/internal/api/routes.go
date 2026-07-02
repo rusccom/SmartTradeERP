@@ -9,6 +9,7 @@ import (
 	"smarterp/backend/internal/erp/ledger"
 	mediafeature "smarterp/backend/internal/platform/media"
 	"smarterp/backend/internal/shared/auth"
+	"smarterp/backend/internal/shared/config"
 	"smarterp/backend/internal/shared/db"
 	"smarterp/backend/internal/shared/httpx"
 	"smarterp/backend/internal/shared/storage"
@@ -21,7 +22,7 @@ func Register(
 	store *db.Store,
 	tokens *auth.TokenService,
 	mediaStore storage.ObjectStore,
-	mediaURL string,
+	cfg config.Config,
 ) error {
 	mux.HandleFunc("GET /health", health(store))
 	ledgerService := ledger.NewService(store)
@@ -35,11 +36,11 @@ func Register(
 		ledger:   ledgerService,
 		bundles:  bundleService,
 		media:    mediaService,
-		mediaURL: mediaURL,
+		mediaURL: cfg.R2.PublicBaseURL,
 	})
 	registerOperations(mux, store, tokens, ledgerService, bundleService)
 	registerSettings(mux, store, tokens)
-	return registerStorefrontAdmin(mux, store, tokens)
+	return registerStorefrontAdmin(mux, store, tokens, cfg.ShopsBaseDomain)
 }
 
 func newBundleService(store *db.Store) *bundles.Service {

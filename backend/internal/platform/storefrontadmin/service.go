@@ -16,14 +16,15 @@ import (
 const previewTTL = 15 * time.Minute
 
 type Service struct {
-	store    *db.Store
-	repo     *Repository
-	registry *storefront.Registry
-	tokens   *auth.TokenService
+	store     *db.Store
+	repo      *Repository
+	registry  *storefront.Registry
+	tokens    *auth.TokenService
+	shopsBase string
 }
 
-func NewService(store *db.Store, repo *Repository, registry *storefront.Registry, tokens *auth.TokenService) *Service {
-	return &Service{store: store, repo: repo, registry: registry, tokens: tokens}
+func NewService(store *db.Store, repo *Repository, registry *storefront.Registry, tokens *auth.TokenService, shopsBase string) *Service {
+	return &Service{store: store, repo: repo, registry: registry, tokens: tokens, shopsBase: shopsBase}
 }
 
 // Themes lists installed themes for the picker.
@@ -36,6 +37,10 @@ func (s *Service) Get(ctx context.Context, tenantID string) (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
+	host, err := s.ensureHost(ctx, tenantID)
+	if err != nil {
+		return Settings{}, err
+	}
 	return Settings{
 		ThemeID:         row.ThemeID,
 		DraftThemeID:    row.DraftThemeID,
@@ -43,6 +48,7 @@ func (s *Service) Get(ctx context.Context, tenantID string) (Settings, error) {
 		DraftTokens:     decodeTokens(row.DraftTokens),
 		Sections:        decodeSections(row.Sections),
 		DraftSections:   normalizeSections(decodeSections(row.DraftSections)),
+		ShopURL:         shopURL(host),
 	}, nil
 }
 
@@ -60,14 +66,14 @@ func (s *Service) SaveDraft(ctx context.Context, tenantID string, req DraftReque
 	if err != nil {
 		return err
 	}
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	return s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		return s.repo.SaveDraft(ctx, tx, tenantID, req.ThemeID, tokens, sections)
 	})
 }
 
 // Publish promotes the draft theme, tokens and sections to the live storefront.
 func (s *Service) Publish(ctx context.Context, tenantID string) error {
-	return s.store.WithTx(ctx, func(tx pgx.Tx) error {
+	return s.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		return s.repo.Publish(ctx, tx, tenantID)
 	})
 }

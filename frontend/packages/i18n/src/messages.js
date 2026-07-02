@@ -101,6 +101,7 @@ export const messagesByLocale = {
     "storefront.title": "Storefront design",
     "storefront.subtitle": "Pick a template and tune its look. Every template uses the same catalog, cart, and checkout — only the design changes.",
     "storefront.loading": "Loading…",
+    "storefront.shopAddress": "Your store address:",
     "storefront.templates": "Templates",
     "storefront.use": "Use template",
     "storefront.selected": "Selected",

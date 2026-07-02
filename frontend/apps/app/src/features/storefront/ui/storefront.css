@@ -109,3 +109,6 @@
   cursor: pointer;
 }
 .storefront-section-move button:disabled { opacity: 0.4; cursor: default; }
+.storefront-address { margin: 8px 0 0; font-size: 14px; color: #374151; }
+.storefront-address a { color: #2563eb; font-weight: 600; text-decoration: none; }
+.storefront-address a:hover { text-decoration: underline; }

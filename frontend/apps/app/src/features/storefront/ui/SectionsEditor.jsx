@@ -31,10 +31,10 @@ function SectionRow({ section, index, total, onToggle, onMove, t }) {
       </label>
       <span className="storefront-section-move">
         <button type="button" onClick={() => onMove(index, -1)} disabled={index === 0} aria-label={t("storefront.moveUp")}>
-          ↑
+          {"\u2191"}
         </button>
         <button type="button" onClick={() => onMove(index, 1)} disabled={index === total - 1} aria-label={t("storefront.moveDown")}>
-          ↓
+          {"\u2193"}
         </button>
       </span>
     </li>

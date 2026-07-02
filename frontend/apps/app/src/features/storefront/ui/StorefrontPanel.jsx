@@ -17,6 +17,7 @@ function StorefrontPanel() {
       <header className="storefront-head">
         <h2>{t("storefront.title")}</h2>
         <p className="storefront-sub">{t("storefront.subtitle")}</p>
+        <ShopAddress url={store.shopUrl} t={t} />
       </header>
       <ThemeGallery themes={store.themes} themeId={store.themeId} onSelect={store.selectTheme} t={t} />
       <TokenEditor
@@ -29,6 +30,20 @@ function StorefrontPanel() {
       <SectionsEditor sections={store.sections} onToggle={store.toggleSection} onMove={store.moveSection} t={t} />
       <StorefrontActions store={store} t={t} />
     </section>
+  );
+}
+
+function ShopAddress({ url, t }) {
+  if (!url) {
+    return null;
+  }
+  return (
+    <p className="storefront-address">
+      {t("storefront.shopAddress")}{" "}
+      <a href={url} target="_blank" rel="noreferrer">
+        {url.replace("https://", "")} ↗
+      </a>
+    </p>
   );
 }
 
