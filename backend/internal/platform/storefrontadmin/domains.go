@@ -15,6 +15,15 @@ const maxHostAttempts = 10
 
 var errNoFreeHost = errors.New("storefrontadmin: no free shop host")
 
+// reservedLabels are subdomains of the shops base domain used by the platform
+// itself (app, API, mail, ...) — a tenant slug must never claim them.
+var reservedLabels = map[string]bool{
+	"www": true, "api": true, "erp": true, "app": true, "admin": true,
+	"mail": true, "smtp": true, "imap": true, "ftp": true, "cdn": true,
+	"assets": true, "static": true, "status": true, "docs": true,
+	"help": true, "support": true, "blog": true, "shop": true,
+}
+
 // ensureHost returns the tenant's shop host, provisioning a {slug}.{base}
 // subdomain on first use. With no base domain configured it is a no-op, so
 // local development works without DNS.
@@ -32,6 +41,9 @@ func (s *Service) provisionHost(ctx context.Context, tenantID string) (string, e
 		return "", err
 	}
 	base := slug.Make(name)
+	if reservedLabels[base] {
+		base = base + "-store"
+	}
 	for attempt := 0; attempt < maxHostAttempts; attempt++ {
 		host := s.candidateHost(base, attempt)
 		err := s.repo.InsertDomain(ctx, uuid.NewString(), tenantID, host)
