@@ -80,4 +80,9 @@ if (builder) {
   window.addEventListener("cartchange", syncBuilder);
   syncBuilder();
 }
-document.querySelectorAll("[data-kit]").forEach(bindKit);
+function bindKits(root) {
+  root.querySelectorAll("[data-kit]").forEach(bindKit);
+}
+
+document.addEventListener("storefront:variant-change", event => bindKits(event.target));
+bindKits(document);

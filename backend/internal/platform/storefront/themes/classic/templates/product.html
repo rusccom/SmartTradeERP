@@ -1,14 +1,14 @@
 {{define "content"}}
 <article class="product">
-<div class="product-gallery">
+<div class="product-gallery" data-variant-part="gallery">
 {{range .Images}}<img class="product-image" src="{{.}}" alt="" loading="lazy">{{else}}<div class="product-noimg"></div>{{end}}
 </div>
 <div class="product-info">
 <h1 class="product-name">{{.Name}}</h1>
-{{if .HasPrice}}<div class="product-price">{{.Price.Display}}</div>{{end}}
+<div class="product-price" data-variant-part="price" {{if not .HasPrice}}hidden{{end}}>{{if .HasPrice}}{{.Price.Display}}{{end}}</div>
 {{if .Description}}<p class="product-desc">{{.Description}}</p>{{end}}
 {{template "variant-picker" .}}
-{{with .Selected}}<button class="add-btn" type="button" data-sf-add="{{.VariantID}}" data-added="Added ✓" {{if not .Purchasable}}disabled{{end}}>Add to cart</button>{{end}}
+<div data-variant-part="purchase">{{with .Selected}}<button class="add-btn" type="button" data-sf-add="{{.VariantID}}" data-added="Added ✓" {{if not .Purchasable}}disabled{{end}}>Add to cart</button>{{end}}</div>
 </div>
 </article>
 {{end}}
