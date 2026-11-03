@@ -56,7 +56,7 @@ th,td { padding:10px; border-bottom:1px solid var(--color-border); text-align:ce
 th:first-child { text-align:left; } thead { background:#edf1e8; } th[scope=row] { font-weight:500; }
 .crumb { margin:28px 0 18px; font-size:.8rem; color:var(--color-muted); }
 .detail { display:grid; grid-template-columns:1fr 1fr; align-items:start; gap:clamp(24px,5vw,70px); }
-.gallery { display:grid; gap:12px; } .gallery img { width:100%; max-height:580px; object-fit:contain; background:white; border:1px solid var(--color-border); border-radius:14px; }
+.gallery { display:grid; gap:12px; } .gallery img { width:100%; aspect-ratio:1; max-height:580px; object-fit:contain; background:white; border:1px solid var(--color-border); border-radius:14px; }
 .detail h1 { font-size:clamp(2rem,4vw,3.3rem); margin:10px 0 18px; } .detail .text-link { display:inline-block; margin-top:18px; }
 .buy-row,.kit-total,.kit-form label { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:13px 0; border-top:1px solid var(--color-border); }
 .buy-row span { display:block; } .kit-form h2 { font-size:1.55rem; margin:24px 0 12px; } .kit-form small { white-space:nowrap; }
