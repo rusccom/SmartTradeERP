@@ -1,0 +1,3 @@
+{{define "content"}}<header class="intro"><p class="eyebrow"><a href="/">MamaPack</a> / Katalog</p><h1>{{if .Title}}{{.Title}}{{else}}Wszystkie produkty{{end}}</h1></header>
+<div class="grid">{{range .Products}}{{template "card" .}}{{else}}<p>W tej kolekcji nie ma jeszcze produktów.</p>{{end}}</div>
+<nav class="pager" aria-label="Strony katalogu">{{if .HasPrev}}<a href="{{.PrevURL}}" rel="prev">← Poprzednia</a>{{end}}{{if .HasNext}}<a href="{{.NextURL}}" rel="next">Następna →</a>{{end}}</nav>{{end}}

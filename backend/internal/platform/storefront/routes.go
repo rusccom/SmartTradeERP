@@ -10,50 +10,56 @@ import (
 	"smarterp/backend/internal/shared/httpx"
 )
 
-const healthDBTimeout = 2 * time.Second
-
-// Register wires the public, tenant-by-Host storefront routes onto mux. Pages
-// resolve the tenant from the request Host; /health and theme assets do not.
 func Register(mux *http.ServeMux, store *db.Store, opts Options) error {
-	registry, err := NewRegistry()
+	h, err := newStoreHandler(NewRepository(store), opts)
 	if err != nil {
 		return err
 	}
-	repo := NewRepository(store)
-	service := NewService(repo, registry, opts)
-	resolver := NewResolver(service)
-	handler := NewHandler(service, registry, newPreviewAuth(opts.JWTSecret))
-	commerce := NewCommerceHandler(NewCommerce(store, repo))
 	mux.HandleFunc("GET /health", health(store))
-	mux.HandleFunc("GET /_assets/themes/{theme}/theme.css", handler.ThemeCSS)
-	mux.HandleFunc("GET /_assets/storefront.js", handler.AppJS)
-	mw := resolver.Middleware()
-	registerPages(mux, handler, mw)
-	registerCommerce(mux, commerce, mw)
+	h.mount(mux, NewResolver(h.service).Middleware())
 	return nil
 }
 
-func registerCommerce(mux *http.ServeMux, handler *CommerceHandler, mw auth.Middleware) {
-	mux.Handle("POST /api/storefront/cart", auth.Chain(http.HandlerFunc(handler.Cart), mw))
-	mux.Handle("POST /api/storefront/checkout", auth.Chain(http.HandlerFunc(handler.Checkout), mw))
+// LocalPreview runs the normal shop handlers against the theme's sample catalog.
+func LocalPreview() (http.Handler, error) {
+	h, err := newStoreHandler(nil, Options{})
+	if err != nil {
+		return nil, err
+	}
+	mux := http.NewServeMux()
+	h.mount(mux, func(next http.Handler) http.Handler { return next })
+	return mux, nil
 }
 
-func registerPages(mux *http.ServeMux, handler *Handler, mw auth.Middleware) {
-	mux.Handle("GET /{$}", auth.Chain(http.HandlerFunc(handler.Home), mw))
-	mux.Handle("GET /products", auth.Chain(http.HandlerFunc(handler.ProductList), mw))
-	mux.Handle("GET /products/{slug}", auth.Chain(http.HandlerFunc(handler.ProductDetail), mw))
-	mux.Handle("GET /cart", auth.Chain(http.HandlerFunc(handler.Cart), mw))
-	mux.Handle("GET /robots.txt", auth.Chain(http.HandlerFunc(handler.Robots), mw))
-	mux.Handle("GET /sitemap.xml", auth.Chain(http.HandlerFunc(handler.Sitemap), mw))
-	mux.Handle("/", auth.Chain(http.HandlerFunc(handler.NotFound), mw))
+func newStoreHandler(repo *Repository, opts Options) (*Handler, error) {
+	registry, err := NewRegistry()
+	if err != nil {
+		return nil, err
+	}
+	return &Handler{service: NewService(repo, registry, opts), registry: registry, preview: newPreviewAuth(opts.JWTSecret)}, nil
+}
+
+func (h *Handler) mount(mux *http.ServeMux, mw auth.Middleware) {
+	h.assets(mux)
+	pages := map[string]shopHandler{
+		"GET /{$}": h.home, "GET /products": h.list, "GET /products/{slug}": h.product,
+		"GET /collections/{collection}": h.list, "GET /pages/{page}": h.custom, "GET /cart": h.cart,
+		"POST /api/storefront/cart": h.quote, "POST /api/storefront/checkout": h.checkout,
+		"/": h.notFound,
+	}
+	for pattern, page := range pages {
+		mux.Handle(pattern, mw(h.withShop(page)))
+	}
+	mux.Handle("GET /robots.txt", mw(http.HandlerFunc(h.Robots)))
+	mux.Handle("GET /sitemap.xml", mw(http.HandlerFunc(h.Sitemap)))
 }
 
 func health(store *db.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), healthDBTimeout)
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
 		if err := store.Ping(ctx); err != nil {
-			httpx.WriteError(w, http.StatusServiceUnavailable, "db_unavailable", "database unavailable", nil)
+			httpx.WriteError(w, 503, "db_unavailable", "database unavailable", err.Error())
 			return
 		}
 		w.WriteHeader(http.StatusOK)

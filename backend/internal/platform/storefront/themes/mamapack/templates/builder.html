@@ -1,0 +1,8 @@
+{{define "content"}}<header class="intro"><p class="eyebrow"><a href="/">MamaPack</a> / Kreator wyprawki</p>
+<h1>Złóż to <em>sama.</em></h1><p>Wybierz potrzebne rzeczy i ich warianty. Twoja lista od razu zapisuje się w koszyku.</p></header>
+<div class="builder"><div>
+<nav class="anchors" aria-label="Kategorie"><a href="/pages/zlozsam" {{if not .Selected}}aria-current="page"{{end}}>Wszystkie</a>{{range .Categories}}<a href="?kategoria={{.Slug}}" {{if eq $.Selected .Slug}}aria-current="page"{{end}}>{{.Name}}</a>{{end}}</nav>
+{{range .Groups}}<section class="builder-group" id="k-{{.ID}}"><h2>{{.Name}}</h2>{{range .Products}}{{template "builder-row" .}}{{end}}</section>
+{{else}}<p>Brak produktów w tej części katalogu.</p>{{end}}
+<nav class="pager" aria-label="Strony listy">{{if .Prev}}<a href="{{.Prev}}" rel="prev">← Poprzednia</a>{{end}}{{if .Next}}<a href="{{.Next}}" rel="next">Następna →</a>{{end}}</nav></div>
+<aside class="summary"><p class="eyebrow">Twoja wyprawka</p><h2>Podsumowanie</h2><p>Produkty w koszyku <b data-sf-cart-count>0</b></p><p class="sum">Razem <strong data-builder-total>—</strong></p><a class="button" href="/cart">Przejdź do koszyka →</a></aside></div>{{end}}

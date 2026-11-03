@@ -12,10 +12,12 @@ import (
 )
 
 type Manifest struct {
-	ID         string            `json:"id"`
-	Name       string            `json:"name"`
-	PreviewURL string            `json:"preview_url"`
-	Tokens     map[string]string `json:"tokens"`
+	Collections map[string]string `json:"collections"`
+	ID          string            `json:"id"`
+	Name        string            `json:"name"`
+	PreviewURL  string            `json:"preview_url"`
+	Pages       map[string]string `json:"pages"`
+	Tokens      map[string]string `json:"tokens"`
 }
 
 type themeEntry struct {
@@ -27,7 +29,7 @@ type themeEntry struct {
 
 // requiredPages every theme must define. validateTheme fails at boot otherwise,
 // so a broken theme can never ship a blank shop.
-var requiredPages = []string{"home", "list", "product", "cart", "404"}
+var requiredPages = []string{"home", "list", "product", "404"}
 
 // NewRegistry loads and validates every embedded theme folder.
 func NewRegistry() (*Registry, error) {
@@ -35,21 +37,32 @@ func NewRegistry() (*Registry, error) {
 	if err != nil {
 		return nil, err
 	}
-	reg := &Registry{themes: make(map[string]*themeEntry)}
+	cart, err := template.ParseFS(themesFS, "shared/cart.html", "shared/seo-head.html")
+	if err != nil {
+		return nil, err
+	}
+	reg := &Registry{cart: cart, themes: make(map[string]*themeEntry)}
+	if err := reg.loadThemes(entries); err != nil {
+		return nil, err
+	}
+	if !reg.Has("classic") {
+		return nil, errors.New("storefront: classic theme is required")
+	}
+	return reg, nil
+}
+
+func (reg *Registry) loadThemes(entries []fs.DirEntry) error {
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
 		}
 		loaded, err := loadTheme(entry.Name())
 		if err != nil {
-			return nil, fmt.Errorf("storefront theme %q: %w", entry.Name(), err)
+			return fmt.Errorf("storefront theme %q: %w", entry.Name(), err)
 		}
 		reg.themes[entry.Name()] = loaded
 	}
-	if _, ok := reg.themes["classic"]; !ok {
-		return nil, errors.New("storefront: classic theme is required")
-	}
-	return reg, nil
+	return nil
 }
 
 func loadTheme(id string) (*themeEntry, error) {
@@ -61,7 +74,7 @@ func loadTheme(id string) (*themeEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	pages, err := loadPages(id)
+	pages, err := loadPages(manifest)
 	if err != nil {
 		return nil, err
 	}
@@ -80,10 +93,14 @@ func loadManifest(id string) (Manifest, error) {
 	return manifest, nil
 }
 
-func loadPages(id string) (map[string]*template.Template, error) {
+func loadPages(manifest Manifest) (map[string]*template.Template, error) {
 	pages := make(map[string]*template.Template, len(requiredPages))
-	for _, name := range requiredPages {
-		tmpl, err := parsePage(id, name)
+	names := append([]string(nil), requiredPages...)
+	for _, name := range manifest.Pages {
+		names = append(names, name)
+	}
+	for _, name := range names {
+		tmpl, err := parsePage(manifest.ID, name)
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +112,7 @@ func loadPages(id string) (map[string]*template.Template, error) {
 func parsePage(id, name string) (*template.Template, error) {
 	dir := path.Join("themes", id, "templates")
 	return template.New(name).ParseFS(themesFS,
-		path.Join(dir, "layout.html"),
+		"shared/seo-head.html", path.Join(dir, "layout.html"),
 		path.Join(dir, "partials", "*.html"),
 		path.Join(dir, name+".html"),
 	)

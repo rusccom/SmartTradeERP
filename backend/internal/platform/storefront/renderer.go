@@ -2,12 +2,14 @@ package storefront
 
 import (
 	"bytes"
+	"html/template"
 	"net/http"
 	"sort"
 )
 
 // Registry holds every embedded theme parsed and validated at boot.
 type Registry struct {
+	cart   *template.Template
 	themes map[string]*themeEntry
 }
 
@@ -55,6 +57,9 @@ func (rg *Registry) CSS(themeID string) ([]byte, string, bool) {
 // so a render error never produces a half-written response.
 func (rg *Registry) Render(w http.ResponseWriter, status int, themeID, page string, data any) {
 	tmpl := rg.theme(themeID).pages[page]
+	if page == "cart" {
+		tmpl = rg.cart
+	}
 	if tmpl == nil {
 		http.Error(w, "template not found", http.StatusInternalServerError)
 		return

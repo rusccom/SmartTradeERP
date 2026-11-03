@@ -1,6 +1,12 @@
 package storefront
 
-import "github.com/shopspring/decimal"
+import (
+	"strings"
+
+	"github.com/shopspring/decimal"
+
+	"smarterp/backend/internal/platform/storefront/catalog"
+)
 
 // currency holds the tenant's base-currency display rules.
 type currency struct {
@@ -11,16 +17,19 @@ type currency struct {
 
 // formatMoney renders a decimal amount for display and keeps the raw amount and
 // ISO code for structured data (JSON-LD offers).
-func formatMoney(value decimal.Decimal, cur currency) MoneyVM {
+func formatMoney(value decimal.Decimal, cur currency) catalog.Money {
 	places := cur.places
 	if places < 0 || places > 4 {
 		places = 2
 	}
 	amount := value.StringFixed(places)
-	return MoneyVM{Display: displayPrice(amount, cur), Amount: amount, Code: cur.code}
+	return catalog.Money{Display: displayPrice(amount, cur), Amount: amount, Code: cur.code}
 }
 
 func displayPrice(amount string, cur currency) string {
+	if cur.code == "PLN" {
+		return strings.Replace(amount, ".", ",", 1) + " zł"
+	}
 	if cur.symbol != "" {
 		return cur.symbol + " " + amount
 	}

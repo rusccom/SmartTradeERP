@@ -1,0 +1,8 @@
+{{define "builder-row"}}<article class="builder-row" data-builder-row>
+{{if .ImageURL}}<a href="{{.URL}}" tabindex="-1" aria-hidden="true"><img loading="lazy" src="{{.ImageURL}}" alt=""></a>{{end}}
+<div class="row-info"><h3><a href="{{.URL}}">{{.Name}}</a></h3>
+<select data-variant aria-label="Wariant produktu {{.Name}}">{{range .Variants}}<option value="{{.VariantID}}" data-price="{{.Price.Display}}" {{if not .Purchasable}}disabled{{end}}>{{if eq .Name "Default"}}Podstawowy{{else}}{{.Name}}{{end}}</option>{{end}}</select>
+<span class="row-price" data-unit-price></span></div>
+<div class="row-controls"><label><input type="checkbox" aria-label="Wybierz {{.Name}}" data-picked> Wybierz</label>
+<div class="stepper"><button type="button" data-step="-1" aria-label="Zmniejsz ilość">−</button><output data-quantity>0</output><button type="button" data-step="1" aria-label="Zwiększ ilość">+</button></div></div>
+</article>{{end}}

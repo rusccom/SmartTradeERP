@@ -18,10 +18,12 @@ func (s *Service) buildLayout(r *http.Request, brand brandRow, seo SeoVM, previe
 		seo.Robots = "noindex,nofollow"
 	}
 	return LayoutVM{
-		Brand: BrandVM{TenantName: brand.TenantName, LogoURL: s.image(brand.LogoKey, logoTransform), HomeURL: "/"},
-		Theme: ThemeVM{ID: themeID, AssetVersion: s.registry.AssetVersion(themeID), TokenCSS: s.tokenCSS(themeID, brand.TokensJSON)},
-		SEO:   seo,
-		Nav:   defaultNav(),
+		Brand:    BrandVM{TenantName: brand.TenantName, LogoURL: s.image(brand.LogoKey, logoTransform), HomeURL: "/"},
+		Theme:    ThemeVM{ID: themeID, AssetVersion: s.registry.AssetVersion(themeID), TokenCSS: s.tokenCSS(themeID, brand.TokensJSON)},
+		SEO:      seo,
+		Nav:      defaultNav(),
+		Preview:  preview,
+		Language: shopLanguage(brand),
 	}
 }
 

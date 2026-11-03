@@ -5,57 +5,62 @@ import (
 	"net/http"
 
 	"smarterp/backend/internal/shared/httpx"
-	"smarterp/backend/internal/shared/tenant"
 	"smarterp/backend/internal/shared/validation"
 )
-
-type CommerceHandler struct {
-	commerce *Commerce
-}
-
-func NewCommerceHandler(commerce *Commerce) *CommerceHandler {
-	return &CommerceHandler{commerce: commerce}
-}
 
 type cartPayload struct {
 	Items []cartItemInput `json:"items"`
 }
 
-func (h *CommerceHandler) Cart(w http.ResponseWriter, r *http.Request) {
-	payload := cartPayload{}
-	if err := httpx.DecodeJSON(r, &payload); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid payload", err.Error())
+func (h *Handler) quote(w http.ResponseWriter, r *http.Request, sh *shop) {
+	var payload cartPayload
+	if !readPayload(w, r, &payload) {
 		return
 	}
-	result, err := h.commerce.PriceCart(r.Context(), tenant.FromContext(r.Context()), payload.Items)
-	if err != nil {
-		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to price cart", err.Error())
-		return
-	}
-	httpx.WriteData(w, http.StatusOK, result, nil)
-}
-
-func (h *CommerceHandler) Checkout(w http.ResponseWriter, r *http.Request) {
-	req := checkoutRequest{}
-	if err := httpx.DecodeJSON(r, &req); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid payload", err.Error())
-		return
-	}
-	result, err := h.commerce.Checkout(r.Context(), tenant.FromContext(r.Context()), req)
+	cart, err := sh.priceCart(payload.Items)
 	if err != nil {
 		writeCheckoutError(w, err)
 		return
 	}
-	httpx.WriteData(w, http.StatusCreated, result, nil)
+	cur := sh.brand.Currency
+	httpx.WriteData(w, 200, cartResult{Lines: cart.lines, Total: formatMoney(cart.total, cur).Display, Currency: cur.code}, nil)
+}
+
+func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, sh *shop) {
+	var req checkoutRequest
+	if !readPayload(w, r, &req) {
+		return
+	}
+	result, err := sh.place(req)
+	if err != nil {
+		writeCheckoutError(w, err)
+		return
+	}
+	status := http.StatusCreated
+	if sh.preview {
+		status = http.StatusOK
+	}
+	httpx.WriteData(w, status, result, nil)
+}
+
+func readPayload(w http.ResponseWriter, r *http.Request, target any) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, 256<<10)
+	if err := httpx.DecodeJSON(r, target); err != nil {
+		httpx.WriteError(w, 400, "bad_request", "invalid payload", nil)
+		return false
+	}
+	return true
 }
 
 func writeCheckoutError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, ErrCheckoutInvalid), errors.Is(err, validation.ErrInvalidData):
-		httpx.WriteError(w, http.StatusBadRequest, "invalid_data", "invalid checkout data", nil)
+		httpx.WriteError(w, 400, "invalid_data", "Invalid checkout data", nil)
 	case errors.Is(err, ErrCartEmpty):
-		httpx.WriteError(w, http.StatusBadRequest, "empty_cart", "no purchasable items", nil)
+		httpx.WriteError(w, 400, "empty_cart", "Cart is empty", nil)
+	case errors.Is(err, errStock):
+		httpx.WriteError(w, 409, "unavailable", "Some items are unavailable", nil)
 	default:
-		httpx.WriteError(w, http.StatusInternalServerError, "internal_error", "checkout failed", err.Error())
+		httpx.WriteError(w, 500, "internal_error", "Store unavailable", nil)
 	}
 }

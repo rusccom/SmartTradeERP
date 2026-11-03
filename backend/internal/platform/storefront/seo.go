@@ -1,6 +1,11 @@
 package storefront
 
-import "net/http"
+import (
+	"cmp"
+	"net/http"
+
+	"smarterp/backend/internal/platform/storefront/catalog"
+)
 
 func requestScheme(r *http.Request) string {
 	if r.TLS != nil {
@@ -39,8 +44,12 @@ func seoList(r *http.Request, brand brandRow) SeoVM {
 }
 
 func seoCart(r *http.Request, brand brandRow) SeoVM {
+	title := "Cart"
+	if shopLanguage(brand) == "pl" {
+		title = "Koszyk"
+	}
 	return SeoVM{
-		Title:  "Cart — " + brand.TenantName,
+		Title:  title + " — " + brand.TenantName,
 		Robots: "noindex,nofollow",
 		OGType: "website",
 	}
@@ -54,11 +63,8 @@ func seoNotFound(r *http.Request, brand brandRow) SeoVM {
 	}
 }
 
-func seoProduct(r *http.Request, detail productDetailRow, ogImage string, price MoneyVM, hasPrice bool) SeoVM {
-	title := detail.SEOTitle
-	if title == "" {
-		title = detail.Name
-	}
+func seoProduct(r *http.Request, detail catalog.Product, ogImage string, price catalog.Money, hasPrice bool) SeoVM {
+	title := cmp.Or(detail.SEOTitle, detail.Name)
 	seo := SeoVM{
 		Title:       title,
 		Description: detail.SEODescription,

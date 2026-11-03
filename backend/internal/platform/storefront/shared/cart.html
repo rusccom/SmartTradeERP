@@ -1,0 +1,26 @@
+{{define "layout"}}{{$pl := eq .Layout.Language "pl"}}<!doctype html><html lang="{{.Layout.Language}}"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+{{template "seo-head" .Layout}}<link rel="icon" href="data:,"><link rel="stylesheet" href="/_assets/cart.css"><script type="module" src="/_assets/storefront.js?v=2"></script></head><body>
+<header><a class="brand" href="/">{{.Layout.Brand.TenantName}}</a><a href="/products">{{if $pl}}Kontynuuj zakupy{{else}}Continue shopping{{end}} →</a></header>
+<main data-sf-cart><p class="eyebrow">{{if $pl}}Podsumowanie zakupów{{else}}Order summary{{end}}</p>
+<h1>{{if $pl}}Twój koszyk{{else}}Your cart{{end}}</h1>
+{{if .Layout.Preview}}<p class="notice">{{if $pl}}Podgląd sklepu. Możesz sprawdzić zamówienie próbne bez zapisywania go w ERP.{{else}}Store preview. Try checkout without placing a live order.{{end}}</p>{{end}}
+<p role="status" data-message></p>
+<div class="empty" data-empty hidden><h2>{{if $pl}}Koszyk jest pusty{{else}}Your cart is empty{{end}}</h2>
+<a href="/products">{{if $pl}}Zobacz produkty{{else}}Browse products{{end}} →</a></div>
+<div class="checkout-grid" data-summary hidden>
+<section class="panel"><h2>{{if $pl}}Produkty{{else}}Items{{end}}</h2><div data-lines></div>
+<p class="total">{{if $pl}}Razem{{else}}Total{{end}} <strong data-total>—</strong></p></section>
+<form class="panel" data-checkout><h2>{{if $pl}}Dane do zamówienia{{else}}Checkout details{{end}}</h2>
+<label>{{if $pl}}Imię i nazwisko{{else}}Full name{{end}}<input name="name" autocomplete="name" maxlength="160" required></label>
+<label>Email<input name="email" autocomplete="email" maxlength="255" type="email" required></label>
+<label>{{if $pl}}Telefon{{else}}Phone{{end}}<input name="phone" type="tel" autocomplete="tel" maxlength="40"></label>
+<label>{{if $pl}}Adres dostawy{{else}}Shipping address{{end}}<textarea name="address" autocomplete="street-address" rows="2"></textarea></label>
+<label>{{if $pl}}Uwagi (opcjonalnie){{else}}Order note (optional){{end}}<textarea name="note" rows="2"></textarea></label>
+<button class="submit" disabled>{{if .Layout.Preview}}{{if $pl}}Sprawdź zamówienie próbne{{else}}Try preview checkout{{end}}{{else}}{{if $pl}}Złóż zamówienie{{else}}Place order{{end}}{{end}}</button>
+</form></div>
+<template id="cart-line"><article class="line"><div><h3 data-name></h3><small data-variant></small><ul data-components></ul><p class="issue" data-unavailable hidden>{{if $pl}}Ta ilość lub konfiguracja jest niedostępna.{{else}}This quantity or configuration is unavailable.{{end}}</p></div>
+<div class="controls"><div class="stepper"><button type="button" data-action="dec" aria-label="{{if $pl}}Zmniejsz ilość{{else}}Decrease quantity{{end}}">−</button><span data-qty></span><button type="button" data-action="inc" aria-label="{{if $pl}}Zwiększ ilość{{else}}Increase quantity{{end}}">+</button></div>
+<b data-price></b><button type="button" class="remove" data-action="remove">{{if $pl}}Usuń{{else}}Remove{{end}}</button></div></article></template>
+<noscript>{{if $pl}}Włącz JavaScript, aby korzystać z koszyka.{{else}}Enable JavaScript to use the cart.{{end}}</noscript>
+</main></body></html>{{end}}

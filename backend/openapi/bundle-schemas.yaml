@@ -1,0 +1,35 @@
+bundle:
+  type: object
+  properties:
+    product_id:
+      type: string
+    variant_id:
+      type: string
+    product_name:
+      type: string
+    variant_name:
+      type: string
+    sku_code:
+      type: string
+    unit:
+      type: string
+    price:
+      type: string
+    components:
+      type: array
+      items:
+        $ref: '#/component'
+component:
+  type: object
+  required: [component_variant_id, qty]
+  properties:
+    component_variant_id:
+      type: string
+    qty:
+      type: string
+    product_name:
+      type: string
+    variant_name:
+      type: string
+    unit:
+      type: string

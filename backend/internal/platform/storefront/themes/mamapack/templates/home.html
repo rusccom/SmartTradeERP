@@ -1,0 +1,12 @@
+{{define "content"}}
+{{range .Sections}}{{if eq . "hero"}}
+<section class="hero">
+<div class="hero-copy"><p class="eyebrow"><i></i> Wyprawka do szpitala</p>
+<h1>Spakuj torbę<br><em>w swoim rytmie.</em></h1>
+<p>Od pierwszej pieluszki po rzeczy dla mamy. Skompletuj swoją wyprawkę krok po kroku albo wybierz gotową torbę.</p>
+<div class="actions"><a class="button" href="/pages/zlozsam">Złóż to sama <span>→</span></a><a class="text-link" href="/pages/gotowe-torby">Porównaj gotowe torby</a></div></div>
+<div class="hero-photo"><img src="/_assets/themes/mamapack/hospital-bag.webp" fetchpriority="high" alt="Otwarta szpitalna torba z ubrankami, pieluszkami i akcesoriami dla mamy"></div>
+</section>
+<section class="paths"><a href="/pages/zlozsam"><small>01 / KREATOR</small><h2>Twoja własna lista <span>↗</span></h2><p>Wybieraj produkty, rozmiary i ilości.</p></a><a href="/pages/gotowe-torby"><small>02 / GOTOWE ZESTAWY</small><h2>Porównaj torby <span>↗</span></h2><p>Sprawdź skład wyprawki dla mamy i dziecka.</p></a></section>
+{{else if eq . "products"}}<section class="section"><div class="section-head"><div><p class="eyebrow">Katalog MamaPack</p><h2>Do Twojej wyprawki</h2></div><a class="text-link" href="/products">Wszystkie produkty →</a></div>
+<div class="grid">{{range $.Products}}{{template "card" .}}{{else}}<p>Wkrótce pojawią się tu produkty.</p>{{end}}</div></section>{{end}}{{end}}{{end}}

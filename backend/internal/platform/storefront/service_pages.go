@@ -1,167 +1,124 @@
 package storefront
 
 import (
-	"context"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/shopspring/decimal"
 
-	"smarterp/backend/internal/shared/tenant"
+	"smarterp/backend/internal/platform/storefront/catalog"
+	"smarterp/backend/internal/platform/storefront/themes/mamapack"
 )
 
-const (
-	homeProductLimit = 12
-	listPageSize     = 24
-)
+const listPageSize = 24
 
-func (s *Service) BuildHome(r *http.Request, preview bool) (HomeVM, error) {
-	ctx := r.Context()
-	tenantID := tenant.FromContext(ctx)
-	brand, err := s.repo.LoadBrand(ctx, tenantID, preview)
-	if err != nil {
-		return HomeVM{}, err
+func (sh *shop) list(r *http.Request) (ListVM, error) {
+	page, collection := pageParam(r), r.PathValue("collection")
+	if collection != "" && len(sh.service.registry.theme(sh.brand.ThemeID).manifest.Collections) == 0 {
+		return ListVM{}, ErrProductNotFound
 	}
-	rows, err := s.repo.ListPublishedProducts(ctx, tenantID, homeProductLimit, 0)
-	if err != nil {
-		return HomeVM{}, err
+	f := catalog.Filter{Collection: collection, Limit: listPageSize + 1, Offset: (page - 1) * listPageSize}
+	if collection == mamapack.BagCollection {
+		f.CollectionSlugs = mamapack.BagSlugs()
 	}
-	layout := s.buildLayout(r, brand, seoHome(r, brand), preview)
-	return HomeVM{Layout: layout, Products: s.toCards(brand, rows), Sections: homeSections(brand.Sections)}, nil
-}
-
-func (s *Service) BuildList(r *http.Request, preview bool) (ListVM, error) {
-	ctx := r.Context()
-	tenantID := tenant.FromContext(ctx)
-	brand, err := s.repo.LoadBrand(ctx, tenantID, preview)
+	items, err := sh.catalog(f)
 	if err != nil {
 		return ListVM{}, err
 	}
-	page := pageParam(r)
-	rows, err := s.repo.ListPublishedProducts(ctx, tenantID, listPageSize, (page-1)*listPageSize)
-	if err != nil {
-		return ListVM{}, err
+	title, ok := sh.collectionTitle(collection, items)
+	if !ok {
+		return ListVM{}, ErrProductNotFound
 	}
-	total, err := s.repo.CountPublishedProducts(ctx, tenantID)
-	if err != nil {
-		return ListVM{}, err
-	}
-	return s.assembleList(r, brand, rows, page, total, preview), nil
+	return sh.listView(r, items, page, title), nil
 }
 
-func (s *Service) assembleList(r *http.Request, brand brandRow, rows []productCardRow, page, total int, preview bool) ListVM {
-	offset := (page - 1) * listPageSize
-	return ListVM{
-		Layout:   s.buildLayout(r, brand, seoList(r, brand), preview),
-		Products: s.toCards(brand, rows),
-		Page:     page,
-		HasPrev:  page > 1,
-		HasNext:  offset+len(rows) < total,
-		PrevURL:  listPageURL(page - 1),
-		NextURL:  listPageURL(page + 1),
+func (sh *shop) listView(r *http.Request, items []catalog.Product, page int, title string) ListVM {
+	seo := seoList(r, sh.brand)
+	if title != "" {
+		seo.Title = title + " · " + sh.brand.TenantName
 	}
+	next := len(items) > listPageSize
+	if next {
+		items = items[:listPageSize]
+	}
+	return ListVM{Layout: sh.layout(r, seo), Title: title, Products: sh.cards(items), Page: page, HasPrev: page > 1, HasNext: next,
+		PrevURL: pageURL(r.URL.Path, page-1), NextURL: pageURL(r.URL.Path, page+1)}
 }
 
-func (s *Service) BuildProduct(r *http.Request, slug string, preview bool) (ProductDetailVM, error) {
-	ctx := r.Context()
-	tenantID := tenant.FromContext(ctx)
-	brand, err := s.repo.LoadBrand(ctx, tenantID, preview)
-	if err != nil {
-		return ProductDetailVM{}, err
+func (sh *shop) collectionTitle(slug string, items []catalog.Product) (string, bool) {
+	if slug == "" {
+		return "", true
 	}
-	detail, err := s.repo.ProductBySlug(ctx, tenantID, slug)
-	if err != nil {
-		return ProductDetailVM{}, err
+	if title, ok := sh.service.registry.theme(sh.brand.ThemeID).manifest.Collections[slug]; ok {
+		return title, true
 	}
-	return s.assembleProduct(ctx, r, brand, detail, preview)
+	for _, p := range items {
+		for _, c := range p.Categories {
+			if c.Slug == slug {
+				return c.Name, true
+			}
+		}
+	}
+	return "", false
 }
 
-func (s *Service) assembleProduct(ctx context.Context, r *http.Request, brand brandRow, detail productDetailRow, preview bool) (ProductDetailVM, error) {
-	tenantID := tenant.FromContext(ctx)
-	variants, err := s.repo.VariantsForProduct(ctx, tenantID, detail.ID)
-	if err != nil {
-		return ProductDetailVM{}, err
-	}
-	keys, err := s.repo.ProductImageKeys(ctx, tenantID, detail.ID)
-	if err != nil {
-		return ProductDetailVM{}, err
-	}
-	images := s.imageList(keys, mainTransform)
-	price, hasPrice := minVariantPrice(variants, brand.Currency)
-	seo := seoProduct(r, detail, firstString(images), price, hasPrice)
-	return ProductDetailVM{
-		Layout: s.buildLayout(r, brand, seo, preview), Name: detail.Name, Description: detail.SEODescription,
-		Images: images, Price: price, HasPrice: hasPrice, Variants: toVariantVMs(variants, brand.Currency),
-	}, nil
+func (sh *shop) product(r *http.Request, p catalog.Product) ProductDetailVM {
+	variants := sh.variantViews(p)
+	price, ok := minPrice(variants)
+	images := sh.images(p, mainTransform)
+	seo := seoProduct(r, p, firstString(images), price, ok)
+	return ProductDetailVM{Layout: sh.layout(r, seo), Name: p.Name, Description: p.SEODescription, Images: images, Price: price, HasPrice: ok, Variants: variants}
 }
 
-func (s *Service) BuildCart(r *http.Request, preview bool) (CartVM, error) {
-	ctx := r.Context()
-	brand, err := s.repo.LoadBrand(ctx, tenant.FromContext(ctx), preview)
-	if err != nil {
-		return CartVM{}, err
-	}
-	return CartVM{Layout: s.buildLayout(r, brand, seoCart(r, brand), preview)}, nil
-}
-
-func (s *Service) BuildNotFound(r *http.Request, preview bool) (NotFoundVM, error) {
-	ctx := r.Context()
-	brand, err := s.repo.LoadBrand(ctx, tenant.FromContext(ctx), preview)
-	if err != nil {
-		return NotFoundVM{}, err
-	}
-	return NotFoundVM{Layout: s.buildLayout(r, brand, seoNotFound(r, brand), preview)}, nil
-}
-
-func (s *Service) toCards(brand brandRow, rows []productCardRow) []ProductCardVM {
-	cards := make([]ProductCardVM, 0, len(rows))
-	for _, row := range rows {
-		cards = append(cards, s.toCard(brand, row))
+func (sh *shop) cards(products []catalog.Product) []catalog.Card {
+	cards := make([]catalog.Card, 0, len(products))
+	for _, p := range products {
+		variants := sh.variantViews(p)
+		price, ok := minPrice(variants)
+		cards = append(cards, catalog.Card{Categories: p.Categories, Variants: variants, Name: p.Name, Slug: p.Slug, URL: productURL(p.Slug),
+			ImageURL: firstString(sh.images(p, cardTransform)), Price: price, HasPrice: ok})
 	}
 	return cards
 }
 
-func (s *Service) toCard(brand brandRow, row productCardRow) ProductCardVM {
-	return ProductCardVM{
-		Name:     row.Name,
-		URL:      productURL(row.Slug),
-		ImageURL: s.image(row.ImageKey, cardTransform),
-		Price:    formatMoney(row.MinPrice, brand.Currency),
-		HasPrice: row.HasPrice,
+func (sh *shop) variantViews(p catalog.Product) []catalog.VariantView {
+	list := make([]catalog.VariantView, 0, len(p.Variants))
+	for _, v := range p.Variants {
+		q, err := resolveVariant(v, nil, sh.brand.Currency.places)
+		view := catalog.VariantView{VariantID: v.ID, Name: v.Name, SKU: v.SKU, HasPrice: err == nil,
+			Price: formatMoney(q.Price, sh.brand.Currency), Purchasable: err == nil && availableUnits(q.Components).GreaterThanOrEqual(decimal.NewFromInt(1))}
+		if v.Bundle != nil {
+			view.Slots = v.Bundle.Slots
+		}
+		list = append(list, view)
 	}
+	return list
+}
+
+func minPrice(variants []catalog.VariantView) (catalog.Money, bool) {
+	var best catalog.Money
+	min := decimal.Zero
+	for _, v := range variants {
+		if !v.HasPrice {
+			continue
+		}
+		value, _ := decimal.NewFromString(v.Price.Amount)
+		if best.Amount == "" || value.LessThan(min) {
+			best, min = v.Price, value
+		}
+	}
+	return best, best.Amount != ""
 }
 
 func (s *Service) imageList(keys []string, transform string) []string {
-	urls := make([]string, 0, len(keys))
+	var out []string
 	for _, key := range keys {
-		if url := s.image(key, transform); url != "" {
-			urls = append(urls, url)
+		if u := s.image(key, transform); u != "" {
+			out = append(out, u)
 		}
 	}
-	return urls
-}
-
-func minVariantPrice(variants []variantRow, cur currency) (MoneyVM, bool) {
-	min := decimal.Zero
-	found := false
-	for _, v := range variants {
-		if v.HasPrice && (!found || v.Price.LessThan(min)) {
-			min = v.Price
-			found = true
-		}
-	}
-	if !found {
-		return MoneyVM{}, false
-	}
-	return formatMoney(min, cur), true
-}
-
-func toVariantVMs(variants []variantRow, cur currency) []ProductVariantVM {
-	vms := make([]ProductVariantVM, 0, len(variants))
-	for _, v := range variants {
-		vms = append(vms, ProductVariantVM{VariantID: v.ID, Name: v.Name, SKU: v.SKU, Price: formatMoney(v.Price, cur), HasPrice: v.HasPrice})
-	}
-	return vms
+	return out
 }
 
 func firstString(values []string) string {
@@ -175,20 +132,20 @@ func productURL(slug string) string {
 	if slug == "" {
 		return "/products"
 	}
-	return "/products/" + slug
+	return "/products/" + url.PathEscape(slug)
 }
 
-func listPageURL(page int) string {
-	if page <= 1 {
-		return "/products"
+func pageURL(path string, n int) string {
+	if n <= 1 {
+		return path
 	}
-	return "/products?page=" + strconv.Itoa(page)
+	return path + "?page=" + strconv.Itoa(n)
 }
 
 func pageParam(r *http.Request) int {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil || page < 1 {
+	n, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || n < 1 || n > 1000000 {
 		return 1
 	}
-	return page
+	return n
 }

@@ -7,5 +7,7 @@
 <meta property="og:title" content="{{.SEO.Title}}">
 {{if .SEO.Description}}<meta property="og:description" content="{{.SEO.Description}}">{{end}}
 {{if .SEO.OGImage}}<meta property="og:image" content="{{.SEO.OGImage}}">{{end}}
+<meta name="sf-preview" content="{{.Preview}}">
+<meta name="sf-cart-scope" content="{{.CartScope}}">
 {{.SEO.JSONLD}}
 {{end}}

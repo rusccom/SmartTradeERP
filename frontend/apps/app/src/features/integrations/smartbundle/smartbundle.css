@@ -1,0 +1,9 @@
+.bundle-workspace { display:grid; align-content:start; gap:14px; min-width:0; }
+.smartbundle-settings { padding:14px; border:1px solid #dbe4dc; background:#fff; border-radius:6px; }
+.smartbundle-settings summary { cursor:pointer; color:#31594c; font-weight:650; }
+.smartbundle-settings form { display:grid; gap:12px; margin-top:16px; }
+.smartbundle-settings label { display:flex; align-items:center; gap:8px; }
+.smartbundle-settings fieldset { display:grid; gap:6px; border:1px solid #dbe4dc; border-radius:6px; padding:10px; }
+.smartbundle-settings input[type=number] { max-width:76px; }
+.smartbundle-settings button { justify-self:start; padding:8px 12px; background:#31594c; color:white; border:0; border-radius:6px; cursor:pointer; }
+.smartbundle-settings p { margin:8px 0 0; }

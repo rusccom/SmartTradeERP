@@ -1,0 +1,35 @@
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema: {type: string, format: uuid}
+get:
+  summary: Read storefront pricing and component choices for an ERP bundle variant
+  responses:
+    '200':
+      description: Settings and component slots with available catalog variants
+put:
+  summary: Set the permitted variants and discounts for this bundle
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [mode, discount, slots]
+          properties:
+            mode: {type: string, enum: [fixed, dynamic]}
+            discount: {type: string, description: Percentage from 0 to 100}
+            slots:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  discount: {type: string}
+                  options:
+                    type: array
+                    items: {type: string, format: uuid}
+  responses:
+    '200': {description: Saved settings and component slots}
+    '400': {description: Invalid choices or discount}
+    '404': {description: Bundle not found}

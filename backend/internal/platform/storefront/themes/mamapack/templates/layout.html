@@ -1,0 +1,15 @@
+{{define "layout"}}<!doctype html>
+<html lang="pl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+{{template "seo-head" .Layout}}
+<link rel="icon" href="/_assets/themes/mamapack/logo.webp">
+<link rel="stylesheet" href="/_assets/themes/mamapack/theme.css?v={{.Layout.Theme.AssetVersion}}">
+<style>:root{ {{.Layout.Theme.TokenCSS}} }</style>
+<script type="module" src="/_assets/storefront.js?v=2"></script>
+<script type="module" src="/_assets/themes/mamapack/shop.js"></script>
+</head><body>
+<a class="skip" href="#main">Przejdź do treści</a>
+{{template "header" .Layout}}
+<main id="main" class="wrap">{{template "content" .}}</main>
+<footer class="footer wrap"><a href="/">MamaPack</a><span>Wyprawka dla mamy i dziecka</span><a href="/cart">Koszyk →</a></footer>
+</body></html>{{end}}

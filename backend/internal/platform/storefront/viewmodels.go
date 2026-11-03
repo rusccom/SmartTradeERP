@@ -1,15 +1,22 @@
 package storefront
 
-import "html/template"
+import (
+	"html/template"
+
+	"smarterp/backend/internal/platform/storefront/catalog"
+)
 
 // LayoutVM is the shared chrome every themed page renders: brand, theme tokens,
 // SEO head, and navigation. It is identical across themes so all shops share the
 // same structure and differ only visually.
 type LayoutVM struct {
-	Brand BrandVM
-	Theme ThemeVM
-	SEO   SeoVM
-	Nav   []NavItemVM
+	Brand         BrandVM
+	Theme         ThemeVM
+	SEO           SeoVM
+	Nav           []NavItemVM
+	Preview, Demo bool
+	Language      string
+	CartScope     string
 }
 
 type BrandVM struct {
@@ -41,43 +48,20 @@ type NavItemVM struct {
 	URL   string
 }
 
-// MoneyVM keeps a display string for the theme plus a raw amount and ISO code
-// for structured data, so themes never format currency themselves.
-type MoneyVM struct {
-	Display string
-	Amount  string
-	Code    string
-}
-
-type ProductCardVM struct {
-	Name     string
-	URL      string
-	ImageURL string
-	Price    MoneyVM
-	HasPrice bool
-}
-
-type ProductVariantVM struct {
-	VariantID string
-	Name      string
-	SKU       string
-	Price     MoneyVM
-	HasPrice  bool
-}
-
 type CartVM struct {
 	Layout LayoutVM
 }
 
 type HomeVM struct {
 	Layout   LayoutVM
-	Products []ProductCardVM
+	Products []catalog.Card
 	Sections []string
 }
 
 type ListVM struct {
+	Title    string
 	Layout   LayoutVM
-	Products []ProductCardVM
+	Products []catalog.Card
 	Page     int
 	HasPrev  bool
 	HasNext  bool
@@ -90,9 +74,9 @@ type ProductDetailVM struct {
 	Name        string
 	Description string
 	Images      []string
-	Price       MoneyVM
+	Price       catalog.Money
 	HasPrice    bool
-	Variants    []ProductVariantVM
+	Variants    []catalog.VariantView
 }
 
 type NotFoundVM struct {

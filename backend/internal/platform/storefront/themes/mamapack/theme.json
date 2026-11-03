@@ -1,0 +1,17 @@
+{
+  "id": "mamapack",
+  "name": "MamaPack",
+  "preview_url": "/_assets/themes/mamapack/hospital-bag.webp",
+  "tokens": {
+    "color-bg": "#fffdf9",
+    "color-fg": "#283e3c",
+    "color-primary": "#315952",
+    "color-border": "#d9ded4",
+    "color-muted": "#546662"
+  },
+  "collections": {"gotowe-torby-do-szpitala": "Gotowe torby do szpitala"},
+  "pages": {
+    "/pages/zlozsam": "builder",
+    "/pages/gotowe-torby": "bags"
+  }
+}

@@ -1,0 +1,7 @@
+{{define "header"}}
+{{if .Preview}}<div class="preview-bar">Podgląd sklepu{{if .Demo}} · Katalog przykładowy{{end}} · Zamówienia próbne</div>{{end}}
+<header class="header wrap">
+<a class="logo" href="/" aria-label="MamaPack — strona główna">{{if .Brand.LogoURL}}<img src="{{.Brand.LogoURL}}" alt="{{.Brand.TenantName}}">{{else}}<img src="/_assets/themes/mamapack/logo.webp" alt="MamaPack">{{end}}</a>
+<nav aria-label="Sklep"><a href="/pages/zlozsam">Złóż to sama</a><a href="/pages/gotowe-torby">Gotowe torby</a><a href="/products">Produkty</a></nav>
+<a class="bag-link" href="/cart"><svg width="20" height="22" viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3.8 8.5h16.4l1 14H2.8l1-14Z"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg>Koszyk <span data-sf-cart-count>0</span></a>
+</header>{{end}}

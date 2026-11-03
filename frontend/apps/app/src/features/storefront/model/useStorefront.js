@@ -30,12 +30,19 @@ async function fetchInitial(signal, setters) {
       loadStorefrontThemes(signal),
       loadStorefrontSettings(signal),
     ]);
-    setters.setThemes(themes);
+    setters.setThemes(themePreviews(themes, settings?.shop_url));
     applySettings(themes, settings, setters);
     setters.setMeta((meta) => ({ ...meta, loading: false }));
   } catch (error) {
     failInitial(error, setters.setMeta);
   }
+}
+
+function themePreviews(themes, shopUrl) {
+  return themes.map(theme => ({
+    ...theme,
+    preview_url: theme.preview_url && shopUrl ? new URL(theme.preview_url, shopUrl).href : "",
+  }));
 }
 
 function failInitial(error, setMeta) {

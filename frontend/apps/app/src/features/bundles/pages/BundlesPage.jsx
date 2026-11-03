@@ -12,7 +12,7 @@ import {
   toComponentPayload,
 } from "../model/bundleComponents";
 import BundleCreateModal from "../ui/BundleCreateModal";
-import BundleComponentsEditor from "../ui/BundleComponentsEditor";
+import BundleWorkspace from "../ui/BundleWorkspace";
 import BundleList from "../ui/BundleList";
 import "../ui/bundles.css";
 
@@ -24,19 +24,17 @@ function BundlesPage() {
   return (
     <>
       <main className="bundles-page">
-        <BundleList
-          bundles={state.bundles}
-          loading={state.loading}
-          selectedID={state.selectedID}
-          onCreate={() => setCreateOpen(true)}
-          onSelect={state.selectBundle}
-          onReload={state.reload}
-        />
-        <BundleComponentsEditor {...editorProps(state)} />
+        <BundleList {...listProps(state, () => setCreateOpen(true))} />
+        <BundleWorkspace {...editorProps(state)} />
       </main>
       <BundleCreateModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={state.reload} />
     </>
   );
+}
+
+function listProps(state, onCreate) {
+  return { bundles: state.bundles, loading: state.loading, selectedID: state.selectedID,
+    onCreate, onSelect: state.selectBundle, onReload: state.reload };
 }
 
 function editorProps(state) {

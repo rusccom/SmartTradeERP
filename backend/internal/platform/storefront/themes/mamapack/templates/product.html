@@ -1,0 +1,6 @@
+{{define "content"}}<nav class="crumb"><a href="/">MamaPack</a> / <a href="/products">Produkty</a></nav>
+<article class="detail"><div class="gallery">{{range .Images}}<img src="{{.}}" alt="{{$.Name}}" loading="lazy">{{end}}</div>
+<div><p class="eyebrow">Wyprawka MamaPack</p><h1>{{.Name}}</h1>{{if .Description}}<p>{{.Description}}</p>{{end}}
+{{range .Variants}}{{if .Slots}}{{template "configurator" .}}{{else}}<div class="buy-row"><div>{{if ne .Name "Default"}}<b>{{.Name}}</b>{{end}}{{if .HasPrice}}<span>{{.Price.Display}}</span>{{end}}</div>
+<button type="button" class="button" data-sf-add="{{.VariantID}}" data-added="Dodano ✓" {{if not .Purchasable}}disabled{{end}}>{{if .Purchasable}}Dodaj do koszyka{{else}}Niedostępny{{end}}</button></div>{{end}}{{else}}<p>Produkt chwilowo niedostępny.</p>{{end}}
+<a class="text-link" href="/cart">Zobacz koszyk →</a></div></article>{{end}}

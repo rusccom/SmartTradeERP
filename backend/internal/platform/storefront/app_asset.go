@@ -1,18 +1,31 @@
 package storefront
 
 import (
-	_ "embed"
+	"io/fs"
 	"net/http"
+	"path"
 )
 
-// storefrontJS is the shared progressive-enhancement cart script, identical
-// across themes. Themes provide the markup hooks (data-sf-*); this drives them.
-//
-//go:embed assets/storefront.js
-var storefrontJS []byte
+func (h *Handler) assets(mux *http.ServeMux) {
+	mux.HandleFunc("GET /_assets/themes/{theme}/theme.css", h.ThemeCSS)
+	mux.HandleFunc("GET /_assets/themes/{theme}/{file}", func(w http.ResponseWriter, r *http.Request) {
+		theme := r.PathValue("theme")
+		if !h.registry.Has(theme) {
+			http.NotFound(w, r)
+			return
+		}
+		serveAsset(w, r, path.Join("themes", theme, "assets"), r.PathValue("file"))
+	})
+	mux.HandleFunc("GET /_assets/{file}", func(w http.ResponseWriter, r *http.Request) {
+		serveAsset(w, r, "assets", r.PathValue("file"))
+	})
+}
 
-func (h *Handler) AppJS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-	w.Header().Set("Cache-Control", "public, max-age=3600")
-	_, _ = w.Write(storefrontJS)
+func serveAsset(w http.ResponseWriter, r *http.Request, dir, file string) {
+	if !fs.ValidPath(dir) || !fs.ValidPath(file) || path.Base(file) != file || file == "." {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Cache-Control", "public, max-age=0, must-revalidate")
+	http.ServeFileFS(w, r, themesFS, path.Join(dir, file))
 }

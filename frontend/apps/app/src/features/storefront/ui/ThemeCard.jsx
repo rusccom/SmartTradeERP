@@ -5,7 +5,9 @@ function ThemeCard({ theme, selected, onSelect, t }) {
       className={selected ? "theme-card is-selected" : "theme-card"}
       onClick={() => onSelect(theme.id)}
     >
-      <span className="theme-card-preview" style={previewStyle(theme.tokens)} />
+      <span className="theme-card-preview" style={previewStyle(theme.tokens)}>
+        {theme.preview_url && <img src={theme.preview_url} alt="" loading="lazy" />}
+      </span>
       <span className="theme-card-name">{theme.name}</span>
       <span className="theme-card-state">{selected ? t("storefront.selected") : t("storefront.use")}</span>
     </button>

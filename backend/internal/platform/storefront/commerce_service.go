@@ -1,174 +1,196 @@
 package storefront
 
 import (
-	"context"
+	"errors"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 
-	"smarterp/backend/internal/shared/db"
+	"smarterp/backend/internal/integrations/smartbundle"
+	"smarterp/backend/internal/platform/storefront/catalog"
 	"smarterp/backend/internal/shared/validation"
 )
 
 const maxLineQty = 100000
 
-// Commerce prices carts and places orders. All prices come from the database;
-// the client is trusted only for variant ids and quantities.
-type Commerce struct {
-	store *db.Store
-	repo  *Repository
+type pricedCart struct {
+	lines   []cartLine
+	items   []orderItemRecord
+	total   decimal.Decimal
+	blocked bool
 }
 
-func NewCommerce(store *db.Store, repo *Repository) *Commerce {
-	return &Commerce{store: store, repo: repo}
+type catalogEntry struct {
+	name    string
+	variant catalog.Variant
 }
 
-func (c *Commerce) PriceCart(ctx context.Context, tenantID string, items []cartItemInput) (cartResult, error) {
-	cur, err := c.repo.TenantCurrency(ctx, tenantID)
-	if err != nil {
-		return cartResult{}, err
+func (sh *shop) priceCart(input []cartItemInput) (pricedCart, error) {
+	if len(input) == 0 {
+		return pricedCart{lines: []cartLine{}}, nil
 	}
-	lines, total, err := c.buildLines(ctx, tenantID, cur, items)
+	ids, err := cartIDs(input)
 	if err != nil {
-		return cartResult{}, err
+		return pricedCart{}, err
 	}
-	return cartResult{Lines: lines, Total: formatMoney(total, cur).Display, Currency: cur.code}, nil
+	products, err := sh.catalog(catalog.Filter{VariantIDs: ids})
+	if err != nil {
+		return pricedCart{}, err
+	}
+	return sh.quoteItems(input, indexCatalog(products)), nil
 }
 
-func (c *Commerce) buildLines(ctx context.Context, tenantID string, cur currency, items []cartItemInput) ([]cartLine, decimal.Decimal, error) {
-	lines := make([]cartLine, 0, len(items))
-	total := decimal.Zero
+func (sh *shop) quoteItems(input []cartItemInput, index map[string]catalogEntry) pricedCart {
+	cart := pricedCart{lines: make([]cartLine, 0, len(input))}
+	needs := make([][]smartbundle.Component, 0, len(input))
+	for _, item := range input {
+		line, record, components := sh.priceLine(item, index[item.VariantID])
+		cart.lines = append(cart.lines, line)
+		cart.items = append(cart.items, record)
+		cart.total = cart.total.Add(record.Total)
+		needs = append(needs, components)
+	}
+	cart.checkStock(needs)
+	return cart
+}
+
+func cartIDs(items []cartItemInput) ([]string, error) {
+	if len(items) > 300 {
+		return nil, validation.ErrInvalidData
+	}
+	ids := make([]string, 0, len(items))
 	for _, item := range items {
-		line, lineTotal, ok, err := c.lineFor(ctx, tenantID, cur, item)
-		if err != nil {
-			return nil, decimal.Zero, err
+		if !validation.UUID(item.VariantID) || !item.Qty.IsPositive() || item.Qty.GreaterThan(decimal.NewFromInt(maxLineQty)) {
+			return nil, validation.ErrInvalidData
 		}
-		if ok {
-			lines = append(lines, line)
-			total = total.Add(lineTotal)
-		}
+		ids = append(ids, item.VariantID)
 	}
-	return lines, total, nil
+	return ids, nil
 }
 
-func (c *Commerce) lineFor(ctx context.Context, tenantID string, cur currency, item cartItemInput) (cartLine, decimal.Decimal, bool, error) {
-	if !validQty(item.Qty) {
-		return cartLine{}, decimal.Zero, false, nil
+func indexCatalog(products []catalog.Product) map[string]catalogEntry {
+	out := make(map[string]catalogEntry)
+	for _, product := range products {
+		for _, v := range product.Variants {
+			out[v.ID] = catalogEntry{product.Name, v}
+		}
 	}
-	price, found, err := c.repo.PriceVariant(ctx, tenantID, item.VariantID)
-	if err != nil || !found {
-		return cartLine{}, decimal.Zero, false, err
-	}
-	stock, err := c.repo.VariantStock(ctx, tenantID, item.VariantID)
+	return out
+}
+
+func (sh *shop) priceLine(item cartItemInput, entry catalogEntry) (cartLine, orderItemRecord, []smartbundle.Component) {
+	v, cur := entry.variant, sh.brand.Currency
+	line := cartLine{VariantID: item.VariantID, Picks: item.Picks, Qty: item.Qty.String(), ProductName: entry.name, VariantName: v.Name}
+	q, err := resolveVariant(v, item.Picks, cur.places)
 	if err != nil {
-		return cartLine{}, decimal.Zero, false, err
+		return line, orderItemRecord{}, nil
 	}
-	lineTotal := price.Price.Mul(item.Qty).Round(4)
-	return buildCartLine(item.VariantID, price, item.Qty, lineTotal, stock, cur), lineTotal, true, nil
+	total := q.Price.Mul(item.Qty).Round(cur.places)
+	line.UnitPrice, line.LineTotal = formatMoney(q.Price, cur).Display, formatMoney(total, cur).Display
+	line.Available = availableUnits(q.Components).String()
+	line.Purchasable = true
+	if v.Bundle != nil {
+		line.Components = q.Components
+	}
+	record := orderItemRecord{ID: uuid.NewString(), VariantID: v.ID, ProductName: entry.name, VariantName: v.Name,
+		Qty: item.Qty, UnitPrice: q.Price, Total: total, Components: line.Components}
+	return line, record, q.Components
 }
 
-func buildCartLine(variantID string, price variantPrice, qty, lineTotal, stock decimal.Decimal, cur currency) cartLine {
-	return cartLine{
-		VariantID:   variantID,
-		ProductName: price.ProductName,
-		VariantName: price.VariantName,
-		Qty:         qty.String(),
-		UnitPrice:   formatMoney(price.Price, cur).Display,
-		LineTotal:   formatMoney(lineTotal, cur).Display,
-		Available:   stock.String(),
-		Purchasable: stock.GreaterThanOrEqual(qty),
+func resolveVariant(v catalog.Variant, picks map[string]string, places int32) (smartbundle.Quote, error) {
+	if v.Bundle != nil {
+		return v.Bundle.Resolve(v.Price, picks, places)
+	}
+	if v.Price == nil || len(picks) > 0 {
+		return smartbundle.Quote{}, smartbundle.ErrSelection
+	}
+	return smartbundle.Quote{Price: *v.Price, Components: []smartbundle.Component{
+		{VariantID: v.ID, Qty: decimal.NewFromInt(1), Stock: v.Stock},
+	}}, nil
+}
+
+func (cart *pricedCart) checkStock(needs [][]smartbundle.Component) {
+	demand := map[string]decimal.Decimal{}
+	for i, components := range needs {
+		for _, c := range components {
+			demand[c.VariantID] = demand[c.VariantID].Add(c.Qty.Mul(cart.items[i].Qty))
+		}
+	}
+	for i, components := range needs {
+		for _, c := range components {
+			if demand[c.VariantID].GreaterThan(c.Stock) {
+				cart.lines[i].Purchasable = false
+			}
+		}
+		if !cart.lines[i].Purchasable {
+			cart.blocked = true
+		}
 	}
 }
 
-// Checkout re-prices every line server-side and persists an order. Stock is
-// advisory (returned in cart preview); the merchant fulfils from the ERP.
-func (c *Commerce) Checkout(ctx context.Context, tenantID string, req checkoutRequest) (orderResult, error) {
+func availableUnits(components []smartbundle.Component) decimal.Decimal {
+	amounts := map[string]decimal.Decimal{}
+	for _, c := range components {
+		amounts[c.VariantID] = amounts[c.VariantID].Add(c.Qty)
+	}
+	var result decimal.Decimal
+	for i, c := range components {
+		units := c.Stock.Div(amounts[c.VariantID])
+		if i == 0 || units.LessThan(result) {
+			result = units
+		}
+	}
+	return result
+}
+
+var errStock = errors.New("cart contains unavailable items")
+
+func (sh *shop) place(req checkoutRequest) (orderResult, error) {
 	if err := validateCustomer(req.Customer); err != nil {
 		return orderResult{}, err
 	}
-	cur, err := c.repo.TenantCurrency(ctx, tenantID)
-	if err != nil {
-		return orderResult{}, err
-	}
-	items, total, err := c.orderItems(ctx, tenantID, req.Items)
-	if err != nil {
-		return orderResult{}, err
-	}
-	if len(items) == 0 {
+	if len(req.Items) == 0 {
 		return orderResult{}, ErrCartEmpty
 	}
-	return c.persistOrder(ctx, tenantID, cur, req, items, total)
-}
-
-func (c *Commerce) orderItems(ctx context.Context, tenantID string, items []cartItemInput) ([]orderItemRecord, decimal.Decimal, error) {
-	records := make([]orderItemRecord, 0, len(items))
-	total := decimal.Zero
-	for _, item := range items {
-		record, ok, err := c.orderItem(ctx, tenantID, item)
-		if err != nil {
-			return nil, decimal.Zero, err
-		}
-		if ok {
-			records = append(records, record)
-			total = total.Add(record.Total)
-		}
-	}
-	return records, total, nil
-}
-
-func (c *Commerce) orderItem(ctx context.Context, tenantID string, item cartItemInput) (orderItemRecord, bool, error) {
-	if !validQty(item.Qty) {
-		return orderItemRecord{}, false, nil
-	}
-	price, found, err := c.repo.PriceVariant(ctx, tenantID, item.VariantID)
-	if err != nil || !found {
-		return orderItemRecord{}, false, err
-	}
-	total := price.Price.Mul(item.Qty).Round(4)
-	return orderItemRecord{
-		ID: uuid.NewString(), VariantID: item.VariantID, ProductName: price.ProductName,
-		VariantName: price.VariantName, UnitPrice: price.Price, Qty: item.Qty, Total: total,
-	}, true, nil
-}
-
-func (c *Commerce) persistOrder(ctx context.Context, tenantID string, cur currency, req checkoutRequest, items []orderItemRecord, total decimal.Decimal) (orderResult, error) {
-	order := buildOrderRecord(tenantID, cur, req, total)
-	err := c.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
-		return c.repo.InsertOrder(ctx, tx, order, items)
-	})
+	cart, err := sh.priceCart(req.Items)
 	if err != nil {
 		return orderResult{}, err
 	}
-	return orderResult{Number: order.Number, Total: formatMoney(total, cur).Display, Currency: cur.code, Status: "new"}, nil
+	if cart.blocked {
+		return orderResult{}, errStock
+	}
+	return sh.finishOrder(req, cart)
 }
 
-func buildOrderRecord(tenantID string, cur currency, req checkoutRequest, total decimal.Decimal) orderRecord {
+func (sh *shop) finishOrder(req checkoutRequest, cart pricedCart) (orderResult, error) {
+	cur := sh.brand.Currency
+	result := orderResult{Total: formatMoney(cart.total, cur).Display, Currency: cur.code, Status: "preview"}
+	if sh.preview {
+		return result, nil
+	}
+	order := sh.order(req, cart.total)
+	err := sh.service.repo.store.WithTenantTx(sh.ctx, sh.tenantID, func(tx pgx.Tx) error {
+		return sh.service.repo.InsertOrder(sh.ctx, tx, order, cart.items)
+	})
+	result.Number, result.Status = order.Number, "new"
+	return result, err
+}
+
+func (sh *shop) order(req checkoutRequest, total decimal.Decimal) orderRecord {
 	return orderRecord{
-		ID: uuid.NewString(), TenantID: tenantID, Number: orderNumber(),
-		CustomerName:  strings.TrimSpace(req.Customer.Name),
-		CustomerEmail: strings.TrimSpace(req.Customer.Email),
-		CustomerPhone: strings.TrimSpace(req.Customer.Phone),
-		Address:       strings.TrimSpace(req.Customer.Address),
-		Note:          strings.TrimSpace(req.Note),
-		CurrencyCode:  cur.code, Total: total,
+		ID: uuid.NewString(), TenantID: sh.tenantID, Number: "SF-" + strings.ToUpper(uuid.NewString()[:8]),
+		CustomerName: strings.TrimSpace(req.Customer.Name), CustomerEmail: strings.TrimSpace(req.Customer.Email),
+		CustomerPhone: strings.TrimSpace(req.Customer.Phone), Address: strings.TrimSpace(req.Customer.Address),
+		Note: strings.TrimSpace(req.Note), CurrencyCode: sh.brand.Currency.code, Total: total,
 	}
 }
 
-func orderNumber() string {
-	return "SF-" + strings.ToUpper(uuid.NewString()[:8])
-}
-
-func validateCustomer(cust checkoutCustomer) error {
-	name := strings.TrimSpace(cust.Name)
-	email := strings.TrimSpace(cust.Email)
-	if name == "" || len([]rune(name)) > 160 || email == "" || !validation.Email(email) {
+func validateCustomer(c checkoutCustomer) error {
+	name := strings.TrimSpace(c.Name)
+	if name == "" || len([]rune(name)) > 160 || !validation.Email(strings.TrimSpace(c.Email)) {
 		return ErrCheckoutInvalid
 	}
 	return nil
-}
-
-func validQty(qty decimal.Decimal) bool {
-	return qty.GreaterThan(decimal.Zero) && qty.LessThanOrEqual(decimal.NewFromInt(maxLineQty))
 }

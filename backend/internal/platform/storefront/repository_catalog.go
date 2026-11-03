@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/shopspring/decimal"
 )
 
 type brandRow struct {
@@ -15,30 +14,6 @@ type brandRow struct {
 	Sections   []byte
 	LogoKey    string
 	Currency   currency
-}
-
-type productCardRow struct {
-	Name     string
-	Slug     string
-	ImageKey string
-	MinPrice decimal.Decimal
-	HasPrice bool
-}
-
-type productDetailRow struct {
-	ID             string
-	Name           string
-	Slug           string
-	SEOTitle       string
-	SEODescription string
-}
-
-type variantRow struct {
-	ID       string
-	Name     string
-	SKU      string
-	Price    decimal.Decimal
-	HasPrice bool
 }
 
 const brandPublishedSQL = `SELECT t.name,
@@ -85,109 +60,6 @@ func (r *Repository) LoadBrand(ctx context.Context, tenantID string, preview boo
 	}
 	out.Currency = currency{code: code, symbol: symbol, places: int32(places)}
 	return out, nil
-}
-
-const listProductsSQL = `SELECT p.name, p.slug,
-        COALESCE(pi.object_key, ''),
-        COALESCE(pr.min_price, 0),
-        (pr.min_price IS NOT NULL)
-    FROM catalog.products p
-    LEFT JOIN LATERAL (
-        SELECT m.object_key FROM platform.media_objects m
-        WHERE m.tenant_id = p.tenant_id AND m.owner_type = 'product' AND m.owner_id = p.id AND m.status = 'ready'
-        ORDER BY m.is_primary DESC, m.sort_order, m.created_at LIMIT 1
-    ) pi ON true
-    LEFT JOIN LATERAL (
-        SELECT MIN(v.price) AS min_price FROM catalog.product_variants v
-        WHERE v.tenant_id = p.tenant_id AND v.product_id = p.id AND v.is_published AND v.price IS NOT NULL
-    ) pr ON true
-    WHERE p.is_published
-    ORDER BY p.created_at DESC
-    LIMIT $1 OFFSET $2`
-
-func (r *Repository) ListPublishedProducts(ctx context.Context, tenantID string, limit, offset int) ([]productCardRow, error) {
-	rows, err := r.store.Query(ctx, tenantID, listProductsSQL, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return scanCards(rows)
-}
-
-func scanCards(rows pgx.Rows) ([]productCardRow, error) {
-	cards := make([]productCardRow, 0)
-	for rows.Next() {
-		card := productCardRow{}
-		if err := rows.Scan(&card.Name, &card.Slug, &card.ImageKey, &card.MinPrice, &card.HasPrice); err != nil {
-			return nil, err
-		}
-		cards = append(cards, card)
-	}
-	return cards, rows.Err()
-}
-
-func (r *Repository) CountPublishedProducts(ctx context.Context, tenantID string) (int, error) {
-	const query = `SELECT COUNT(*) FROM catalog.products WHERE is_published`
-	total := 0
-	err := r.store.QueryRow(ctx, tenantID, query).Scan(&total)
-	return total, err
-}
-
-const productBySlugSQL = `SELECT p.id::text, p.name, p.slug, COALESCE(p.seo_title, ''), COALESCE(p.seo_description, '')
-    FROM catalog.products p
-    WHERE p.slug = $1 AND p.is_published
-    LIMIT 1`
-
-func (r *Repository) ProductBySlug(ctx context.Context, tenantID, slug string) (productDetailRow, error) {
-	out := productDetailRow{}
-	err := r.store.QueryRow(ctx, tenantID, productBySlugSQL, slug).Scan(
-		&out.ID, &out.Name, &out.Slug, &out.SEOTitle, &out.SEODescription)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return productDetailRow{}, ErrProductNotFound
-		}
-		return productDetailRow{}, err
-	}
-	return out, nil
-}
-
-const variantsSQL = `SELECT v.id::text, COALESCE(v.name, 'Default'), COALESCE(v.sku_code, ''), COALESCE(v.price, 0), (v.price IS NOT NULL)
-    FROM catalog.product_variants v
-    WHERE v.product_id = $1 AND v.is_published
-    ORDER BY v.created_at`
-
-func (r *Repository) VariantsForProduct(ctx context.Context, tenantID, productID string) ([]variantRow, error) {
-	rows, err := r.store.Query(ctx, tenantID, variantsSQL, productID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return scanVariants(rows)
-}
-
-func scanVariants(rows pgx.Rows) ([]variantRow, error) {
-	variants := make([]variantRow, 0)
-	for rows.Next() {
-		v := variantRow{}
-		if err := rows.Scan(&v.ID, &v.Name, &v.SKU, &v.Price, &v.HasPrice); err != nil {
-			return nil, err
-		}
-		variants = append(variants, v)
-	}
-	return variants, rows.Err()
-}
-
-const productImagesSQL = `SELECT m.object_key FROM platform.media_objects m
-    WHERE m.owner_type = 'product' AND m.owner_id = $1 AND m.status = 'ready'
-    ORDER BY m.is_primary DESC, m.sort_order, m.created_at`
-
-func (r *Repository) ProductImageKeys(ctx context.Context, tenantID, productID string) ([]string, error) {
-	rows, err := r.store.Query(ctx, tenantID, productImagesSQL, productID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return scanStrings(rows)
 }
 
 const slugsSQL = `SELECT slug FROM catalog.products

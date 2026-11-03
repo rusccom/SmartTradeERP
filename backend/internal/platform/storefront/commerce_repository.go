@@ -2,19 +2,13 @@ package storefront
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 
+	"smarterp/backend/internal/integrations/smartbundle"
 	"smarterp/backend/internal/shared/db"
 )
-
-type variantPrice struct {
-	ProductName string
-	VariantName string
-	Price       decimal.Decimal
-}
 
 type orderRecord struct {
 	ID            string
@@ -30,6 +24,7 @@ type orderRecord struct {
 }
 
 type orderItemRecord struct {
+	Components  []smartbundle.Component
 	ID          string
 	VariantID   string
 	ProductName string
@@ -39,66 +34,13 @@ type orderItemRecord struct {
 	Total       decimal.Decimal
 }
 
-const priceVariantSQL = `SELECT p.name, COALESCE(v.name, 'Default'), COALESCE(v.price, 0)
-    FROM catalog.product_variants v
-    JOIN catalog.products p ON p.id = v.product_id
-    WHERE v.id = $1 AND v.is_published AND p.is_published
-    LIMIT 1`
-
-// PriceVariant returns the server-authoritative price for a published variant.
-// found is false when the variant is missing, unpublished, or cross-tenant.
-func (r *Repository) PriceVariant(ctx context.Context, tenantID, variantID string) (variantPrice, bool, error) {
-	out := variantPrice{}
-	err := r.store.QueryRow(ctx, tenantID, priceVariantSQL, variantID).Scan(&out.ProductName, &out.VariantName, &out.Price)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return variantPrice{}, false, nil
-	}
-	if err != nil {
-		return variantPrice{}, false, err
-	}
-	return out, true, nil
-}
-
-const variantStockSQL = `SELECT COALESCE(running_qty, 0)
-    FROM ledger.cost_movement_results r
-    JOIN ledger.inventory_movements m ON m.id = r.movement_id
-    JOIN ledger.posting_batches b ON b.id = m.posting_batch_id
-    WHERE r.variant_id = $1 AND b.status = 'active'
-    ORDER BY r.sequence_num DESC LIMIT 1`
-
-func (r *Repository) VariantStock(ctx context.Context, tenantID, variantID string) (decimal.Decimal, error) {
-	qty := decimal.Zero
-	err := r.store.QueryRow(ctx, tenantID, variantStockSQL, variantID).Scan(&qty)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return decimal.Zero, nil
-	}
-	return qty, err
-}
-
-const tenantCurrencySQL = `SELECT COALESCE(c.code, ''), COALESCE(c.symbol, ''), COALESCE(c.decimal_places, 2)
-    FROM platform.tenant_settings ts
-    LEFT JOIN platform.currencies c ON c.id = ts.base_currency_id`
-
-func (r *Repository) TenantCurrency(ctx context.Context, tenantID string) (currency, error) {
-	var code, symbol string
-	var places int
-	err := r.store.QueryRow(ctx, tenantID, tenantCurrencySQL).Scan(&code, &symbol, &places)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return currency{places: 2}, nil
-	}
-	if err != nil {
-		return currency{}, err
-	}
-	return currency{code: code, symbol: symbol, places: int32(places)}, nil
-}
-
 const insertOrderSQL = `INSERT INTO storefront.orders
         (id, tenant_id, number, status, customer_name, customer_email, customer_phone, shipping_address, currency_code, total_amount, note)
     VALUES ($1, $2, $3, 'new', $4, $5, $6, $7, $8, $9, $10)`
 
 const insertOrderItemSQL = `INSERT INTO storefront.order_items
-        (id, order_id, variant_id, product_name, variant_name, unit_price, qty, total_amount, tenant_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+        (id, order_id, variant_id, product_name, variant_name, unit_price, qty, total_amount, tenant_id, bundle_components)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 
 func (r *Repository) InsertOrder(ctx context.Context, tx db.DBTX, order orderRecord, items []orderItemRecord) error {
 	if err := insertOrderRow(ctx, tx, order); err != nil {
@@ -119,7 +61,14 @@ func insertOrderRow(ctx context.Context, tx db.DBTX, o orderRecord) error {
 }
 
 func insertOrderItem(ctx context.Context, tx db.DBTX, order orderRecord, item orderItemRecord) error {
-	_, err := tx.Exec(ctx, insertOrderItemSQL, item.ID, order.ID, item.VariantID,
-		item.ProductName, item.VariantName, item.UnitPrice, item.Qty, item.Total, order.TenantID)
+	if item.Components == nil {
+		item.Components = []smartbundle.Component{}
+	}
+	components, err := json.Marshal(item.Components)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, insertOrderItemSQL, item.ID, order.ID, item.VariantID,
+		item.ProductName, item.VariantName, item.UnitPrice, item.Qty, item.Total, order.TenantID, components)
 	return err
 }
