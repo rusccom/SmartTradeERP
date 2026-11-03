@@ -3,19 +3,25 @@ package db
 import (
 	"context"
 	"net/url"
-	"time"
 
 	pgxdecimal "github.com/jackc/pgx-shopspring-decimal"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
+type PoolPurpose uint8
+
+const (
+	ServicePool PoolPurpose = iota
+	MigrationPool
+)
+
+func Connect(ctx context.Context, databaseURL string, purpose PoolPurpose) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		return nil, err
 	}
-	configurePool(config, databaseURL)
+	configurePool(config, databaseURL, purpose)
 	config.AfterConnect = registerTypes
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
@@ -28,22 +34,18 @@ func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func configurePool(config *pgxpool.Config, databaseURL string) {
-	if !poolParamSet(databaseURL, "pool_max_conns") {
-		config.MaxConns = 20
+func configurePool(config *pgxpool.Config, databaseURL string, purpose PoolPurpose) {
+	limit := int32(4)
+	if purpose == MigrationPool {
+		limit = 1
+		config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 	}
+	config.MaxConns = min(config.MaxConns, limit)
 	if !poolParamSet(databaseURL, "pool_min_conns") {
 		config.MinConns = 1
 	}
-	if !poolParamSet(databaseURL, "pool_max_conn_lifetime") {
-		config.MaxConnLifetime = time.Hour
-	}
-	if !poolParamSet(databaseURL, "pool_max_conn_idle_time") {
-		config.MaxConnIdleTime = 30 * time.Minute
-	}
-	if !poolParamSet(databaseURL, "pool_health_check_period") {
-		config.HealthCheckPeriod = time.Minute
-	}
+	config.MinConns = min(config.MinConns, config.MaxConns)
+	config.MinIdleConns = min(config.MinIdleConns, config.MaxConns)
 }
 
 func poolParamSet(databaseURL string, key string) bool {

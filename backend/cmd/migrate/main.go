@@ -11,6 +11,9 @@ import (
     "time"
 
     "github.com/jackc/pgx/v5"
+    "github.com/jackc/pgx/v5/pgxpool"
+
+    "smarterp/backend/internal/shared/db"
 )
 
 type Config struct {
@@ -34,15 +37,23 @@ func run() error {
     if err := validateConfig(cfg); err != nil {
         return err
     }
-    conn, err := connect(cfg.DatabaseURL)
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+    pool, err := db.Connect(ctx, cfg.DatabaseURL, db.MigrationPool)
     if err != nil {
         return err
     }
-    defer conn.Close(context.Background())
+    defer pool.Close()
+    return pool.AcquireFunc(ctx, func(conn *pgxpool.Conn) error {
+        return migrate(conn.Conn(), cfg.MigrationsDir)
+    })
+}
+
+func migrate(conn *pgx.Conn, dir string) error {
     if err := ensureMigrationsTable(conn); err != nil {
         return err
     }
-    files, err := listMigrationFiles(cfg.MigrationsDir)
+    files, err := listMigrationFiles(dir)
     if err != nil {
         return err
     }
@@ -61,17 +72,6 @@ func validateConfig(cfg Config) error {
         return errors.New("DATABASE_URL is required")
     }
     return nil
-}
-
-func connect(databaseURL string) (*pgx.Conn, error) {
-    parsed, err := pgx.ParseConfig(databaseURL)
-    if err != nil {
-        return nil, err
-    }
-    parsed.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
-    return pgx.ConnectConfig(ctx, parsed)
 }
 
 func ensureMigrationsTable(conn *pgx.Conn) error {

@@ -12,7 +12,7 @@ import (
 )
 
 func Build(ctx context.Context, cfg config.Config) (*http.Server, func(), error) {
-	pool, err := db.Connect(ctx, cfg.DatabaseURL)
+	pool, err := db.Connect(ctx, cfg.DatabaseURL, db.ServicePool)
 	if err != nil {
 		return nil, nil, err
 	}

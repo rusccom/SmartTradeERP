@@ -14,7 +14,7 @@ import (
 // separate process from the ERP API with its own database pool and request
 // timeouts so a crawler storm on a shop cannot starve the authenticated API.
 func BuildStorefront(ctx context.Context, cfg config.Config) (*http.Server, func(), error) {
-	pool, err := db.Connect(ctx, cfg.DatabaseURL)
+	pool, err := db.Connect(ctx, cfg.DatabaseURL, db.ServicePool)
 	if err != nil {
 		return nil, nil, err
 	}
