@@ -2,6 +2,7 @@ package storefront
 
 import (
 	"errors"
+	"mime"
 	"net/http"
 
 	"smarterp/backend/internal/shared/httpx"
@@ -22,8 +23,7 @@ func (h *Handler) quote(w http.ResponseWriter, r *http.Request, sh *shop) {
 		writeCheckoutError(w, err)
 		return
 	}
-	cur := sh.brand.Currency
-	httpx.WriteData(w, 200, cartResult{Lines: cart.lines, Total: formatMoney(cart.total, cur).Display, Currency: cur.code}, nil)
+	sh.writeCart(w, cart, 0)
 }
 
 func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, sh *shop) {
@@ -31,7 +31,7 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, sh *shop) {
 	if !readPayload(w, r, &req) {
 		return
 	}
-	result, err := sh.place(req)
+	result, err := sh.place(cartSession(w, r, sh.preview), req)
 	if err != nil {
 		writeCheckoutError(w, err)
 		return
@@ -44,6 +44,10 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, sh *shop) {
 }
 
 func readPayload(w http.ResponseWriter, r *http.Request, target any) bool {
+	if kind, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type")); kind != "application/json" {
+		httpx.WriteError(w, 415, "unsupported_media_type", "JSON required", nil)
+		return false
+	}
 	r.Body = http.MaxBytesReader(w, r.Body, 256<<10)
 	if err := httpx.DecodeJSON(r, target); err != nil {
 		httpx.WriteError(w, 400, "bad_request", "invalid payload", nil)
@@ -54,6 +58,8 @@ func readPayload(w http.ResponseWriter, r *http.Request, target any) bool {
 
 func writeCheckoutError(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, errCartChanged):
+		httpx.WriteError(w, 409, "cart_changed", "Cart changed", nil)
 	case errors.Is(err, ErrCheckoutInvalid), errors.Is(err, validation.ErrInvalidData):
 		httpx.WriteError(w, 400, "invalid_data", "Invalid checkout data", nil)
 	case errors.Is(err, ErrCartEmpty):

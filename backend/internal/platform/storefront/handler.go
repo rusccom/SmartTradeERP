@@ -18,10 +18,7 @@ type shopHandler func(http.ResponseWriter, *http.Request, *shop)
 func (h *Handler) withShop(next shopHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Cookie")
-		preview, ok := true, true
-		if h.service.repo != nil {
-			preview, ok = h.preview.session(w, r)
-		}
+		preview, ok := h.preview.session(w, r)
 		if !ok {
 			return
 		}

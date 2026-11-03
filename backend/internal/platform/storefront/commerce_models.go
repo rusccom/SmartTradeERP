@@ -28,6 +28,7 @@ type cartLine struct {
 }
 
 type cartResult struct {
+	Version  int64      `json:"version"`
 	Lines    []cartLine `json:"lines"`
 	Total    string     `json:"total"`
 	Currency string     `json:"currency"`
@@ -41,7 +42,7 @@ type checkoutCustomer struct {
 }
 
 type checkoutRequest struct {
-	Items    []cartItemInput  `json:"items"`
+	Version  int64            `json:"version"`
 	Customer checkoutCustomer `json:"customer"`
 	Note     string           `json:"note"`
 }

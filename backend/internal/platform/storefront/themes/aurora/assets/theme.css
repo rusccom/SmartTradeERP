@@ -127,3 +127,5 @@ img { max-width: 100%; display: block; }
 @media (max-width: 760px) {
   .au-product { grid-template-columns: 1fr; gap: 28px; }
 }
+
+.variant-options { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; } .variant-options a { display:inline-flex; align-items:center; padding:8px 12px; min-height:44px; border:1px solid currentColor; border-radius:6px; } .variant-options [aria-current] { font-weight:700; }

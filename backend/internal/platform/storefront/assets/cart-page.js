@@ -1,4 +1,4 @@
-import { lineKey, quantity, readCart, setQuantity, shopRequest, writeCart } from "./cart-store.js";
+import { cart, changeQuantity, lineKey, placeOrder, refreshCart, reportCartError } from "./cart-store.js";
 
 const polish = document.documentElement.lang === "pl";
 const message = (pl, en) => polish ? pl : en;
@@ -23,10 +23,12 @@ function changeLine(event) {
   const button = event.target.closest("[data-action]");
   if (!button) return;
   const key = button.closest("[data-key]").dataset.key;
-  const item = readCart().find(row => lineKey(row) === key);
+  const item = cart?.lines.find(row => lineKey(row) === key);
   if (!item) return;
   const delta = button.dataset.action === "inc" ? 1 : -1;
-  setQuantity(item, button.dataset.action === "remove" ? 0 : quantity(item) + delta);
+  const { variant_id, picks } = item;
+  const remove = button.dataset.action === "remove";
+  changeQuantity({ variant_id, picks }, remove ? 0 : delta, !remove);
 }
 
 function paint(root, data) {
@@ -35,48 +37,25 @@ function paint(root, data) {
   root.querySelector(".submit").disabled = data.lines.some(line => !line.purchasable);
 }
 
-function showError(root, error) {
-  const expired = error.message === "403";
-  root.querySelector("[data-message]").textContent = expired
-    ? message("Podgląd wygasł. Otwórz go ponownie w ERP.", "Preview expired. Reopen it in the ERP.")
-    : message("Nie udało się potwierdzić koszyka. Odśwież stronę i spróbuj ponownie.", "Could not confirm your cart. Refresh and try again.");
-}
-
-function refresher(root) {
-  let version = 0;
-  return async function refresh() {
-    const current = ++version;
-    const items = readCart();
-    root.querySelector(".submit").disabled = true;
-    root.querySelector("[data-empty]").hidden = items.length > 0;
-    root.querySelector("[data-summary]").hidden = !items.length;
-    if (!items.length) return;
-    try {
-      const data = await shopRequest("cart", { items });
-      if (version === current) paint(root, data);
-    } catch (error) { if (version === current) showError(root, error); }
-  };
+function render(root) {
+  if (!cart) return;
+  root.querySelector("[data-empty]").hidden = cart.lines.length > 0;
+  root.querySelector("[data-summary]").hidden = !cart.lines.length;
+  paint(root, cart);
 }
 
 async function checkout(root, event) {
   event.preventDefault();
   const form = event.currentTarget;
   if (form.inert || form.querySelector("button").disabled) return;
-  const items = readCart();
   const { note, ...customer } = Object.fromEntries(new FormData(form));
   form.inert = true;
   try {
-    const order = await shopRequest("checkout", { items, customer, note });
-    consumeItems(items);
+    const order = await placeOrder({ customer, note });
     form.reset();
     root.querySelector("[data-message]").textContent = confirmation(order);
-  } catch (error) { showError(root, error); }
+  } catch (error) { reportCartError(error); await refreshCart().catch(reportCartError); }
   finally { form.inert = false; }
-}
-
-function consumeItems(submitted) {
-  const remaining = readCart().map(item => ({ ...item, qty: Number(item.qty) - quantity(item, submitted) }));
-  writeCart(remaining.filter(item => item.qty > 0));
 }
 
 function confirmation(order) {
@@ -85,10 +64,8 @@ function confirmation(order) {
 }
 
 export function startCart(root) {
-  const refresh = refresher(root);
   root.addEventListener("click", changeLine);
   root.querySelector("form").addEventListener("submit", event => checkout(root, event));
-  window.addEventListener("cartchange", refresh);
-  window.addEventListener("pageshow", refresh);
-  refresh();
+  window.addEventListener("cartchange", () => render(root));
+  render(root);
 }

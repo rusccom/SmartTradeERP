@@ -1,0 +1,2 @@
+{{define "variant-picker"}}{{if gt (len .Variants) 1}}<nav class="anchors variant-options" aria-label="{{if eq .Layout.Language "pl"}}Wariant produktu{{else}}Product variant{{end}}">
+{{range .Variants}}<a href="?variant={{.VariantID}}" {{if eq .VariantID $.Selected.VariantID}}aria-current="true"{{end}}>{{.Name}}</a>{{end}}</nav>{{end}}{{end}}

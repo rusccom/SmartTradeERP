@@ -12,28 +12,30 @@ import (
 )
 
 const readRules = `SELECT COALESCE(r.price_mode,'fixed'),COALESCE(r.discount,0),COALESCE(r.slots,'{}')
-	FROM catalog.product_variants v JOIN catalog.products p ON p.id=v.product_id
+	FROM catalog.product_variants v JOIN catalog.products p ON p.id=v.product_id AND p.tenant_id=v.tenant_id
 	LEFT JOIN storefront.smartbundle_rules r ON r.variant_id=v.id AND r.tenant_id=v.tenant_id
-	WHERE v.id=$1 AND p.is_composite`
+	WHERE v.tenant_id=$1 AND v.id=$2 AND p.is_composite`
 
 const readOptions = `SELECT vc.component_variant_id::text,p.name,
 	jsonb_agg(jsonb_build_object('id',a.id,'name',COALESCE(a.name,'Default')) ORDER BY a.created_at,a.id)
-	FROM catalog.variant_components vc JOIN catalog.product_variants v ON v.id=vc.component_variant_id
-	JOIN catalog.products p ON p.id=v.product_id JOIN catalog.product_variants a ON a.product_id=p.id
-	WHERE vc.variant_id=$1 GROUP BY vc.component_variant_id,p.name ORDER BY p.name,vc.component_variant_id`
+	FROM catalog.variant_components vc JOIN catalog.product_variants kit ON kit.id=vc.variant_id
+	JOIN catalog.product_variants v ON v.id=vc.component_variant_id AND v.tenant_id=kit.tenant_id
+	JOIN catalog.products p ON p.id=v.product_id AND p.tenant_id=v.tenant_id
+	JOIN catalog.product_variants a ON a.product_id=p.id AND a.tenant_id=p.tenant_id
+	WHERE kit.tenant_id=$1 AND kit.id=$2 GROUP BY vc.component_variant_id,p.name ORDER BY p.name,vc.component_variant_id`
 
 const saveRules = `INSERT INTO storefront.smartbundle_rules(tenant_id,variant_id,price_mode,discount,slots)
 	VALUES ($1,$2,$3,$4,$5) ON CONFLICT (tenant_id,variant_id) DO UPDATE SET
 	price_mode=EXCLUDED.price_mode,discount=EXCLUDED.discount,slots=EXCLUDED.slots`
 
-func readEditor(ctx context.Context, tx pgx.Tx, id string) (Editor, error) {
+func readEditor(ctx context.Context, tx pgx.Tx, tenantID, id string) (Editor, error) {
 	var result Editor
 	s := &result.Settings
-	err := tx.QueryRow(ctx, readRules, id).Scan(&s.Mode, &s.Discount, &s.Slots)
+	err := tx.QueryRow(ctx, readRules, tenantID, id).Scan(&s.Mode, &s.Discount, &s.Slots)
 	if err != nil {
 		return result, err
 	}
-	rows, err := tx.Query(ctx, readOptions, id)
+	rows, err := tx.Query(ctx, readOptions, tenantID, id)
 	if err != nil {
 		return result, err
 	}
@@ -78,7 +80,7 @@ func (h *SettingsHandler) editor(ctx context.Context, tenantID, id string, updat
 	}
 	err := h.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
 		var err error
-		result, err = readEditor(ctx, tx, id)
+		result, err = readEditor(ctx, tx, tenantID, id)
 		if err != nil || update == nil {
 			return err
 		}

@@ -112,7 +112,7 @@ func loadPages(manifest Manifest) (map[string]*template.Template, error) {
 func parsePage(id, name string) (*template.Template, error) {
 	dir := path.Join("themes", id, "templates")
 	return template.New(name).ParseFS(themesFS,
-		"shared/seo-head.html", path.Join(dir, "layout.html"),
+		"shared/seo-head.html", "shared/variant-picker.html", path.Join(dir, "layout.html"),
 		path.Join(dir, "partials", "*.html"),
 		path.Join(dir, name+".html"),
 	)

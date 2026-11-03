@@ -8,7 +8,6 @@ import (
 	"github.com/shopspring/decimal"
 
 	"smarterp/backend/internal/platform/storefront/catalog"
-	"smarterp/backend/internal/platform/storefront/themes/mamapack"
 )
 
 const listPageSize = 24
@@ -19,9 +18,6 @@ func (sh *shop) list(r *http.Request) (ListVM, error) {
 		return ListVM{}, ErrProductNotFound
 	}
 	f := catalog.Filter{Collection: collection, Limit: listPageSize + 1, Offset: (page - 1) * listPageSize}
-	if collection == mamapack.BagCollection {
-		f.CollectionSlugs = mamapack.BagSlugs()
-	}
 	items, err := sh.catalog(f)
 	if err != nil {
 		return ListVM{}, err
@@ -65,10 +61,28 @@ func (sh *shop) collectionTitle(slug string, items []catalog.Product) (string, b
 
 func (sh *shop) product(r *http.Request, p catalog.Product) ProductDetailVM {
 	variants := sh.variantViews(p)
-	price, ok := minPrice(variants)
-	images := sh.images(p, mainTransform)
-	seo := seoProduct(r, p, firstString(images), price, ok)
-	return ProductDetailVM{Layout: sh.layout(r, seo), Name: p.Name, Description: p.SEODescription, Images: images, Price: price, HasPrice: ok, Variants: variants}
+	vm := ProductDetailVM{Name: p.Name, Description: p.SEODescription, Variants: variants}
+	keys := p.Images
+	if len(variants) != 0 {
+		i := selectedVariant(variants, r.URL.Query().Get("variant"))
+		vm.Selected = &variants[i]
+		vm.Price, vm.HasPrice = variants[i].Price, variants[i].HasPrice
+		if len(p.Variants[i].Images) > 0 {
+			keys = p.Variants[i].Images
+		}
+	}
+	vm.Images = sh.service.imageList(keys, mainTransform)
+	vm.Layout = sh.layout(r, seoProduct(r, p, firstString(vm.Images), vm.Price, vm.HasPrice))
+	return vm
+}
+
+func selectedVariant(variants []catalog.VariantView, id string) int {
+	for i, v := range variants {
+		if v.VariantID == id {
+			return i
+		}
+	}
+	return 0
 }
 
 func (sh *shop) cards(products []catalog.Product) []catalog.Card {
@@ -77,7 +91,7 @@ func (sh *shop) cards(products []catalog.Product) []catalog.Card {
 		variants := sh.variantViews(p)
 		price, ok := minPrice(variants)
 		cards = append(cards, catalog.Card{Categories: p.Categories, Variants: variants, Name: p.Name, Slug: p.Slug, URL: productURL(p.Slug),
-			ImageURL: firstString(sh.images(p, cardTransform)), Price: price, HasPrice: ok})
+			ImageURL: sh.service.image(firstString(p.Images), cardTransform), Price: price, HasPrice: ok})
 	}
 	return cards
 }
@@ -86,7 +100,11 @@ func (sh *shop) variantViews(p catalog.Product) []catalog.VariantView {
 	list := make([]catalog.VariantView, 0, len(p.Variants))
 	for _, v := range p.Variants {
 		q, err := resolveVariant(v, nil, sh.brand.Currency.places)
-		view := catalog.VariantView{VariantID: v.ID, Name: v.Name, SKU: v.SKU, HasPrice: err == nil,
+		key := firstString(v.Images)
+		if key == "" {
+			key = firstString(p.Images)
+		}
+		view := catalog.VariantView{VariantID: v.ID, Name: v.Name, SKU: v.SKU, ImageURL: sh.service.image(key, cardTransform), HasPrice: err == nil,
 			Price: formatMoney(q.Price, sh.brand.Currency), Purchasable: err == nil && availableUnits(q.Components).GreaterThanOrEqual(decimal.NewFromInt(1))}
 		if v.Bundle != nil {
 			view.Slots = v.Bundle.Slots

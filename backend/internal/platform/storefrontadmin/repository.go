@@ -32,11 +32,11 @@ const loadSQL = `SELECT COALESCE(storefront_theme_id, 'classic'),
         COALESCE(draft_tokens, '{}'::jsonb),
         COALESCE(sections, '[]'::jsonb),
         COALESCE(draft_sections, '[]'::jsonb)
-    FROM platform.tenant_settings`
+    FROM platform.tenant_settings WHERE tenant_id = $1`
 
 func (r *Repository) Load(ctx context.Context, tenantID string) (settingsRow, error) {
 	out := settingsRow{}
-	err := r.store.QueryRow(ctx, tenantID, loadSQL).Scan(
+	err := r.store.QueryRow(ctx, tenantID, loadSQL, tenantID).Scan(
 		&out.ThemeID, &out.DraftThemeID, &out.PublishedTokens, &out.DraftTokens, &out.Sections, &out.DraftSections)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return defaultRow(), nil
@@ -69,10 +69,10 @@ const publishSQL = `UPDATE platform.tenant_settings
     SET storefront_theme_id = COALESCE(NULLIF(draft_theme_id, ''), storefront_theme_id),
         published_tokens = draft_tokens,
         sections = draft_sections,
-        updated_at = now()`
+        updated_at = now() WHERE tenant_id = $1`
 
 func (r *Repository) Publish(ctx context.Context, tx db.DBTX, tenantID string) error {
-	_, err := tx.Exec(ctx, publishSQL)
+	_, err := tx.Exec(ctx, publishSQL, tenantID)
 	return err
 }
 

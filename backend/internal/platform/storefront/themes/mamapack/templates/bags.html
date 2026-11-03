@@ -2,8 +2,8 @@
 <h1>Gotowe <em>torby.</em></h1><p>Wybierz, dla kogo pakujesz torbę. Porównaj zawartość zestawów, a w wybranej torbie dobierz warianty produktów.</p></header>
 <nav class="anchors" aria-label="Dla kogo">{{range .Groups}}<a href="#{{.ID}}">{{.Name}}</a>{{end}}</nav>
 {{range .Groups}}<section class="section bag-group" id="{{.ID}}"><p class="eyebrow">Gotowe zestawy</p><h2>{{.Name}}</h2>
-<div class="grid">{{range .Bags}}<a href="{{.URL}}" class="card kit-card"><div class="card-photo">{{if .ImageURL}}<img src="{{.ImageURL}}" loading="lazy" alt="">{{end}}</div><h3>{{.Label}}</h3>{{if .HasPrice}}<p>{{.Price.Display}}</p>{{end}}<span class="text-link">Wybierz warianty →</span></a>{{end}}</div>
-<div class="table-scroll" tabindex="0" aria-label="Porównanie zawartości — {{.Name}}"><table><caption>Porównanie zawartości</caption><thead><tr><th scope="col">W zestawie</th>{{range .Bags}}<th scope="col">{{.Label}}</th>{{end}}</tr></thead>
+<div class="grid">{{range .Bags}}<a href="{{.URL}}" class="card kit-card"><div class="card-photo">{{if .ImageURL}}<img src="{{.ImageURL}}" loading="lazy" alt="">{{end}}</div><h3>{{.Name}}</h3>{{if .HasPrice}}<p>{{.Price.Display}}</p>{{end}}<span class="text-link">Wybierz warianty →</span></a>{{end}}</div>
+<div class="table-scroll" tabindex="0" aria-label="Porównanie zawartości — {{.Name}}"><table><caption>Porównanie zawartości</caption><thead><tr><th scope="col">W zestawie</th>{{range .Bags}}<th scope="col">{{.Name}}</th>{{end}}</tr></thead>
 <tbody>{{range .Rows}}<tr><th scope="row">{{.Name}}</th>{{range .Values}}<td>{{.}}</td>{{end}}</tr>{{end}}</tbody></table></div></section>
 {{else}}<p>Gotowe torby pojawią się po opublikowaniu zestawów.</p>{{end}}
 <a class="text-link" href="/collections/gotowe-torby-do-szpitala">Zobacz kolekcję gotowych toreb →</a>{{end}}

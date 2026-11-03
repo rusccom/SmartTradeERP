@@ -45,16 +45,13 @@ func builderPageURL(path string, page int, category string) string {
 }
 
 func (sh *shop) builderCategories() ([]catalog.Category, error) {
-	if sh.demo {
-		return mamapack.SampleCategories(), nil
-	}
 	const query = `SELECT c.slug,c.name FROM catalog.categories c
-		WHERE c.tenant_id=$1 AND c.is_published AND c.slug<>'' AND EXISTS (
-			SELECT 1 FROM catalog.product_categories pc JOIN catalog.products p ON p.id=pc.product_id
-			JOIN catalog.product_variants v ON v.product_id=p.id AND v.is_published
-			WHERE pc.category_id=c.id AND p.is_published AND NOT p.is_composite)
+		WHERE c.tenant_id=$1 AND (c.is_published OR $2) AND c.slug<>'' AND EXISTS (
+			SELECT 1 FROM catalog.product_categories pc JOIN catalog.products p ON p.id=pc.product_id AND p.tenant_id=pc.tenant_id
+			JOIN catalog.product_variants v ON v.product_id=p.id AND v.tenant_id=p.tenant_id AND (v.is_published OR $2)
+			WHERE pc.tenant_id=c.tenant_id AND pc.category_id=c.id AND (p.is_published OR $2) AND NOT p.is_composite)
 		ORDER BY c.sort_order,c.name`
-	rows, err := sh.service.repo.store.Query(sh.ctx, sh.tenantID, query, sh.tenantID)
+	rows, err := sh.service.repo.store.Query(sh.ctx, sh.tenantID, query, sh.tenantID, sh.preview)
 	if err != nil {
 		return nil, err
 	}

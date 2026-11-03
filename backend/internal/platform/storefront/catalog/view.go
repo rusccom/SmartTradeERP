@@ -22,6 +22,7 @@ type Card struct {
 }
 
 type VariantView struct {
+	ImageURL    string
 	Purchasable bool
 	Slots       []smartbundle.Slot
 	VariantID   string

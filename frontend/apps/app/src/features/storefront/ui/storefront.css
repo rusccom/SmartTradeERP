@@ -113,3 +113,10 @@
 .storefront-address { margin: 8px 0 0; font-size: 14px; color: #374151; }
 .storefront-address a { color: #2563eb; font-weight: 600; text-decoration: none; }
 .storefront-address a:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+  .storefront-actions,.storefront-tokens-head { flex-wrap: wrap; gap: 8px; }
+  .storefront-themes { grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr)); }
+  .storefront-token-grid { grid-template-columns: minmax(0, 1fr); }
+  .storefront-section-move button { width: 44px; height: 44px; }
+  .storefront-address { overflow-wrap: anywhere; }
+}

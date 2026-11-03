@@ -25,7 +25,7 @@ func (h *Handler) custom(w http.ResponseWriter, r *http.Request, sh *shop) {
 		vm, err := sh.builder(r)
 		h.page(w, vm.Layout, page, vm, err)
 	case "bags":
-		items, err := sh.catalog(catalog.Filter{Kind: "bags"})
+		items, err := sh.catalog(catalog.Filter{Kind: "bags", Collection: mamapack.BagCollection})
 		vm := bagsVM{Layout: sh.pageLayout(r, "Gotowe torby do szpitala dla mamy i noworodka"), Groups: mamapack.CompareBags(sh.cards(items))}
 		h.page(w, vm.Layout, page, vm, err)
 	default:

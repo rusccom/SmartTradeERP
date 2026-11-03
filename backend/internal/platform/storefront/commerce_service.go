@@ -147,34 +147,47 @@ func availableUnits(components []smartbundle.Component) decimal.Decimal {
 
 var errStock = errors.New("cart contains unavailable items")
 
-func (sh *shop) place(req checkoutRequest) (orderResult, error) {
+func (sh *shop) place(id string, req checkoutRequest) (orderResult, error) {
 	if err := validateCustomer(req.Customer); err != nil {
 		return orderResult{}, err
 	}
-	if len(req.Items) == 0 {
-		return orderResult{}, ErrCartEmpty
-	}
-	cart, err := sh.priceCart(req.Items)
+	saved, err := sh.readCart(id)
 	if err != nil {
 		return orderResult{}, err
 	}
-	if cart.blocked {
-		return orderResult{}, errStock
+	if saved.Version != req.Version {
+		return orderResult{}, errCartChanged
 	}
-	return sh.finishOrder(req, cart)
+	cart, err := sh.checkoutCart(saved.Items)
+	if err != nil {
+		return orderResult{}, err
+	}
+	return sh.finishOrder(id, req, cart)
 }
 
-func (sh *shop) finishOrder(req checkoutRequest, cart pricedCart) (orderResult, error) {
+func (sh *shop) checkoutCart(items []cartItemInput) (pricedCart, error) {
+	if len(items) == 0 {
+		return pricedCart{}, ErrCartEmpty
+	}
+	cart, err := sh.priceCart(items)
+	if err == nil && cart.blocked {
+		err = errStock
+	}
+	return cart, err
+}
+
+func (sh *shop) finishOrder(id string, req checkoutRequest, cart pricedCart) (orderResult, error) {
 	cur := sh.brand.Currency
 	result := orderResult{Total: formatMoney(cart.total, cur).Display, Currency: cur.code, Status: "preview"}
-	if sh.preview {
-		return result, nil
-	}
-	order := sh.order(req, cart.total)
 	err := sh.service.repo.store.WithTenantTx(sh.ctx, sh.tenantID, func(tx pgx.Tx) error {
+		err := sh.saveCart(tx, id, savedCart{Version: req.Version, Items: []cartItemInput{}})
+		if err != nil || sh.preview {
+			return err
+		}
+		order := sh.order(req, cart.total)
+		result.Number, result.Status = order.Number, "new"
 		return sh.service.repo.InsertOrder(sh.ctx, tx, order, cart.items)
 	})
-	result.Number, result.Status = order.Number, "new"
 	return result, err
 }
 

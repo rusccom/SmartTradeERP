@@ -19,7 +19,7 @@ var catalogSQL string
 var catalogBundlesSQL string
 
 func (repo *Repository) catalog(ctx context.Context, tenantID string, f catalog.Filter) ([]catalog.Product, error) {
-	rows, err := repo.store.Query(ctx, tenantID, catalogSQL, tenantID, f.Slug, f.Kind, f.Collection, f.VariantIDs, f.Limit, f.Offset, f.CollectionSlugs)
+	rows, err := repo.store.Query(ctx, tenantID, catalogSQL, tenantID, f.Slug, f.Kind, f.Collection, f.VariantIDs, f.Limit, f.Offset, f.Preview)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (repo *Repository) catalog(ctx context.Context, tenantID string, f catalog.
 	if err != nil {
 		return nil, err
 	}
-	return products, repo.loadRecipes(ctx, tenantID, products)
+	return products, repo.loadRecipes(ctx, tenantID, products, f.Preview)
 }
 
 func scanShopProduct(row pgx.CollectableRow) (catalog.Product, error) {
@@ -36,13 +36,13 @@ func scanShopProduct(row pgx.CollectableRow) (catalog.Product, error) {
 	return p, err
 }
 
-func (repo *Repository) loadRecipes(ctx context.Context, tenantID string, products []catalog.Product) error {
+func (repo *Repository) loadRecipes(ctx context.Context, tenantID string, products []catalog.Product, preview bool) error {
 	targets := recipeTargets(products)
 	if len(targets) == 0 {
 		return nil
 	}
 	ids := slices.Collect(maps.Keys(targets))
-	rows, err := repo.store.Query(ctx, tenantID, catalogBundlesSQL, tenantID, ids)
+	rows, err := repo.store.Query(ctx, tenantID, catalogBundlesSQL, tenantID, ids, preview)
 	if err != nil {
 		return err
 	}

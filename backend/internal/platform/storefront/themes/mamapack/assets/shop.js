@@ -1,4 +1,4 @@
-import { feedback, quantity, readCart, setQuantity, shopRequest } from "/_assets/cart-store.js";
+import { cart, changeQuantity, feedback, quantity, shopRequest } from "/_assets/cart-store.js";
 
 const builder = document.querySelector(".builder");
 const rows = Array.from(document.querySelectorAll("[data-builder-row]"));
@@ -7,42 +7,38 @@ function selected(row) {
   return { variant_id: row.querySelector("[data-variant]").value };
 }
 
-function syncRow(row, items) {
+function syncRow(row) {
   const option = row.querySelector("[data-variant]").selectedOptions[0];
-  const count = quantity(selected(row), items);
+  const count = quantity(selected(row));
+  const available = option?.dataset.available === "true";
+  const image = row.querySelector("img");
+  if (image && option?.dataset.image) image.src = option.dataset.image;
   row.querySelector("[data-unit-price]").textContent = option?.dataset.price || "—";
   row.querySelector("[data-quantity]").textContent = count;
   row.querySelector("[data-picked]").checked = count > 0;
-  row.querySelector("[data-picked]").disabled = !count && (!option || option.disabled);
+  row.querySelector("[data-picked]").disabled = !count && !available;
   row.querySelector('[data-step="-1"]').disabled = !count;
-  row.querySelector('[data-step="1"]').disabled = !option || option.disabled;
+  row.querySelector('[data-step="1"]').disabled = !available;
 }
 
 function bindRow(row) {
   const select = row.querySelector("select");
   const prior = [...select.options].find(option => quantity({ variant_id: option.value }) > 0);
-  const option = prior || [...select.options].find(option => !option.disabled);
+  const option = prior || [...select.options].find(option => option.dataset.available === "true");
   if (option) select.value = option.value;
-  select.addEventListener("change", () => syncRow(row, readCart()));
+  select.addEventListener("change", () => syncRow(row));
   row.querySelector("[data-picked]").addEventListener("change", event => {
-    setQuantity(selected(row), event.target.checked ? 1 : 0);
+    changeQuantity(selected(row), event.target.checked ? 1 : 0, false).catch(() => syncRow(row));
   });
   row.addEventListener("click", event => {
     const step = event.target.closest("[data-step]");
-    if (step) setQuantity(selected(row), quantity(selected(row)) + Number(step.dataset.step));
+    if (step) changeQuantity(selected(row), Number(step.dataset.step));
   });
 }
 
-let request = 0;
-async function syncBuilder() {
-  const current = ++request;
-  const items = readCart();
-  for (const row of rows) syncRow(row, items);
-  const total = builder.querySelector("[data-builder-total]");
-  try {
-    const data = await shopRequest("cart", { items });
-    if (current === request) total.textContent = data.total;
-  } catch { if (current === request) total.textContent = "—"; }
+function syncBuilder() {
+  for (const row of rows) syncRow(row);
+  builder.querySelector("[data-builder-total]").textContent = cart?.total || "—";
 }
 
 function kitItem(form) {
@@ -58,8 +54,7 @@ function bindKit(form) {
     event.preventDefault();
     if (submit.disabled) return;
     const item = kitItem(form);
-    setQuantity(item, quantity(item) + 1);
-    feedback(submit);
+    changeQuantity(item, 1).then(() => feedback(submit), () => {});
   });
   quote();
 }
@@ -70,7 +65,7 @@ function kitQuoter(form, button) {
     const current = ++revision;
     button.disabled = true;
     try {
-      const data = await shopRequest("cart", { items: [{ ...kitItem(form), qty: 1 }] });
+      const data = await shopRequest("quote", "POST", { items: [{ ...kitItem(form), qty: 1 }] });
       if (current !== revision) return;
       const line = data.lines[0];
       button.disabled = !line?.purchasable;
@@ -81,9 +76,8 @@ function kitQuoter(form, button) {
 }
 
 if (builder) {
-  rows.forEach(bindRow);
+  window.addEventListener("cartchange", () => rows.forEach(bindRow), { once: true });
   window.addEventListener("cartchange", syncBuilder);
-  window.addEventListener("pageshow", syncBuilder);
   syncBuilder();
 }
 document.querySelectorAll("[data-kit]").forEach(bindKit);

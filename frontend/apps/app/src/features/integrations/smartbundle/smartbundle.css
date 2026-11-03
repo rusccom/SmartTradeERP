@@ -7,3 +7,7 @@
 .smartbundle-settings input[type=number] { max-width:76px; }
 .smartbundle-settings button { justify-self:start; padding:8px 12px; background:#31594c; color:white; border:0; border-radius:6px; cursor:pointer; }
 .smartbundle-settings p { margin:8px 0 0; }
+@media (max-width:600px) {
+  .smartbundle-settings fieldset { min-width:0; } .smartbundle-settings label { flex-wrap:wrap; overflow-wrap:anywhere; }
+  .smartbundle-settings select { max-width:100%; } .smartbundle-settings button { min-height:44px; }
+}

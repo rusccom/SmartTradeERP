@@ -22,3 +22,7 @@ label { display:grid; gap:4px; margin-bottom:12px; font-size:.88rem; } input,tex
 .submit { width:100%; color:white; background:#31594c; border:0; border-radius:8px; padding:12px; margin-top:8px; font-weight:650; }
 button:disabled { opacity:.5; cursor:default; } :focus-visible { outline:3px solid #a74f39; outline-offset:2px; }
 @media(max-width:720px) { .checkout-grid { grid-template-columns:1fr; } main { padding-top:28px; } header { padding:16px 20px; } }
+@media(max-width:520px) {
+  header,.controls { flex-wrap:wrap; gap:8px; } .brand,.line,.total { overflow-wrap:anywhere; }
+  .stepper button,.remove { min-height:44px; min-width:44px; } label input,label textarea { min-width:0; font-size:16px; }
+}

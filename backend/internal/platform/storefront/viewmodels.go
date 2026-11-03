@@ -10,13 +10,12 @@ import (
 // SEO head, and navigation. It is identical across themes so all shops share the
 // same structure and differ only visually.
 type LayoutVM struct {
-	Brand         BrandVM
-	Theme         ThemeVM
-	SEO           SeoVM
-	Nav           []NavItemVM
-	Preview, Demo bool
-	Language      string
-	CartScope     string
+	Brand    BrandVM
+	Theme    ThemeVM
+	SEO      SeoVM
+	Nav      []NavItemVM
+	Preview  bool
+	Language string
 }
 
 type BrandVM struct {
@@ -70,6 +69,7 @@ type ListVM struct {
 }
 
 type ProductDetailVM struct {
+	Selected    *catalog.VariantView
 	Layout      LayoutVM
 	Name        string
 	Description string

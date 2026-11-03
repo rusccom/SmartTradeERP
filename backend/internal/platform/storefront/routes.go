@@ -20,17 +20,6 @@ func Register(mux *http.ServeMux, store *db.Store, opts Options) error {
 	return nil
 }
 
-// LocalPreview runs the normal shop handlers against the theme's sample catalog.
-func LocalPreview() (http.Handler, error) {
-	h, err := newStoreHandler(nil, Options{})
-	if err != nil {
-		return nil, err
-	}
-	mux := http.NewServeMux()
-	h.mount(mux, func(next http.Handler) http.Handler { return next })
-	return mux, nil
-}
-
 func newStoreHandler(repo *Repository, opts Options) (*Handler, error) {
 	registry, err := NewRegistry()
 	if err != nil {
@@ -44,7 +33,8 @@ func (h *Handler) mount(mux *http.ServeMux, mw auth.Middleware) {
 	pages := map[string]shopHandler{
 		"GET /{$}": h.home, "GET /products": h.list, "GET /products/{slug}": h.product,
 		"GET /collections/{collection}": h.list, "GET /pages/{page}": h.custom, "GET /cart": h.cart,
-		"POST /api/storefront/cart": h.quote, "POST /api/storefront/checkout": h.checkout,
+		"GET /api/storefront/cart": h.currentCart, "PUT /api/storefront/cart": h.updateCart,
+		"POST /api/storefront/quote": h.quote, "POST /api/storefront/checkout": h.checkout,
 		"/": h.notFound,
 	}
 	for pattern, page := range pages {

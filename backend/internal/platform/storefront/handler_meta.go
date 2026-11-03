@@ -4,19 +4,12 @@ import "net/http"
 
 func (h *Handler) Robots(w http.ResponseWriter, r *http.Request) {
 	body := "User-agent: *\nAllow: /\nSitemap: " + absoluteURL(r, "/sitemap.xml") + "\n"
-	if h.service.repo == nil {
-		body = "User-agent: *\nDisallow: /\n"
-	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	_, _ = w.Write([]byte(body))
 }
 
 func (h *Handler) Sitemap(w http.ResponseWriter, r *http.Request) {
-	if h.service.repo == nil {
-		http.NotFound(w, r)
-		return
-	}
 	body, err := h.service.BuildSitemap(r)
 	if err != nil {
 		http.Error(w, "Sitemap unavailable", 500)
