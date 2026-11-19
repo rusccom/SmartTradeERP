@@ -79,14 +79,7 @@ function buildApi(state) {
     shopUrl: state.meta.shopUrl,
     themes: state.themes,
     themeId: state.themeId,
-    tokens: state.tokens,
-    tokenKeys: Object.keys(themeDefaults(state.themes, state.themeId)),
-    sections: state.sections,
     selectTheme: (id) => selectTheme(state, id),
-    setToken: (key, value) => state.setTokens((current) => ({ ...current, [key]: value })),
-    resetTokens: () => state.setTokens(themeDefaults(state.themes, state.themeId)),
-    toggleSection: (key) => toggleSection(state.setSections, key),
-    moveSection: (index, direction) => moveSection(state.setSections, index, direction),
     save: () => runAction(state, false),
     publish: () => runAction(state, true),
     preview: () => runPreview(state),
@@ -94,26 +87,9 @@ function buildApi(state) {
 }
 
 function selectTheme(state, id) {
+  if (id === state.themeId) return;
   state.setThemeId(id);
   state.setTokens(themeDefaults(state.themes, id));
-}
-
-function toggleSection(setSections, key) {
-  setSections((list) => list.map((item) => (item.key === key ? { ...item, enabled: !item.enabled } : item)));
-}
-
-function moveSection(setSections, index, direction) {
-  setSections((list) => reorder(list, index, index + direction));
-}
-
-function reorder(list, from, to) {
-  if (to < 0 || to >= list.length) {
-    return list;
-  }
-  const copy = [...list];
-  const [item] = copy.splice(from, 1);
-  copy.splice(to, 0, item);
-  return copy;
 }
 
 function draftPayload(state) {

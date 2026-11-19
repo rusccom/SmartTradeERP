@@ -2,6 +2,7 @@ function ThemeCard({ theme, selected, onSelect, t }) {
   return (
     <button
       type="button"
+      aria-pressed={selected}
       className={selected ? "theme-card is-selected" : "theme-card"}
       onClick={() => onSelect(theme.id)}
     >
