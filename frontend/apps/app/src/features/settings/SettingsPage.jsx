@@ -1,6 +1,6 @@
 import { useI18n } from "@smarterp/i18n/useI18n";
 import PluginsPanel from "@smarterp/ui/plugins/PluginsPanel";
-import CurrencySettingsPanel from "../../currencies/ui/CurrencySettingsPanel";
+import CurrencySettingsPanel from "../currencies/ui/CurrencySettingsPanel";
 
 function SettingsPage() {
   const { t } = useI18n();
