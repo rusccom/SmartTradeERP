@@ -107,7 +107,7 @@ func (sh *shop) variantViews(p catalog.Product) []catalog.VariantView {
 		view := catalog.VariantView{VariantID: v.ID, Name: v.Name, SKU: v.SKU, ImageURL: sh.service.image(key, cardTransform), HasPrice: err == nil,
 			Price: formatMoney(q.Price, sh.brand.Currency), Purchasable: err == nil && availableUnits(q.Components).GreaterThanOrEqual(decimal.NewFromInt(1))}
 		if v.Bundle != nil {
-			view.Slots = v.Bundle.Slots
+			view.Slots = v.Bundle.Choices()
 		}
 		list = append(list, view)
 	}

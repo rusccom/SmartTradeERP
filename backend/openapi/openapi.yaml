@@ -14,12 +14,14 @@ paths:
   /admin/tenants/{id}:
     get:
       summary: Tenant details
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+      parameters: [{$ref: './plugins.yaml#/TenantID'}]
+  /admin/tenants/{id}/plugins:
+    $ref: './plugins.yaml#/AdminList'
+  /admin/tenants/{id}/plugins/{key}:
+    $ref: './plugins.yaml#/Grant'
+  /client/plugins: {$ref: './plugins.yaml#/ClientList'}
+  /client/plugins/{key}:
+    $ref: './plugins.yaml#/Enable'
   /admin/stats:
     get:
       summary: Platform stats

@@ -17,17 +17,11 @@ import (
 
 const healthDBTimeout = 2 * time.Second
 
-func Register(
-	mux *http.ServeMux,
-	store *db.Store,
-	tokens *auth.TokenService,
-	mediaStore storage.ObjectStore,
-	cfg config.Config,
-) error {
+func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService, mediaStore storage.ObjectStore, cfg config.Config) error {
 	mux.HandleFunc("GET /health", health(store))
 	ledgerService := ledger.NewService(store)
 	bundleService := newBundleService(store)
-	mediaService := newMediaService(store, mediaStore)
+	registerPlugins(mux, store, tokens)
 	registerAdmin(mux, store, tokens)
 	registerClientAuth(mux, store, tokens)
 	registerCatalog(mux, catalogDeps{
@@ -35,7 +29,7 @@ func Register(
 		tokens:   tokens,
 		ledger:   ledgerService,
 		bundles:  bundleService,
-		media:    mediaService,
+		media:    newMediaService(store, mediaStore),
 		mediaURL: cfg.R2.PublicBaseURL,
 	})
 	registerOperations(mux, store, tokens, ledgerService, bundleService)

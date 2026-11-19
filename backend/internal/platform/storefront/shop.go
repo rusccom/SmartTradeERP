@@ -3,6 +3,7 @@ package storefront
 import (
 	"context"
 	"net/http"
+	"slices"
 
 	"smarterp/backend/internal/platform/storefront/catalog"
 	"smarterp/backend/internal/shared/tenant"
@@ -25,7 +26,12 @@ func (s *Service) open(r *http.Request, preview bool) (*shop, error) {
 
 func (sh *shop) catalog(f catalog.Filter) ([]catalog.Product, error) {
 	f.Preview = sh.preview
-	return sh.service.repo.catalog(sh.ctx, sh.tenantID, f)
+	loader := sh.service.repo.fixedRecipes
+	plugin := sh.service.opts.BundleOptions
+	if plugin.Load != nil && slices.Contains(sh.brand.Plugins, plugin.Key) {
+		loader = plugin.Load
+	}
+	return sh.service.repo.catalog(sh.ctx, sh.tenantID, f, loader)
 }
 
 func (sh *shop) layout(r *http.Request, seo SeoVM) LayoutVM {

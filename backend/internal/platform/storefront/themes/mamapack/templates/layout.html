@@ -4,9 +4,9 @@
 {{template "seo-head" .Layout}}
 <link rel="icon" href="/_assets/themes/mamapack/logo.webp">
 <link rel="stylesheet" href="/_assets/themes/mamapack/theme.css?v={{.Layout.Theme.AssetVersion}}">
-<style>:root{ {{.Layout.Theme.TokenCSS}} }</style>
 <script type="module" src="/_assets/storefront.js?v=2"></script>
-<script type="module" src="/_assets/themes/mamapack/shop.js"></script>
+{{if .Layout.HasPlugin "smartbundle"}}<script type="module" src="/_assets/plugins/smartbundle/configurator.js"></script>
+<script type="module" src="/_assets/themes/mamapack/shop.js"></script>{{end}}
 </head><body>
 <a class="skip" href="#main">Przejdź do treści</a>
 {{template "header" .Layout}}

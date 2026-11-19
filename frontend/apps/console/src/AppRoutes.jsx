@@ -1,7 +1,7 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import RouteSeo from "@smarterp/ui/seo/RouteSeo";
-import RequireNoSession from "@smarterp/auth/guards/RequireNoSession";
+import { hasAdminSession } from "@smarterp/auth/session";
 import RequireAdminAuth from "@smarterp/auth/guards/RequireAdminAuth";
 import FallbackRoute from "@smarterp/auth/guards/FallbackRoute";
 import AdminLayout from "./features/admin/layout/AdminLayout";
@@ -14,8 +14,8 @@ function AppRoutes() {
     <>
       <RouteSeo />
       <Routes>
-        <Route element={<RequireNoSession><AdminLayout /></RequireNoSession>}>
-          <Route path="/admin" element={<AdminLoginPage />} />
+        <Route element={<AdminLayout />}>
+          <Route path="/admin" element={hasAdminSession() ? <Navigate to="/admin/dashboard" replace /> : <AdminLoginPage />} />
         </Route>
         <Route element={<RequireAdminAuth><AdminLayout /></RequireAdminAuth>}>
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />

@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/jackc/pgx/v5"
+
 	"smarterp/backend/internal/shared/httpx"
 	"smarterp/backend/internal/shared/validation"
 )
@@ -50,6 +51,9 @@ func (sh *shop) replaceCart(id string, cart savedCart) (pricedCart, error) {
 		return quote, err
 	}
 	err = sh.service.repo.store.WithTenantTx(sh.ctx, sh.tenantID, func(tx pgx.Tx) error {
+		if err := sh.checkPluginState(tx); err != nil {
+			return err
+		}
 		return sh.saveCart(tx, id, cart)
 	})
 	return quote, err

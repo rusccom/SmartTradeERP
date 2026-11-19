@@ -1,7 +1,5 @@
 package catalog
 
-import "smarterp/backend/internal/integrations/smartbundle"
-
 type Product struct {
 	Name, Slug, SEOTitle, SEODescription string
 	Composite                            bool
@@ -13,15 +11,16 @@ type Product struct {
 type Category struct{ Slug, Name, ParentSlug string }
 
 type Variant struct {
-	smartbundle.Option
+	Option
 	Images []string
 	SKU    string
-	Bundle *smartbundle.Bundle
+	Bundle Recipe
 }
 
 type Filter struct {
-	Preview                bool
-	Slug, Collection, Kind string
-	VariantIDs             []string
-	Limit, Offset          int
+	Preview                        bool
+	Slug, Collection, ProductType  string
+	RequireVariants, ExactCategory bool
+	VariantIDs                     []string
+	Limit, Offset                  int
 }

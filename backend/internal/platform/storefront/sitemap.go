@@ -32,11 +32,21 @@ func (s *Service) BuildSitemap(r *http.Request) ([]byte, error) {
 		return nil, err
 	}
 	manifest := s.registry.theme(brand.ThemeID).manifest
-	pages := slices.Sorted(maps.Keys(manifest.Pages))
+	return renderSitemap(r, slugs, manifest.sitemapPages(brand.Plugins))
+}
+
+func (manifest Manifest) sitemapPages(plugins []string) []string {
+	var pages []string
+	for path, p := range manifest.Pages {
+		if p.available(plugins) {
+			pages = append(pages, path)
+		}
+	}
+	slices.Sort(pages)
 	for _, slug := range slices.Sorted(maps.Keys(manifest.Collections)) {
 		pages = append(pages, "/collections/"+slug)
 	}
-	return renderSitemap(r, slugs, pages)
+	return pages
 }
 
 func renderSitemap(r *http.Request, slugs, pages []string) ([]byte, error) {

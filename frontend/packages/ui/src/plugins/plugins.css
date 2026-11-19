@@ -1,0 +1,8 @@
+.plugins-panel { margin-block:24px; max-width:44rem; }
+.plugins-panel h3 { margin-bottom:10px; }
+.plugin-control { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 0; }
+.plugin-control label { display:inline-flex; align-items:center; min-height:44px; gap:10px; overflow-wrap:anywhere; }
+.plugin-control small { color:#546170; }
+.plugins-panel > label { display:block; margin-bottom:4px; }
+.plugins-panel select { max-width:100%; min-height:44px; font:inherit; }
+.plugins-panel [role=alert] { color:#a02c2c; overflow-wrap:anywhere; }

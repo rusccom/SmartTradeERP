@@ -6,21 +6,11 @@ function ThemeCard({ theme, selected, onSelect, t }) {
       className={selected ? "theme-card is-selected" : "theme-card"}
       onClick={() => onSelect(theme.id)}
     >
-      <span className="theme-card-preview" style={previewStyle(theme.tokens)}>
-        {theme.preview_url && <img src={theme.preview_url} alt="" loading="lazy" />}
-      </span>
+      {theme.preview_url && <span className="theme-card-preview"><img src={theme.preview_url} alt="" loading="lazy" /></span>}
       <span className="theme-card-name">{theme.name}</span>
       <span className="theme-card-state">{selected ? t("storefront.selected") : t("storefront.use")}</span>
     </button>
   );
-}
-
-function previewStyle(tokens) {
-  return {
-    background: tokens?.["color-bg"] || "#ffffff",
-    color: tokens?.["color-fg"] || "#111827",
-    borderColor: tokens?.["color-border"] || "#e5e7eb",
-  };
 }
 
 export default ThemeCard;

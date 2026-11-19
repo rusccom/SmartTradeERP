@@ -1,0 +1,59 @@
+TenantID:
+  name: id
+  in: path
+  required: true
+  schema: {type: string, format: uuid}
+PluginKey:
+  name: key
+  in: path
+  required: true
+  schema: {type: string}
+Listing:
+  description: Installed plugins and this organization's access
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          data:
+            type: object
+            properties:
+              can_manage: {type: boolean}
+              plugins:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    key: {type: string}
+                    name: {type: string}
+                    granted: {type: boolean}
+                    enabled: {type: boolean}
+AdminList:
+  parameters: [{$ref: '#/TenantID'}]
+  get:
+    summary: List plugin access for an organization as platform administrator
+    responses: {'200': {$ref: '#/Listing'}}
+ClientList:
+  get:
+    summary: List plugins available to the current store
+    responses: {'200': {$ref: '#/Listing'}}
+Grant:
+  parameters: [{$ref: '#/TenantID'}, {$ref: '#/PluginKey'}]
+  put:
+    summary: Grant or revoke a plugin license as platform administrator
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {type: object, required: [granted], properties: {granted: {type: boolean}}}
+    responses: {'200': {description: Access saved}, '404': {description: Unknown organization or plugin}}
+Enable:
+  parameters: [{$ref: '#/PluginKey'}]
+  put:
+    summary: Enable or disable a granted plugin as store owner
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {type: object, required: [enabled], properties: {enabled: {type: boolean}}}
+    responses: {'200': {description: Activation saved}, '403': {description: Owner and plugin license required}}

@@ -10,12 +10,8 @@ import (
 )
 
 type settingsRow struct {
-	ThemeID         string
-	DraftThemeID    string
-	PublishedTokens []byte
-	DraftTokens     []byte
-	Sections        []byte
-	DraftSections   []byte
+	ThemeID      string
+	DraftThemeID string
 }
 
 type Repository struct {
@@ -26,53 +22,29 @@ func NewRepository(store *db.Store) *Repository {
 	return &Repository{store: store}
 }
 
-const loadSQL = `SELECT COALESCE(storefront_theme_id, 'classic'),
-        COALESCE(draft_theme_id, ''),
-        COALESCE(published_tokens, '{}'::jsonb),
-        COALESCE(draft_tokens, '{}'::jsonb),
-        COALESCE(sections, '[]'::jsonb),
-        COALESCE(draft_sections, '[]'::jsonb)
-    FROM platform.tenant_settings WHERE tenant_id = $1`
+const loadSQL = `SELECT storefront_theme_id,COALESCE(draft_theme_id,'')
+	FROM platform.tenant_settings WHERE tenant_id=$1`
 
 func (r *Repository) Load(ctx context.Context, tenantID string) (settingsRow, error) {
-	out := settingsRow{}
-	err := r.store.QueryRow(ctx, tenantID, loadSQL, tenantID).Scan(
-		&out.ThemeID, &out.DraftThemeID, &out.PublishedTokens, &out.DraftTokens, &out.Sections, &out.DraftSections)
+	var row settingsRow
+	err := r.store.QueryRow(ctx, tenantID, loadSQL, tenantID).Scan(&row.ThemeID, &row.DraftThemeID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return defaultRow(), nil
+		return row, nil
 	}
-	return out, err
+	return row, err
 }
 
-func defaultRow() settingsRow {
-	return settingsRow{
-		ThemeID: "classic", PublishedTokens: []byte("{}"), DraftTokens: []byte("{}"),
-		Sections: []byte("[]"), DraftSections: []byte("[]"),
-	}
-}
-
-const saveDraftSQL = `INSERT INTO platform.tenant_settings
-        (tenant_id, allow_negative_stock, draft_theme_id, draft_tokens, draft_sections)
-    VALUES ($1, false, $2, $3::jsonb, $4::jsonb)
-    ON CONFLICT (tenant_id) DO UPDATE SET
-        draft_theme_id = EXCLUDED.draft_theme_id,
-        draft_tokens = EXCLUDED.draft_tokens,
-        draft_sections = EXCLUDED.draft_sections,
-        updated_at = now()`
-
-func (r *Repository) SaveDraft(ctx context.Context, tx db.DBTX, tenantID, themeID string, tokens, sections []byte) error {
-	_, err := tx.Exec(ctx, saveDraftSQL, tenantID, themeID, string(tokens), string(sections))
+func (r *Repository) SaveDraft(ctx context.Context, tx db.DBTX, tenantID, themeID string) error {
+	const query = `INSERT INTO platform.tenant_settings (tenant_id,allow_negative_stock,draft_theme_id)
+		VALUES ($1,false,$2) ON CONFLICT (tenant_id) DO UPDATE SET draft_theme_id=EXCLUDED.draft_theme_id,updated_at=now()`
+	_, err := tx.Exec(ctx, query, tenantID, themeID)
 	return err
 }
 
-const publishSQL = `UPDATE platform.tenant_settings
-    SET storefront_theme_id = COALESCE(NULLIF(draft_theme_id, ''), storefront_theme_id),
-        published_tokens = draft_tokens,
-        sections = draft_sections,
-        updated_at = now() WHERE tenant_id = $1`
-
 func (r *Repository) Publish(ctx context.Context, tx db.DBTX, tenantID string) error {
-	_, err := tx.Exec(ctx, publishSQL, tenantID)
+	const query = `UPDATE platform.tenant_settings SET storefront_theme_id=COALESCE(NULLIF(draft_theme_id,''),storefront_theme_id),
+		updated_at=now() WHERE tenant_id=$1`
+	_, err := tx.Exec(ctx, query, tenantID)
 	return err
 }
 

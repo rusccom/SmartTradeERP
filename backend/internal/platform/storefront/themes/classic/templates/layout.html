@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {{template "seo-head" .Layout}}
 <link rel="stylesheet" href="/_assets/themes/{{.Layout.Theme.ID}}/theme.css?v={{.Layout.Theme.AssetVersion}}">
-<style>:root{ {{.Layout.Theme.TokenCSS}} }</style>
+{{if .Layout.HasPlugin "smartbundle"}}<script type="module" src="/_assets/plugins/smartbundle/configurator.js"></script>{{end}}
 </head>
 <body>
 {{template "header" .Layout}}

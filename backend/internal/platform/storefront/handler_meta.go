@@ -16,7 +16,7 @@ func (h *Handler) Sitemap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	w.Header().Set("Cache-Control", "public, max-age=300")
+	w.Header().Set("Cache-Control", "public, no-cache, must-revalidate")
 	_, _ = w.Write(body)
 }
 

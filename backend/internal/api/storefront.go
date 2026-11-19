@@ -3,16 +3,15 @@ package api
 import (
 	"net/http"
 
-	"smarterp/backend/internal/platform/storefront"
+	"smarterp/backend/internal/platform/storefront/themes"
 	"smarterp/backend/internal/platform/storefrontadmin"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
 )
 
-// registerStorefrontAdmin wires the tenant-facing storefront settings API. It
-// loads the embedded theme registry once for the picker and token validation.
+// registerStorefrontAdmin wires the tenant-facing storefront settings API. It loads theme descriptors for the picker.
 func registerStorefrontAdmin(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService, shopsBase string) error {
-	registry, err := storefront.NewRegistry()
+	registry, err := themes.Load()
 	if err != nil {
 		return err
 	}

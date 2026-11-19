@@ -1,7 +1,5 @@
 package catalog
 
-import "smarterp/backend/internal/integrations/smartbundle"
-
 // Money keeps a display string for the theme plus a raw amount and ISO code
 // for structured data, so themes never format currency themselves.
 type Money struct {
@@ -24,7 +22,7 @@ type Card struct {
 type VariantView struct {
 	ImageURL    string
 	Purchasable bool
-	Slots       []smartbundle.Slot
+	Slots       []Slot
 	VariantID   string
 	Name        string
 	SKU         string

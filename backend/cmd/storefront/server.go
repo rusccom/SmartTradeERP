@@ -1,10 +1,12 @@
-package app
+package main
 
 import (
 	"context"
 	"net/http"
 	"time"
 
+	"smarterp/backend/internal/integrations/smartbundle"
+	"smarterp/backend/internal/integrations/smartbundle/widget"
 	"smarterp/backend/internal/platform/storefront"
 	"smarterp/backend/internal/shared/config"
 	"smarterp/backend/internal/shared/db"
@@ -20,7 +22,8 @@ func BuildStorefront(ctx context.Context, cfg config.Config) (*http.Server, func
 	}
 	store := db.NewStore(pool)
 	mux := http.NewServeMux()
-	opts := storefront.Options{MediaBaseURL: cfg.R2.PublicBaseURL, JWTSecret: cfg.JWTSecret}
+	widget.Register(mux)
+	opts := storefront.Options{MediaBaseURL: cfg.R2.PublicBaseURL, JWTSecret: cfg.JWTSecret, BundleOptions: smartbundle.Loader(store)}
 	if err := storefront.Register(mux, store, opts); err != nil {
 		pool.Close()
 		return nil, nil, err

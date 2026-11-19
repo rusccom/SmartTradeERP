@@ -5,15 +5,10 @@ import { setAdminToken } from "@smarterp/auth/session";
 import { useI18n } from "@smarterp/i18n/useI18n";
 import { loginAdmin } from "../api/adminAuthApi";
 
-const DEFAULT_ADMIN = {
-  email: "owner@smarterp.local",
-  password: "Owner#2026",
-};
-
 function AdminLoginPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const [form, setForm] = useState(DEFAULT_ADMIN);
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [isLoading, setLoading] = useState(false);
 
@@ -37,10 +32,6 @@ function AdminLoginPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  function applyDefaultCredentials() {
-    setForm(DEFAULT_ADMIN);
-  }
-
   return (
     <section className="auth-shell">
       <form className="auth-card auth-form" onSubmit={handleSubmit}>
@@ -62,9 +53,6 @@ function AdminLoginPage() {
           onChange={handleChange}
           required
         />
-        <button className="secondary-button" type="button" onClick={applyDefaultCredentials}>
-          {t("admin.auth.defaultCredentials")}
-        </button>
         {error && <p className="error-text">{error}</p>}
         <button className="primary-button" type="submit" disabled={isLoading}>
           {isLoading ? t("client.auth.login.loading") : t("admin.auth.button")}

@@ -1,4 +1,4 @@
-{{define "configurator"}}<form class="kit-form" data-kit="{{.VariantID}}"><h2>Dobierz skład torby</h2>
+{{define "configurator"}}<form class="kit-form" data-kit="{{.VariantID}}" data-unavailable="Wybrany skład jest niedostępny." data-quote-error="Nie udało się sprawdzić zestawu."><h2>Dobierz skład torby</h2>
 {{if ne .Name "Default"}}<p>{{.Name}}</p>{{end}}
 {{range .Slots}}<label><span>{{.Name}} <small>× {{.Qty}}</small></span>
 <select data-slot="{{.Key}}" aria-label="{{.Name}}" required>{{range .Options}}<option value="{{.ID}}">{{if eq .Name "Default"}}Podstawowy{{else}}{{.Name}}{{end}}</option>{{end}}</select></label>{{end}}

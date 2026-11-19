@@ -1,9 +1,15 @@
-import { useI18n } from "@smarterp/i18n/useI18n";
-import PlaceholderPage from "@smarterp/ui/PlaceholderPage";
+import { useState } from "react";
+import PluginsPanel from "@smarterp/ui/plugins/PluginsPanel";
+import TenantPicker from "./TenantPicker";
 
-function AdminTenantsPage() {
-  const { t } = useI18n();
-  return <PlaceholderPage title={t("admin.tenants.title")} text={t("admin.tenants.text")} />;
+export default function AdminTenantsPage() {
+  const [selection, setSelection] = useState({ id: "", page: 1 });
+  return (
+    <section className="placeholder">
+      <h2>Organizations</h2>
+      <TenantPicker selection={selection} select={id => setSelection({ ...selection, id })}
+        changePage={delta => setSelection({ page: selection.page + delta, id: "" })} />
+      {selection.id && <PluginsPanel key={selection.id} tenantId={selection.id} />}
+    </section>
+  );
 }
-
-export default AdminTenantsPage;

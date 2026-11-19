@@ -1,0 +1,27 @@
+{
+  "collections": {
+    "gotowe-torby-do-szpitala": "Gotowe torby do szpitala"
+  },
+  "pages": {
+    "/pages/zlozsam": {
+      "template": "builder",
+      "title": "Złóż własną wyprawkę do szpitala",
+      "plugin": "smartbundle",
+      "catalog": {
+        "product_type": "simple",
+        "category_param": "kategoria",
+        "require_variants": true,
+        "page_size": 36
+      }
+    },
+    "/pages/gotowe-torby": {
+      "template": "bags",
+      "title": "Gotowe torby do szpitala dla mamy i noworodka",
+      "plugin": "smartbundle",
+      "catalog": {
+        "product_type": "composite",
+        "collection": "gotowe-torby-do-szpitala"
+      }
+    }
+  }
+}

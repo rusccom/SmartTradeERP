@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 
-	"smarterp/backend/internal/shared/app"
 	"smarterp/backend/internal/shared/config"
 )
 
@@ -13,7 +12,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	server, cleanup, err := app.BuildStorefront(context.Background(), cfg)
+	server, cleanup, err := BuildStorefront(context.Background(), cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

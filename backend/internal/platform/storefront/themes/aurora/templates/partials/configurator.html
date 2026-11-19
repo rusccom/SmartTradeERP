@@ -1,0 +1,6 @@
+{{define "configurator"}}<form class="bundle-options" data-kit="{{.VariantID}}" data-unavailable="This selection is unavailable." data-quote-error="Could not check this selection.">
+{{range .Slots}}<label>{{.Name}} × {{.Qty}}
+<select data-slot="{{.Key}}" required>{{range .Options}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></label>{{end}}
+<p>Bundle price <strong data-kit-price>{{if .HasPrice}}{{.Price.Display}}{{else}}—{{end}}</strong></p>
+<button class="add-btn" type="submit" disabled data-added="Added ✓">Add bundle to cart</button>
+<p role="status" data-kit-status></p></form>{{end}}

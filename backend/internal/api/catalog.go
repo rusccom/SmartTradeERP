@@ -9,7 +9,6 @@ import (
 	"smarterp/backend/internal/erp/products"
 	"smarterp/backend/internal/erp/variants"
 	"smarterp/backend/internal/erp/warehouses"
-	"smarterp/backend/internal/integrations/smartbundle"
 	mediafeature "smarterp/backend/internal/platform/media"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/db"
@@ -81,9 +80,6 @@ func registerVariants(
 func registerBundles(mux *http.ServeMux, deps catalogDeps) {
 	handler := bundles.NewHandler(deps.bundles)
 	tokens := deps.tokens
-	rules := smartbundle.NewSettingsHandler(deps.store)
-	handleClient(mux, tokens, "GET /api/client/bundles/{id}/storefront", rules.Get)
-	handleClient(mux, tokens, "PUT /api/client/bundles/{id}/storefront", rules.Put)
 	handleClient(mux, tokens, "GET /api/client/bundles", handler.List)
 	handleClient(mux, tokens, "GET /api/client/bundles/{id}", handler.ByID)
 	handleClient(mux, tokens, "GET /api/client/bundles/{id}/components", handler.Components)

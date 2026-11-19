@@ -17,7 +17,12 @@ func (h *Handler) assets(mux *http.ServeMux) {
 		serveAsset(w, r, path.Join("themes", theme, "assets"), r.PathValue("file"))
 	})
 	mux.HandleFunc("GET /_assets/{file}", func(w http.ResponseWriter, r *http.Request) {
-		serveAsset(w, r, "assets", r.PathValue("file"))
+		file := r.PathValue("file")
+		dir := "cart/assets"
+		if file == "variant-picker.js" {
+			dir = "variants"
+		}
+		serveAsset(w, r, dir, file)
 	})
 }
 

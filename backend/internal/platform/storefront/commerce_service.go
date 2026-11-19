@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 
-	"smarterp/backend/internal/integrations/smartbundle"
 	"smarterp/backend/internal/platform/storefront/catalog"
 	"smarterp/backend/internal/shared/validation"
 )
@@ -44,7 +43,7 @@ func (sh *shop) priceCart(input []cartItemInput) (pricedCart, error) {
 
 func (sh *shop) quoteItems(input []cartItemInput, index map[string]catalogEntry) pricedCart {
 	cart := pricedCart{lines: make([]cartLine, 0, len(input))}
-	needs := make([][]smartbundle.Component, 0, len(input))
+	needs := make([][]catalog.Component, 0, len(input))
 	for _, item := range input {
 		line, record, components := sh.priceLine(item, index[item.VariantID])
 		cart.lines = append(cart.lines, line)
@@ -80,7 +79,7 @@ func indexCatalog(products []catalog.Product) map[string]catalogEntry {
 	return out
 }
 
-func (sh *shop) priceLine(item cartItemInput, entry catalogEntry) (cartLine, orderItemRecord, []smartbundle.Component) {
+func (sh *shop) priceLine(item cartItemInput, entry catalogEntry) (cartLine, orderItemRecord, []catalog.Component) {
 	v, cur := entry.variant, sh.brand.Currency
 	line := cartLine{VariantID: item.VariantID, Picks: item.Picks, Qty: item.Qty.String(), ProductName: entry.name, VariantName: v.Name}
 	q, err := resolveVariant(v, item.Picks, cur.places)
@@ -99,19 +98,19 @@ func (sh *shop) priceLine(item cartItemInput, entry catalogEntry) (cartLine, ord
 	return line, record, q.Components
 }
 
-func resolveVariant(v catalog.Variant, picks map[string]string, places int32) (smartbundle.Quote, error) {
+func resolveVariant(v catalog.Variant, picks map[string]string, places int32) (catalog.Quote, error) {
 	if v.Bundle != nil {
 		return v.Bundle.Resolve(v.Price, picks, places)
 	}
 	if v.Price == nil || len(picks) > 0 {
-		return smartbundle.Quote{}, smartbundle.ErrSelection
+		return catalog.Quote{}, catalog.ErrSelection
 	}
-	return smartbundle.Quote{Price: *v.Price, Components: []smartbundle.Component{
+	return catalog.Quote{Price: *v.Price, Components: []catalog.Component{
 		{VariantID: v.ID, Qty: decimal.NewFromInt(1), Stock: v.Stock},
 	}}, nil
 }
 
-func (cart *pricedCart) checkStock(needs [][]smartbundle.Component) {
+func (cart *pricedCart) checkStock(needs [][]catalog.Component) {
 	demand := map[string]decimal.Decimal{}
 	for i, components := range needs {
 		for _, c := range components {
@@ -130,7 +129,7 @@ func (cart *pricedCart) checkStock(needs [][]smartbundle.Component) {
 	}
 }
 
-func availableUnits(components []smartbundle.Component) decimal.Decimal {
+func availableUnits(components []catalog.Component) decimal.Decimal {
 	amounts := map[string]decimal.Decimal{}
 	for _, c := range components {
 		amounts[c.VariantID] = amounts[c.VariantID].Add(c.Qty)
@@ -180,6 +179,9 @@ func (sh *shop) finishOrder(id string, req checkoutRequest, cart pricedCart) (or
 	cur := sh.brand.Currency
 	result := orderResult{Total: formatMoney(cart.total, cur).Display, Currency: cur.code, Status: "preview"}
 	err := sh.service.repo.store.WithTenantTx(sh.ctx, sh.tenantID, func(tx pgx.Tx) error {
+		if err := sh.checkPluginState(tx); err != nil {
+			return err
+		}
 		err := sh.saveCart(tx, id, savedCart{Version: req.Version, Items: []cartItemInput{}})
 		if err != nil || sh.preview {
 			return err

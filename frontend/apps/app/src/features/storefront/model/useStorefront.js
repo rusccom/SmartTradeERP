@@ -11,11 +11,9 @@ const INITIAL_META = { loading: true, busy: false, error: "", notice: "", previe
 export function useStorefront() {
   const [themes, setThemes] = useState([]);
   const [themeId, setThemeId] = useState("");
-  const [tokens, setTokens] = useState({});
-  const [sections, setSections] = useState([]);
   const [meta, setMeta] = useState(INITIAL_META);
-  useEffect(() => loadInitial({ setThemes, setThemeId, setTokens, setSections, setMeta }), []);
-  return buildApi({ themes, themeId, tokens, sections, meta, setThemeId, setTokens, setSections, setMeta });
+  useEffect(() => loadInitial({ setThemes, setThemeId, setMeta }), []);
+  return buildApi({ themes, themeId, meta, setThemeId, setMeta });
 }
 
 function loadInitial(setters) {
@@ -53,20 +51,9 @@ function failInitial(error, setMeta) {
 }
 
 function applySettings(themes, settings, setters) {
-  const id = settings?.draft_theme_id || settings?.theme_id || themes[0]?.id || "classic";
+  const id = settings?.draft_theme_id || settings?.theme_id || themes[0]?.id || "";
   setters.setThemeId(id);
-  setters.setTokens(effectiveTokens(themes, id, settings?.draft_tokens));
-  setters.setSections(settings?.draft_sections || []);
   setters.setMeta((meta) => ({ ...meta, shopUrl: settings?.shop_url || "" }));
-}
-
-function effectiveTokens(themes, id, overrides) {
-  return { ...themeDefaults(themes, id), ...(overrides || {}) };
-}
-
-function themeDefaults(themes, id) {
-  const theme = themes.find((item) => item.id === id);
-  return theme?.tokens ? { ...theme.tokens } : {};
 }
 
 function buildApi(state) {
@@ -79,27 +66,17 @@ function buildApi(state) {
     shopUrl: state.meta.shopUrl,
     themes: state.themes,
     themeId: state.themeId,
-    selectTheme: (id) => selectTheme(state, id),
+    selectTheme: state.setThemeId,
     save: () => runAction(state, false),
     publish: () => runAction(state, true),
     preview: () => runPreview(state),
   };
 }
 
-function selectTheme(state, id) {
-  if (id === state.themeId) return;
-  state.setThemeId(id);
-  state.setTokens(themeDefaults(state.themes, id));
-}
-
-function draftPayload(state) {
-  return { theme_id: state.themeId, tokens: state.tokens, sections: state.sections };
-}
-
 async function runAction(state, alsoPublish) {
   startBusy(state.setMeta);
   try {
-    await saveStorefrontDraft(draftPayload(state));
+    await saveStorefrontDraft({ theme_id: state.themeId });
     if (alsoPublish) {
       await publishStorefront();
     }
@@ -112,7 +89,7 @@ async function runAction(state, alsoPublish) {
 async function runPreview(state) {
   startBusy(state.setMeta);
   try {
-    await saveStorefrontDraft(draftPayload(state));
+    await saveStorefrontDraft({ theme_id: state.themeId });
     finishPreview(state.setMeta, await loadStorefrontPreview());
   } catch (error) {
     state.setMeta((meta) => ({ ...meta, busy: false, error: error.message }));

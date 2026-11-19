@@ -2,13 +2,12 @@ package storefront
 
 import (
 	"html/template"
+	"slices"
 
 	"smarterp/backend/internal/platform/storefront/catalog"
 )
 
-// LayoutVM is the shared chrome every themed page renders: brand, theme tokens,
-// SEO head, and navigation. It is identical across themes so all shops share the
-// same structure and differ only visually.
+// LayoutVM exposes store data, enabled plugins and navigation to the active theme.
 type LayoutVM struct {
 	Brand    BrandVM
 	Theme    ThemeVM
@@ -16,7 +15,10 @@ type LayoutVM struct {
 	Nav      []NavItemVM
 	Preview  bool
 	Language string
+	Plugins  []string
 }
+
+func (l LayoutVM) HasPlugin(key string) bool { return slices.Contains(l.Plugins, key) }
 
 type BrandVM struct {
 	TenantName string
@@ -27,7 +29,6 @@ type BrandVM struct {
 type ThemeVM struct {
 	ID           string
 	AssetVersion string
-	TokenCSS     template.CSS
 }
 
 // SeoVM holds head metadata. JSONLD is a complete <script> element built by the
@@ -54,7 +55,6 @@ type CartVM struct {
 type HomeVM struct {
 	Layout   LayoutVM
 	Products []catalog.Card
-	Sections []string
 }
 
 type ListVM struct {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/shopspring/decimal"
 
-	"smarterp/backend/internal/integrations/smartbundle"
+	"smarterp/backend/internal/platform/storefront/catalog"
 	"smarterp/backend/internal/shared/db"
 )
 
@@ -24,7 +24,7 @@ type orderRecord struct {
 }
 
 type orderItemRecord struct {
-	Components  []smartbundle.Component
+	Components  []catalog.Component
 	ID          string
 	VariantID   string
 	ProductName string
@@ -62,7 +62,7 @@ func insertOrderRow(ctx context.Context, tx db.DBTX, o orderRecord) error {
 
 func insertOrderItem(ctx context.Context, tx db.DBTX, order orderRecord, item orderItemRecord) error {
 	if item.Components == nil {
-		item.Components = []smartbundle.Component{}
+		item.Components = []catalog.Component{}
 	}
 	components, err := json.Marshal(item.Components)
 	if err != nil {

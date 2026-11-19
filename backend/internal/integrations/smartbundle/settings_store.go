@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"smarterp/backend/internal/platform/plugins"
 	"smarterp/backend/internal/shared/db"
 	"smarterp/backend/internal/shared/validation"
 )
@@ -79,6 +80,9 @@ func (h *SettingsHandler) editor(ctx context.Context, tenantID, id string, updat
 		return result, validation.ErrInvalidData
 	}
 	err := h.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
+		if err := plugins.RequireEnabled(ctx, tx, tenantID, Key); err != nil {
+			return err
+		}
 		var err error
 		result, err = readEditor(ctx, tx, tenantID, id)
 		if err != nil || update == nil {

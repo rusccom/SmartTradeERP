@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"smarterp/backend/internal/platform/plugins"
 	"smarterp/backend/internal/shared/db"
 	"smarterp/backend/internal/shared/httpx"
 	"smarterp/backend/internal/shared/tenant"
@@ -30,6 +31,8 @@ func (h *SettingsHandler) Put(w http.ResponseWriter, r *http.Request) {
 func (h *SettingsHandler) respond(w http.ResponseWriter, r *http.Request, s *Settings) {
 	result, err := h.editor(r.Context(), tenant.FromContext(r.Context()), r.PathValue("id"), s)
 	switch {
+	case errors.Is(err, plugins.ErrUnavailable):
+		httpx.WriteError(w, 403, "plugin_unavailable", "Enable SmartBundle to manage its settings", nil)
 	case errors.Is(err, pgx.ErrNoRows):
 		httpx.WriteError(w, 404, "not_found", "Bundle not found", nil)
 	case errors.Is(err, validation.ErrInvalidData):

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"smarterp/backend/internal/api"
+	"smarterp/backend/internal/integrations/smartbundle"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/config"
 	"smarterp/backend/internal/shared/db"
@@ -16,21 +17,26 @@ func Build(ctx context.Context, cfg config.Config) (*http.Server, func(), error)
 	if err != nil {
 		return nil, nil, err
 	}
-	store := db.NewStore(pool)
-	mediaStore, err := storage.NewR2Store(cfg.R2)
+	handler, err := apiRouter(db.NewStore(pool), cfg)
 	if err != nil {
 		pool.Close()
 		return nil, nil, err
 	}
+	return &http.Server{Addr: cfg.HTTPAddr, Handler: handler}, pool.Close, nil
+}
+
+func apiRouter(store *db.Store, cfg config.Config) (http.Handler, error) {
+	mediaStore, err := storage.NewR2Store(cfg.R2)
+	if err != nil {
+		return nil, err
+	}
 	tokens := auth.NewTokenService(cfg.JWTSecret, cfg.AccessTTL)
 	mux := http.NewServeMux()
 	if err := api.Register(mux, store, tokens, mediaStore, cfg); err != nil {
-		pool.Close()
-		return nil, nil, err
+		return nil, err
 	}
-	server := &http.Server{Addr: cfg.HTTPAddr, Handler: cors(mux)}
-	cleanup := func() { pool.Close() }
-	return server, cleanup, nil
+	smartbundle.RegisterSettings(mux, store, tokens)
+	return cors(mux), nil
 }
 
 func cors(next http.Handler) http.Handler {

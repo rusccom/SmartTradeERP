@@ -8,10 +8,11 @@ WITH published_categories AS (
     SELECT p.* FROM catalog.products p
     WHERE p.tenant_id = $1 AND (p.is_published OR $8)
       AND ($2 = '' OR p.slug = $2)
-      AND ($3 <> 'builder' OR (NOT p.is_composite AND EXISTS (
-          SELECT 1 FROM catalog.product_variants v WHERE v.tenant_id = p.tenant_id AND v.product_id = p.id AND (v.is_published OR $8)))) AND ($3 <> 'bags' OR p.is_composite)
+      AND ($3::text='' OR p.is_composite=($3='composite'))
+      AND (NOT $9 OR EXISTS (SELECT FROM catalog.product_variants v
+          WHERE v.tenant_id=p.tenant_id AND v.product_id=p.id AND (v.is_published OR $8)))
       AND ($4 = '' OR EXISTS (SELECT 1 FROM published_categories c WHERE c.product_id = p.id
-          AND (c.slug = $4 OR ($3 <> 'builder' AND c.parent_slug = $4))))
+          AND (c.slug = $4 OR (NOT $10 AND c.parent_slug = $4))))
       AND ($5::uuid[] IS NULL OR EXISTS (
           SELECT 1 FROM catalog.product_variants v WHERE v.tenant_id = p.tenant_id AND v.product_id = p.id AND v.id = ANY($5)))
     ORDER BY p.created_at DESC, p.id LIMIT NULLIF($6::int, 0) OFFSET $7

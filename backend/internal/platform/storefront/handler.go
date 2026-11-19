@@ -40,13 +40,13 @@ func cachePage(w http.ResponseWriter, r *http.Request, preview bool) {
 		w.Header().Set("Cache-Control", "no-store")
 		return
 	}
-	w.Header().Set("Cache-Control", "public, max-age=60, s-maxage=300")
+	w.Header().Set("Cache-Control", "public, no-cache, must-revalidate")
 	w.Header().Set("Cache-Tag", normalizeHost(r.Host))
 }
 
 func (h *Handler) home(w http.ResponseWriter, r *http.Request, sh *shop) {
 	products, err := sh.catalog(catalog.Filter{Limit: 12})
-	vm := HomeVM{Layout: sh.layout(r, seoHome(r, sh.brand)), Sections: homeSections(sh.brand.Sections), Products: sh.cards(products)}
+	vm := HomeVM{Layout: sh.layout(r, seoHome(r, sh.brand)), Products: sh.cards(products)}
 	h.page(w, vm.Layout, "home", vm, err)
 }
 

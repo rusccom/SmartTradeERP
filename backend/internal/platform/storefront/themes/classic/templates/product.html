@@ -8,7 +8,7 @@
 <div class="product-price" data-variant-part="price" {{if not .HasPrice}}hidden{{end}}>{{if .HasPrice}}{{.Price.Display}}{{end}}</div>
 {{if .Description}}<p class="product-desc">{{.Description}}</p>{{end}}
 {{template "variant-picker" .}}
-<div data-variant-part="purchase">{{with .Selected}}<button class="add-btn" type="button" data-sf-add="{{.VariantID}}" data-added="Added ✓" {{if not .Purchasable}}disabled{{end}}>Add to cart</button>{{end}}</div>
+<div data-variant-part="purchase">{{with .Selected}}{{if .Slots}}{{template "configurator" .}}{{else}}<button class="add-btn" type="button" data-sf-add="{{.VariantID}}" data-added="Added ✓" {{if not .Purchasable}}disabled{{end}}>Add to cart</button>{{end}}{{end}}</div>
 </div>
 </article>
 {{end}}
