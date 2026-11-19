@@ -1,7 +1,8 @@
 import { useRef } from "react";
-import { useStatusDraft } from "../model/useStatusDraft";
-import StatusDraftForm from "../ui/StatusDraftForm";
-import StatusDraftTable from "../ui/StatusDraftTable";
+import { useStatusDraft } from "./useStatusDraft";
+import StatusDraftForm from "./StatusDraftForm";
+import StatusDraftTable from "./StatusDraftTable";
+import "./setting.css";
 
 export default function OrderSettingsPage() {
   const draft = useStatusDraft();

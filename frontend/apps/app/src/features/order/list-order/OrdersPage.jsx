@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DataTable } from "@smarterp/ui/tables/list-table";
-import { orderColumns } from "../table/orderColumns";
+import { orderColumns } from "./orderColumns";
+import "./list-order.css";
 
 const emptyOrders = [];
 const selectionLabels = {

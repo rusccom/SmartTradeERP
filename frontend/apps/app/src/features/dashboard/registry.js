@@ -1,4 +1,4 @@
-import { ordersMenu } from "../orders/menu";
+import { ordersMenu } from "../order/menu";
 
 export function createMenuSections(t) {
   return [

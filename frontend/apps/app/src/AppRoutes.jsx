@@ -22,9 +22,7 @@ import BundlesPage from "./features/bundles/pages/BundlesPage";
 import StorefrontPage from "./features/storefront/pages/StorefrontPage";
 import IntegrationsPage from "./features/integrations/pages/IntegrationsPage";
 import InPostPage from "./features/integrations/inpost/InPostPage";
-import OrdersLayout from "./features/orders/OrdersLayout";
-import OrdersPage from "./features/orders/pages/OrdersPage";
-import OrderSettingsPage from "./features/orders/pages/OrderSettingsPage";
+import { orderRoutes } from "./features/order/routes";
 
 const clientRoutes = (
   <Route element={<RequireClientAuth><ClientLayout /></RequireClientAuth>}>
@@ -34,10 +32,7 @@ const clientRoutes = (
       <Route path="bundles" element={<BundlesPage />} />
     </Route>
     <Route path="/dashboard/customers" element={<CustomersPage />} />
-    <Route path="/dashboard/orders" element={<OrdersLayout />}>
-      <Route index element={<OrdersPage />} />
-      <Route path="settings" element={<OrderSettingsPage />} />
-    </Route>
+    {orderRoutes}
     <Route path="/dashboard/documents" element={<DocumentsPage />} />
     <Route path="/dashboard/warehouses" element={<WarehousesPage />} />
     <Route path="/dashboard/bundles" element={<Navigate to="/dashboard/products/bundles" replace />} />

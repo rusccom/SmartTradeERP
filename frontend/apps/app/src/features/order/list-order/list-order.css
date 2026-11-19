@@ -1,0 +1,10 @@
+.orders-list .dt-table { min-width: 46rem; }
+.orders-list .dt-row:has(.dt-select-checkbox:checked) { background: #eef2ff; }
+.orders-list .dt-select-checkbox:disabled { cursor: default; }
+.orders-cell { display: grid; gap: 3px; overflow-wrap: anywhere; }
+.orders-cell strong { font-weight: 600; }
+.orders-cell small { color: #475569; font-size: 12px; }
+
+@media (max-width: 760px) {
+  .orders-empty { display: block; position: sticky; left: 16px; max-width: calc(100vw - 80px); }
+}
