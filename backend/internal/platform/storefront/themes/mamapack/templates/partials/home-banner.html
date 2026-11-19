@@ -1,0 +1,20 @@
+{{define "home-banner"}}
+<section class="banner" aria-label="MamaPack" aria-roledescription="karuzela">
+  <div id="banner-slides" class="banner-slides" tabindex="0" role="group" aria-label="Banery sklepu">
+    <img src="/_assets/themes/mamapack/banner-wyprawka.webp"
+         srcset="/_assets/themes/mamapack/banner-wyprawka-768.webp 768w, /_assets/themes/mamapack/banner-wyprawka.webp 1672w"
+         sizes="100vw" width="1672" height="941" fetchpriority="high"
+         alt="Wszystko dla mamy i dziecka. Duży sklep multibrandowy z wyprawką, akcesoriami i produktami do codziennej opieki.">
+    <img src="/_assets/themes/mamapack/banner-rodzina.webp"
+         srcset="/_assets/themes/mamapack/banner-rodzina-768.webp 768w, /_assets/themes/mamapack/banner-rodzina.webp 1916w"
+         sizes="100vw" width="1916" height="821" loading="lazy"
+         alt="Mama z noworodkiem wśród akcesoriów do wyprawki">
+  </div>
+  <div class="banner-controls" role="group" aria-label="Wybór banera" hidden>
+    <button type="button" data-shift="-1" aria-controls="banner-slides" aria-label="Poprzedni baner"><span class="chevron prev"></span></button>
+    <button type="button" data-slide="0" aria-controls="banner-slides" aria-label="Baner 1 z 2" aria-current="true"><span class="dot"></span></button>
+    <button type="button" data-slide="1" aria-controls="banner-slides" aria-label="Baner 2 z 2"><span class="dot"></span></button>
+    <button type="button" data-shift="1" aria-controls="banner-slides" aria-label="Następny baner"><span class="chevron"></span></button>
+  </div>
+</section>
+{{end}}

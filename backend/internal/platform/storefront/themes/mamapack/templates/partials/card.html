@@ -1,1 +1,9 @@
-{{define "card"}}<a class="card" href="{{.URL}}"><div class="card-photo">{{if .ImageURL}}<img loading="lazy" src="{{.ImageURL}}" alt="">{{else}}<span>MamaPack</span>{{end}}</div><h3>{{.Name}}</h3>{{if .HasPrice}}<p>{{.Price.Display}}</p>{{end}}</a>{{end}}
+{{define "card"}}
+<a class="card" href="{{.URL}}">
+  <div class="card-photo">
+    {{if .ImageURL}}<img loading="lazy" src="{{.ImageURL}}" alt="">{{else}}<span>Brak zdjęcia</span>{{end}}
+  </div>
+  <h3>{{.Name}}</h3>
+  {{if .HasPrice}}<p>{{.Price.Display}}</p>{{end}}
+</a>
+{{end}}

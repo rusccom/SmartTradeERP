@@ -1,0 +1,26 @@
+{{define "home-directory"}}
+{{$categories := dict}}
+{{range .Products}}{{range .Categories}}
+  {{if and .Slug .Name}}{{set $categories .Slug .Name}}{{end}}
+{{end}}{{end}}
+<nav class="directory" aria-label="Działy sklepu">
+  <div class="directory-photo"><img loading="lazy" src="/_assets/themes/mamapack/hospital-bag.webp" width="900" height="900" alt=""></div>
+  <div class="directory-content">
+    {{if .Layout.HasPlugin "smartbundle"}}
+      <div class="directory-group">
+        <h2>Wyprawka do szpitala</h2>
+        <ul><li><a href="/pages/gotowe-torby">Gotowe torby</a></li><li><a href="/pages/zlozsam">Spakuj własną torbę</a></li></ul>
+      </div>
+    {{end}}
+    {{if .Products}}
+      <div class="directory-group">
+        <h2>Katalog produktów</h2>
+        <ul>
+          {{range $slug, $name := $categories}}<li><a href="/collections/{{$slug}}">{{$name}}</a></li>{{end}}
+          <li><a href="/products">Wszystkie produkty</a></li>
+        </ul>
+      </div>
+    {{end}}
+  </div>
+</nav>
+{{end}}
