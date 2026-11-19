@@ -14,6 +14,7 @@ export const apiPaths = Object.freeze({
   currencyBase: `${apiScopes.client}/currencies/base`,
   currencyOptions: `${apiScopes.client}/currency-options`,
   clientPlugins: `${apiScopes.client}/plugins`,
+  inpostSettings: `${apiScopes.client}/integrations/inpost`,
   clientPlugin: (key) => `${apiScopes.client}/plugins/${encodeURIComponent(key)}`,
   adminTenantPlugins: (id) => `${apiScopes.admin}/tenants/${encodeURIComponent(id)}/plugins`,
   adminTenantPlugin: (id, key) => `${apiScopes.admin}/tenants/${encodeURIComponent(id)}/plugins/${encodeURIComponent(key)}`,

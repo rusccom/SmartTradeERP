@@ -1,0 +1,57 @@
+Connection:
+  type: object
+  required: [environment, organization_id, organization_name, services, verified_at, revision]
+  properties:
+    environment: {type: string, enum: [production, sandbox]}
+    organization_id: {type: string, pattern: '^[1-9][0-9]*$'}
+    organization_name: {type: string}
+    services: {type: array, items: {type: string}}
+    verified_at: {type: string, format: date-time}
+    revision: {type: integer, format: int64}
+Settings:
+  get:
+    summary: Read the current store's verified InPost ShipX connection
+    responses:
+      '200':
+        description: Connection metadata or null when the store has not connected InPost
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    can_manage: {type: boolean}
+                    connection:
+                      oneOf: [{$ref: '#/Connection'}, {type: object, nullable: true, enum: [null]}]
+      '401': {description: Store sign-in required}
+  put:
+    summary: Verify a ShipX organization and save the connection as store owner
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [environment, organization_id]
+            additionalProperties: false
+            properties:
+              environment: {type: string, enum: [production, sandbox]}
+              organization_id: {type: string, pattern: '^[1-9][0-9]*$'}
+              token: {type: string, writeOnly: true, maxLength: 4096, description: Required for new accounts or environments}
+              revision: {type: integer, format: int64, minimum: 0, default: 0, description: Use the current revision when updating a connection}
+    responses:
+      '200':
+        description: Verified and saved
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: '#/Connection'}}}
+      '400': {description: Invalid settings or token required}
+      '401': {description: Store sign-in required}
+      '403': {description: Store owner required}
+      '409': {description: Revision changed}
+      '422': {description: ShipX denied access to the organization}
+      '429': {description: ShipX rate limit reached}
+      '502': {description: ShipX verification unavailable}
+      '503': {description: Credential storage unavailable}

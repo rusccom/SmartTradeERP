@@ -22,6 +22,7 @@ func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService, me
 	ledgerService := ledger.NewService(store)
 	bundleService := newBundleService(store)
 	registerPlugins(mux, store, tokens)
+	registerInPost(mux, store, tokens, cfg.InPostEncryptionKey)
 	registerAdmin(mux, store, tokens)
 	registerClientAuth(mux, store, tokens)
 	registerCatalog(mux, catalogDeps{

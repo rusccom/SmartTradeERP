@@ -12,8 +12,7 @@
   letter-spacing: -0.025em;
 }
 
-.integration-grid,
-.inpost-tools {
+.integration-grid {
   display: grid;
   gap: 14px;
   padding: 0;
@@ -22,10 +21,8 @@
 }
 
 .integration-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.inpost-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-.integration-tile,
-.inpost-tool {
+.integration-tile {
   position: relative;
   display: flex;
   height: 100%;
@@ -57,7 +54,7 @@
 .integration-icon--allegro { background: #ffebe2; color: #ac3f0c; }
 .integration-name { font-size: 18px; font-weight: 650; }
 .integration-caption { display: block; margin-top: 4px; font-size: 14px; line-height: 1.45; color: #475569; }
-.integration-arrow { position: absolute; top: 22px; right: 18px; color: #4f46e5; }
+.integration-gear { position: absolute; top: 20px; right: 18px; color: #4338ca; }
 
 .integration-back {
   display: inline-flex;
@@ -71,16 +68,13 @@
 }
 
 .integrations .integration-intro { margin: -8px 0 22px; max-width: 65ch; color: #475569; }
-.inpost-tool { align-items: flex-start; gap: 14px; }
-.inpost-tool-icon { flex-shrink: 0; color: #475569; }
-.inpost-external { flex-shrink: 0; margin-left: auto; color: #64748b; }
 
 @media (max-width: 880px) {
   .integration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 540px) {
-  .integration-grid, .inpost-tools { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .integration-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .integration-tile {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -90,6 +84,5 @@
   }
   .integration-icon { grid-row: 1 / 3; align-self: center; margin: 0; }
   .integration-name, .integration-tile .integration-caption { grid-column: 2; }
-  .integration-arrow { position: static; grid-area: 1 / 3 / 3 / 4; align-self: center; }
-  .inpost-tool { padding: 16px; }
+  .integration-gear { position: static; grid-area: 1 / 3 / 3 / 4; align-self: center; }
 }

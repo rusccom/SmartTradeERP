@@ -20,6 +20,7 @@ paths:
   /admin/tenants/{id}/plugins/{key}:
     $ref: './plugins.yaml#/Grant'
   /client/plugins: {$ref: './plugins.yaml#/ClientList'}
+  /client/integrations/inpost: {$ref: './inpost.yaml#/Settings'}
   /client/plugins/{key}:
     $ref: './plugins.yaml#/Enable'
   /admin/stats:

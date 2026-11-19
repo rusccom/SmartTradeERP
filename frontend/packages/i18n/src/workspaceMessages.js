@@ -1,4 +1,7 @@
+import { inpostMessages } from "./integrations/inpost";
+
 export const workspaceMessages = {
+  ...inpostMessages,
   "app.nav.adminDashboard": "Admin Dashboard",
   "app.nav.adminLogin": "Admin Login",
   "app.nav.clientDashboard": "Client Dashboard",
@@ -25,16 +28,7 @@ export const workspaceMessages = {
   "dashboard.menu.storefront": "Storefront",
   "dashboard.menu.integrations": "Integrations",
   "integrations.planned": "Planned",
-  "integrations.inpost.manager": "Manager Paczek",
-  "integrations.inpost.intro": "These tools open InPost in a new tab. Enter the order reference and recipient details in Manager Paczek.",
-  "integrations.inpost.create": "Create a shipment",
-  "integrations.inpost.createHint": "Send to a Paczkomat locker or a street address.",
-  "integrations.inpost.manage": "Labels and courier pickup",
-  "integrations.inpost.manageHint": "Select a shipment, then choose Pobierz etykiety for labels or Zamów kuriera for pickup.",
-  "integrations.inpost.pickups": "Pickup requests",
-  "integrations.inpost.pickupsHint": "View the pickup requests you have already placed.",
-  "integrations.inpost.track": "Track a parcel",
-  "integrations.inpost.trackHint": "Look up the delivery status by tracking number.",
+  "integrations.settings": "{name} settings",
   "storefront.title": "Storefront theme",
   "storefront.loading": "Loading…",
   "storefront.shopAddress": "Store address",

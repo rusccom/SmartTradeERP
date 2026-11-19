@@ -1,14 +1,12 @@
-import { Boxes, Package, Store, Truck } from "lucide-react";
 import { useI18n } from "@smarterp/i18n/useI18n";
+import inpost from "../inpost/provider";
+import furgonetka from "../furgonetka/provider";
+import baseCourier from "../base-courier/provider";
+import allegro from "../allegro/provider";
 import IntegrationTile from "../ui/IntegrationTile";
 import "../integrations.css";
 
-const providers = [
-  { name: "InPost", icon: Package, tone: "inpost", path: "inpost" },
-  { name: "Furgonetka", icon: Truck, tone: "furgonetka" },
-  { name: "Base Courier", icon: Boxes, tone: "base" },
-  { name: "Allegro", icon: Store, tone: "allegro" },
-];
+const providers = [inpost, furgonetka, baseCourier, allegro];
 
 export default function IntegrationsPage() {
   const { t } = useI18n();

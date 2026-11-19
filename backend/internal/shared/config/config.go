@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	HTTPAddr    string
-	DatabaseURL string
-	JWTSecret   string
-	AccessTTL   time.Duration
-	R2          storage.R2Options
+	HTTPAddr            string
+	DatabaseURL         string
+	JWTSecret           string
+	InPostEncryptionKey string
+	AccessTTL           time.Duration
+	R2                  storage.R2Options
 	// ShopsBaseDomain is the wildcard domain tenant shops live under
 	// (e.g. "nanobananas.app" -> myshop.nanobananas.app). Empty disables
 	// automatic subdomain provisioning.
@@ -25,6 +26,7 @@ func Load() (Config, error) {
 	cfg.HTTPAddr = getenv("HTTP_ADDR", ":8080")
 	cfg.DatabaseURL = os.Getenv("DATABASE_URL")
 	cfg.JWTSecret = os.Getenv("JWT_SECRET")
+	cfg.InPostEncryptionKey = os.Getenv("INPOST_ENCRYPTION_KEY")
 	cfg.AccessTTL = parseDuration("JWT_ACCESS_TTL", "8760h")
 	cfg.R2 = loadR2Options()
 	cfg.ShopsBaseDomain = os.Getenv("SHOPS_BASE_DOMAIN")
