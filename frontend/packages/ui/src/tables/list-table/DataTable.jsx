@@ -8,7 +8,7 @@ import DataTableError from "./DataTableError";
 import DataTableHeader from "./DataTableHeader";
 import DataTableOpenLink from "./DataTableOpenLink";
 import DataTablePagination from "./DataTablePagination";
-import DataTableSelectionCheckbox from "./DataTableSelectionCheckbox";
+import { createSelectionColumn } from "./createSelectionColumn";
 import DataTableToolbar from "./DataTableToolbar";
 import "./data-table-actions.css";
 import "./data-table.css";
@@ -37,7 +37,7 @@ function DataTable(props) {
 }
 
 function useDataTableInstance(props) {
-  const mappedColumns = useMemo(() => readColumns(props), [props.columns, props.selectable, props.onRowOpen]);
+  const mappedColumns = useMemo(() => readColumns(props), [props.columns, props.selectable, props.selectionLabels, props.onRowOpen]);
   return useReactTable({
     data: props.data,
     columns: mappedColumns,
@@ -82,7 +82,7 @@ function ErrorBlock({ error, onRetry }) {
 }
 
 function TableBlock({ table, props, loadingClass, emptyText }) {
-  const showHeader = table.getRowModel().rows.length > 0;
+  const showHeader = props.showHeaderWhenEmpty || table.getRowModel().rows.length > 0;
   return (
     <div className={`dt-table-scroll ${loadingClass}`.trim()}>
       <table className="dt-table">
@@ -114,7 +114,7 @@ function readSlots(props) {
 
 function readColumns(props) {
   const columns = props.columns.map((column) => mapColumn(column, props));
-  return props.selectable ? [createSelectionColumn(), ...columns] : columns;
+  return props.selectable ? [createSelectionColumn(props.selectionLabels), ...columns] : columns;
 }
 
 function mapColumn(column, props) {
@@ -161,30 +161,6 @@ function formatValue(value) {
     return "";
   }
   return String(value);
-}
-
-function createSelectionColumn() {
-  return {
-    id: "select",
-    size: 42,
-    enableSorting: false,
-    header: ({ table }) => (
-      <DataTableSelectionCheckbox
-        checked={table.getIsAllPageRowsSelected()}
-        indeterminate={table.getIsSomePageRowsSelected()}
-        onChange={table.getToggleAllPageRowsSelectedHandler()}
-        label="Select all rows"
-      />
-    ),
-    cell: ({ row }) => (
-      <DataTableSelectionCheckbox
-        checked={row.getIsSelected()}
-        disabled={!row.getCanSelect()}
-        onChange={row.getToggleSelectedHandler()}
-        label="Select row"
-      />
-    ),
-  };
 }
 
 export default DataTable;

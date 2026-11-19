@@ -1,0 +1,80 @@
+.orders-workspace {
+  max-width: 1200px;
+  min-width: 0;
+  margin-inline: auto;
+  padding: clamp(10px, 2.5vw, 32px);
+}
+
+.orders-workspace h1 {
+  margin: 0 0 20px;
+  color: #0f172a;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.orders-list .dt-table { min-width: 46rem; }
+.orders-list .dt-row:has(.dt-select-checkbox:checked) { background: #eef2ff; }
+.orders-list .dt-select-checkbox:disabled { cursor: default; }
+.orders-cell { display: grid; gap: 3px; overflow-wrap: anywhere; }
+.orders-cell strong { font-weight: 600; }
+.orders-cell small { color: #475569; font-size: 12px; }
+.orders-workspace .dt-td { overflow-wrap: anywhere; }
+
+.order-status-panel {
+  max-width: 740px;
+  padding: clamp(14px, 2.2vw, 24px);
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.order-status-panel h2 { margin: 0; font-size: 18px; font-weight: 650; }
+.order-status-panel p { margin: 6px 0 20px; color: #475569; font-size: 14px; }
+.order-status-form { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.order-status-field { display: grid; flex: 1 1 220px; min-width: 0; gap: 6px; }
+.order-status-field label { font-size: 14px; line-height: 20px; font-weight: 600; }
+
+.order-status-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.order-status-field [role="alert"] { color: #b42318; font-size: 13px; }
+.order-status-actions { display: flex; align-items: start; flex-wrap: wrap; gap: 8px; padding-top: 26px; }
+
+.order-status-actions button,
+.order-status-edit {
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.order-status-actions button:hover, .order-status-edit:hover { background: #f8fafc; }
+.order-status-actions .order-status-primary { border-color: #4338ca; background: #4338ca; color: #fff; }
+.order-status-actions .order-status-primary:hover { background: #3730a3; }
+.order-status-actions button:disabled { opacity: .5; cursor: default; }
+.order-status-edit { min-height: 36px; padding-inline: 8px; white-space: nowrap; }
+.orders-workspace :is(input, button):focus-visible { outline: 2px solid #4f46e5; outline-offset: 2px; }
+
+@media (max-width: 760px) {
+  .orders-empty { display: block; position: sticky; left: 16px; max-width: calc(100vw - 80px); }
+}
+
+@media (max-width: 560px) {
+  .order-status-form { flex-direction: column; }
+  .order-status-field { flex: auto; }
+  .order-status-actions { padding-top: 0; }
+}

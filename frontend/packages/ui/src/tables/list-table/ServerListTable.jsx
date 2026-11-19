@@ -43,6 +43,8 @@ function readOptionalProps(props) {
   return {
     onRowOpen: props.onRowOpen || props.onRowClick,
     emptyText: props.emptyText,
+    showHeaderWhenEmpty: props.showHeaderWhenEmpty,
+    selectionLabels: props.selectionLabels,
     subRows: readSubRowsConfig(props),
   };
 }
