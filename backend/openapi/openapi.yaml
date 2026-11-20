@@ -15,12 +15,18 @@ paths:
     get:
       summary: Tenant details
       parameters: [{$ref: './plugins.yaml#/TenantID'}]
-  /admin/tenants/{id}/plugins:
-    $ref: './plugins.yaml#/AdminList'
+  /admin/tenants/{id}/plugins: {$ref: './plugins.yaml#/AdminList'}
   /admin/tenants/{id}/plugins/{key}:
     $ref: './plugins.yaml#/Grant'
   /client/plugins: {$ref: './plugins.yaml#/ClientList'}
   /client/integrations/inpost: {$ref: './inpost.yaml#/Settings'}
+  /client/integrations/allegro: {$ref: './allegro.yaml#/Settings'}
+  /client/integrations/allegro/token: {$ref: './allegro.yaml#/Token'}
+  /client/integrations/allegro/check: {$ref: './allegro.yaml#/Check'}
+  /client/integrations/allegro/connections/{version}: {$ref: './allegro.yaml#/Disconnect'}
+  /client/integrations/allegro/oauth/connect: {$ref: './allegro.yaml#/Start'}
+  /client/integrations/allegro/oauth/launch: {$ref: './allegro.yaml#/Launch'}
+  /client/integrations/allegro/oauth/callback: {$ref: './allegro.yaml#/Callback'}
   /client/orders: {$ref: './orders.yaml#/Orders'}
   /client/orders/quote: {$ref: './orders.yaml#/Quote'}
   /client/orders/{id}: {$ref: './orders.yaml#/Card'}

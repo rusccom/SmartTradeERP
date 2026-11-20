@@ -23,6 +23,7 @@ func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService, me
 	bundleService := newBundleService(store)
 	registerPlugins(mux, store, tokens)
 	registerInPost(mux, store, tokens, cfg.InPostEncryptionKey)
+	registerAllegro(mux, store, tokens, cfg.Allegro)
 	images := newMediaService(store, mediaStore)
 	registerOrders(mux, store, tokens, cfg.KSeFEncryptionKey, images)
 	registerAdmin(mux, store, tokens)

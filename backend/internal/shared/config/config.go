@@ -14,6 +14,7 @@ type Config struct {
 	JWTSecret           string
 	InPostEncryptionKey string
 	KSeFEncryptionKey   string
+	Allegro             Allegro
 	AccessTTL           time.Duration
 	R2                  storage.R2Options
 	// ShopsBaseDomain is the wildcard domain tenant shops live under
@@ -29,6 +30,7 @@ func Load() (Config, error) {
 	cfg.JWTSecret = os.Getenv("JWT_SECRET")
 	cfg.InPostEncryptionKey = os.Getenv("INPOST_ENCRYPTION_KEY")
 	cfg.KSeFEncryptionKey = os.Getenv("KSEF_ENCRYPTION_KEY")
+	cfg.Allegro = loadAllegro()
 	cfg.AccessTTL = parseDuration("JWT_ACCESS_TTL", "8760h")
 	cfg.R2 = loadR2Options()
 	cfg.ShopsBaseDomain = os.Getenv("SHOPS_BASE_DOMAIN")

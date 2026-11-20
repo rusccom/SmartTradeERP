@@ -1,0 +1,120 @@
+Account:
+  type: object
+  required: [id, login, method, version, verified_at, expires_at, needs_reconnect]
+  properties:
+    id: {type: string}
+    login: {type: string}
+    method: {type: string, enum: [token, oauth]}
+    version: {type: string, format: uuid}
+    verified_at: {type: string, format: date-time}
+    expires_at: {type: string, format: date-time, nullable: true}
+    needs_reconnect: {type: boolean}
+Settings:
+  get:
+    summary: Read the organization's Allegro connection and available methods
+    responses:
+      '200':
+        description: Connection status and permissions for this user
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  required: [connection, can_manage, token_available, oauth_available]
+                  properties:
+                    connection:
+                      oneOf: [{$ref: '#/Account'}, {type: object, nullable: true, enum: [null]}]
+                    can_manage: {type: boolean}
+                    token_available: {type: boolean}
+                    oauth_available: {type: boolean}
+      '401': {description: Sign-in required}
+Token:
+  put:
+    summary: Verify a seller access token and save or replace it as organization owner
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [access_token]
+            properties:
+              access_token: {type: string, minLength: 1, maxLength: 16384, writeOnly: true}
+              version: {type: string, description: Use the current version for replacement and an empty string for a new connection}
+    responses:
+      '200': {description: Verified seller and order access and saved the token}
+      '400': {description: Invalid input}
+      '401': {description: Sign-in required}
+      '403': {description: Owner required}
+      '409': {description: Seller or connection changed}
+      '422': {description: Token rejected or required access missing}
+      '429': {description: Allegro rate limit reached}
+      '502': {description: Allegro unavailable}
+      '503': {description: Credential storage unavailable}
+Check:
+  post:
+    summary: Verify the saved connection and refresh a sign-in token when needed
+    responses:
+      '200': {description: Verified the saved connection}
+      '401': {description: Sign-in required}
+      '403': {description: Owner required}
+      '404': {description: No connection}
+      '409': {description: Different seller}
+      '422': {description: Reauthorization required}
+      '429': {description: Allegro rate limit reached}
+      '502': {description: Allegro unavailable}
+      '503': {description: Sign-in application unavailable}
+Disconnect:
+  delete:
+    summary: Remove the current organization's saved Allegro credentials
+    parameters:
+      - {name: version, in: path, required: true, schema: {type: string, format: uuid}}
+    responses:
+      '200': {description: Disconnected}
+      '401': {description: Sign-in required}
+      '403': {description: Owner required}
+      '409': {description: Connection changed}
+Start:
+  post:
+    summary: Create a short-lived Allegro sign-in ticket as the organization owner
+    responses:
+      '200':
+        description: Submit the ticket to the launch URL using a browser form
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  required: [ticket, launch_url]
+                  properties:
+                    ticket: {type: string}
+                    launch_url: {type: string, format: uri}
+      '401': {description: Sign-in required}
+      '403': {description: Owner required}
+      '409': {description: Different connection method already in use}
+      '503': {description: Sign-in application unavailable}
+Launch:
+  post:
+    summary: Redeem a one-time ticket and redirect the browser to Allegro
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema: {type: object, required: [ticket], properties: {ticket: {type: string}}}
+    responses:
+      '303': {description: Continue at Allegro or return to the dashboard with a result}
+      '503': {description: Dashboard origin unavailable}
+Callback:
+  get:
+    summary: Complete the seller's browser authorization and return to the dashboard
+    parameters:
+      - {name: state, in: query, required: true, schema: {type: string}}
+      - {name: code, in: query, schema: {type: string}}
+      - {name: error, in: query, schema: {type: string}}
+    responses:
+      '303': {description: Return to the dashboard with the authorization result}
+      '503': {description: Dashboard origin unavailable}

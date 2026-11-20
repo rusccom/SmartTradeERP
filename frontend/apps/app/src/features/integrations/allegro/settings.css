@@ -1,0 +1,42 @@
+.allegro-settings { max-width: 800px; }
+.allegro-card, .allegro-notice {
+  padding: clamp(16px, 3vw, 24px);
+  border: 1px solid #dbe1e9;
+  border-radius: 12px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+.allegro-card h2 { margin: 0 0 6px; color: #0f172a; font-size: 19px; font-weight: 650; }
+.allegro-card p { margin: 6px 0 0; max-width: 60ch; color: #475569; line-height: 1.5; }
+.allegro-card dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 16px; margin: 14px 0 0; font-size: 14px; }
+.allegro-card dt { color: #475569; }
+.allegro-card dd { margin: 0; }
+.allegro-current { margin-bottom: 16px; }
+.allegro-methods { display: grid; gap: 14px; }
+.allegro-field { display: grid; gap: 6px; margin: 14px 0; }
+.allegro-field label { font-size: 14px; font-weight: 600; }
+.allegro-field input {
+  box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid #a5afbc;
+  border-radius: 8px; font: inherit; color: #0f172a; background: white;
+}
+.allegro-field p { margin: 0; font-size: 14px; }
+.allegro-card > p + button { margin-top: 16px; }
+.allegro-field input:focus-visible { outline: 3px solid #4f46e5; outline-offset: 2px; }
+.allegro-card .allegro-verified { color: #17634b; }
+.allegro-settings .allegro-error { color: #a42828; }
+.allegro-actions, .allegro-notice { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.allegro-actions { margin-top: 20px; }
+.allegro-notice { margin-bottom: 12px; justify-content: space-between; }
+.allegro-settings button {
+  min-height: 44px; padding: 8px 14px; border: 1px solid #a5afbc; border-radius: 8px;
+  background: white; color: #1e293b; font: inherit; font-weight: 600; cursor: pointer;
+}
+.allegro-settings button.allegro-primary { background: #4338ca; border-color: #4338ca; color: white; }
+.allegro-settings button:disabled { background: #f1f5f9; border-color: #d5dce6; color: #566477; cursor: default; }
+.allegro-settings button:focus-visible { outline: 3px solid #4f46e5; outline-offset: 2px; }
+@media (max-width: 540px) {
+  .allegro-card button { width: 100%; }
+  .allegro-actions { align-items: stretch; flex-direction: column; }
+  .allegro-card dl { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .allegro-card dd + dt { margin-top: 6px; }
+}
