@@ -23,6 +23,8 @@ func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService, me
 	bundleService := newBundleService(store)
 	registerPlugins(mux, store, tokens)
 	registerInPost(mux, store, tokens, cfg.InPostEncryptionKey)
+	images := newMediaService(store, mediaStore)
+	registerOrders(mux, store, tokens, cfg.KSeFEncryptionKey, images)
 	registerAdmin(mux, store, tokens)
 	registerClientAuth(mux, store, tokens)
 	registerCatalog(mux, catalogDeps{
@@ -30,7 +32,7 @@ func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService, me
 		tokens:   tokens,
 		ledger:   ledgerService,
 		bundles:  bundleService,
-		media:    newMediaService(store, mediaStore),
+		media:    images,
 		mediaURL: cfg.R2.PublicBaseURL,
 	})
 	registerOperations(mux, store, tokens, ledgerService, bundleService)

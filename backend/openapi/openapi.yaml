@@ -21,6 +21,16 @@ paths:
     $ref: './plugins.yaml#/Grant'
   /client/plugins: {$ref: './plugins.yaml#/ClientList'}
   /client/integrations/inpost: {$ref: './inpost.yaml#/Settings'}
+  /client/orders: {$ref: './orders.yaml#/Orders'}
+  /client/orders/quote: {$ref: './orders.yaml#/Quote'}
+  /client/orders/{id}: {$ref: './orders.yaml#/Card'}
+  /client/orders/{id}/quote: {$ref: './orders.yaml#/CardQuote'}
+  /client/orders/{id}/payments: {$ref: './orders.yaml#/Payments'}
+  /client/orders/invoice-formats: {$ref: './orders.yaml#/Formats'}
+  /client/orders/{id}/invoice: {$ref: './orders.yaml#/Issue'}
+  /client/regions/pl/settings: {$ref: './orders.yaml#/Seller'}
+  /client/regions/pl/invoices/{id}/ksef: {$ref: './orders.yaml#/Submission'}
+  /client/regions/pl/invoices/{id}/ksef/check: {$ref: './orders.yaml#/Check'}
   /client/plugins/{key}:
     $ref: './plugins.yaml#/Enable'
   /admin/stats:

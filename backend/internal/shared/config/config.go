@@ -13,6 +13,7 @@ type Config struct {
 	DatabaseURL         string
 	JWTSecret           string
 	InPostEncryptionKey string
+	KSeFEncryptionKey   string
 	AccessTTL           time.Duration
 	R2                  storage.R2Options
 	// ShopsBaseDomain is the wildcard domain tenant shops live under
@@ -27,6 +28,7 @@ func Load() (Config, error) {
 	cfg.DatabaseURL = os.Getenv("DATABASE_URL")
 	cfg.JWTSecret = os.Getenv("JWT_SECRET")
 	cfg.InPostEncryptionKey = os.Getenv("INPOST_ENCRYPTION_KEY")
+	cfg.KSeFEncryptionKey = os.Getenv("KSEF_ENCRYPTION_KEY")
 	cfg.AccessTTL = parseDuration("JWT_ACCESS_TTL", "8760h")
 	cfg.R2 = loadR2Options()
 	cfg.ShopsBaseDomain = os.Getenv("SHOPS_BASE_DOMAIN")

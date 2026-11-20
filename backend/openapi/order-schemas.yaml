@@ -1,0 +1,129 @@
+Address:
+  type: object
+  properties:
+    name: {type: string}
+    company: {type: string}
+    street: {type: string}
+    postal_code: {type: string}
+    city: {type: string}
+    region: {type: string}
+    country: {type: string, description: Two-letter country code}
+    tax_id: {type: string}
+Pickup:
+  type: object
+  nullable: true
+  properties:
+    name: {type: string}
+    point_id: {type: string}
+    street: {type: string}
+    city: {type: string}
+    postal_code: {type: string}
+Details:
+  type: object
+  properties:
+    nickname: {type: string}
+    delivery_kind: {type: string, enum: [address, pickup]}
+    delivery_method: {type: string}
+    delivery_vat: {type: string}
+    payment_method: {type: string}
+    cod: {type: boolean}
+    shipping: {$ref: '#/Address'}
+    billing: {$ref: '#/Address'}
+    pickup: {$ref: '#/Pickup'}
+LineInput:
+  type: object
+  required: [variant_id, qty]
+  properties:
+    id: {type: string, format: uuid, description: Existing order line when editing}
+    variant_id: {type: string, format: uuid}
+    qty: {type: string, description: Positive decimal quantity}
+    vat_rate: {type: string}
+Line:
+  allOf:
+    - {$ref: '#/LineInput'}
+    - type: object
+      properties:
+        product_name: {type: string}
+        image_thumb_url: {type: string}
+        variant_name: {type: string}
+        sku_code: {type: string}
+        unit: {type: string}
+        unit_price: {type: string}
+        total_amount: {type: string}
+Entry:
+  type: object
+  properties:
+    request_id: {type: string, format: uuid, description: Stable idempotency key for a new order}
+    revision: {type: integer, description: Current revision for an update}
+    customer_name: {type: string}
+    customer_email: {type: string}
+    customer_phone: {type: string}
+    billing_customer_id: {type: string}
+    invoice_requested: {type: boolean}
+    delivery_cost: {type: string, nullable: true}
+    details: {$ref: '#/Details'}
+    items: {type: array, items: {$ref: '#/LineInput'}}
+Summary:
+  type: object
+  properties:
+    id: {type: string, format: uuid}
+    number: {type: string}
+    source: {type: string}
+    customer_name: {type: string}
+    status: {type: string}
+    total_amount: {type: string, description: Goods only}
+    total_with_delivery: {type: string, nullable: true}
+    currency_code: {type: string}
+    created_at: {type: string, format: date-time}
+Invoice:
+  type: object
+  properties:
+    id: {type: string, format: uuid}
+    number: {type: string}
+    format: {type: string}
+    issued_at: {type: string, format: date-time}
+Card:
+  allOf:
+    - {$ref: '#/Summary'}
+    - type: object
+      properties:
+        revision: {type: integer}
+        customer_phone: {type: string}
+        customer_email: {type: string}
+        billing_customer_id: {type: string}
+        invoice_requested: {type: boolean}
+        delivery_cost: {type: string, nullable: true}
+        paid_amount: {type: string, nullable: true}
+        quantity: {type: string}
+        details: {$ref: '#/Details'}
+        items: {type: array, items: {$ref: '#/Line'}}
+        invoice: {$ref: '#/Invoice'}
+Quote:
+  type: object
+  properties:
+    items: {type: array, items: {$ref: '#/Line'}}
+    total_amount: {type: string}
+    total_with_delivery: {type: string, nullable: true}
+    quantity: {type: string}
+    currency_code: {type: string}
+Seller:
+  type: object
+  properties:
+    name: {type: string}
+    nip: {type: string}
+    street: {type: string}
+    postal_code: {type: string}
+    city: {type: string}
+    environment: {type: string, enum: [test, production]}
+    revision: {type: integer}
+    token_configured: {type: boolean, readOnly: true}
+    token: {type: string, writeOnly: true}
+    clear_token: {type: boolean, writeOnly: true}
+Delivery:
+  type: object
+  properties:
+    state: {type: string, enum: [ready, sending, pending, accepted, rejected, uncertain]}
+    environment: {type: string}
+    ksef_number: {type: string}
+    message: {type: string}
+    updated_at: {type: string, format: date-time}

@@ -12,6 +12,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/shopspring/decimal v1.4.0
 	golang.org/x/crypto v0.37.0
+	golang.org/x/text v0.24.0
 )
 
 require (
@@ -23,5 +24,4 @@ require (
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
 )

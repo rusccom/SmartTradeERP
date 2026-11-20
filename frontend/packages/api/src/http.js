@@ -4,8 +4,8 @@ import { assertPublicApiPath, isAdminApiPath, isClientApiPath } from "./publicAp
 
 const API_BASE_URL = normalizeBaseURL(import.meta.env.VITE_API_URL);
 
-export async function postJSON(path, payload) {
-  const response = await fetch(createURL(path), createPostOptions(path, payload));
+export async function postJSON(path, payload, signal) {
+  const response = await fetch(createURL(path), { ...createPostOptions(path, payload), signal });
   return parseEnvelope(response);
 }
 

@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { Link } from "react-router-dom";
 import { useI18n } from "@smarterp/i18n/useI18n";
 import { useStatusDraft } from "./useStatusDraft";
 import StatusDraftForm from "./StatusDraftForm";
@@ -16,6 +17,7 @@ export default function OrderSettingsPage() {
   return (
     <section className="order-settings" aria-labelledby="order-settings-title">
       <h1 id="order-settings-title">{t("orders.settings.title")}</h1>
+      <Link className="dt-open-link" to="poland">{t("entry.plSettings")}</Link>
       <div className="order-status-panel">
         <h2>{t("orders.statuses.title")}</h2>
         <p>{t("orders.statuses.draftHint")}</p>

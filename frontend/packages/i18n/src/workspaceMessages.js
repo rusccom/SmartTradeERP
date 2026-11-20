@@ -1,11 +1,13 @@
 import { bundleEditorMessages } from "./bundleEditor";
 import { inpostMessages } from "./integrations/inpost";
 import { orderMessages } from "./orders";
+import { orderEntryMessages } from "./orderEntry";
 
 export const workspaceMessages = {
   ...bundleEditorMessages,
   ...inpostMessages,
   ...orderMessages,
+  ...orderEntryMessages,
   "app.nav.adminDashboard": "Admin Dashboard",
   "app.nav.adminLogin": "Admin Login",
   "app.nav.clientDashboard": "Client Dashboard",

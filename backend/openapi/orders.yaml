@@ -1,0 +1,180 @@
+Orders:
+  get:
+    summary: List orders for the current organization
+    parameters:
+      - {in: query, name: page, schema: {type: integer}}
+      - {in: query, name: per_page, schema: {type: integer}}
+      - {in: query, name: search, schema: {type: string}}
+      - {in: query, name: sort_by, schema: {type: string}}
+      - {in: query, name: sort_dir, schema: {type: string}}
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data: {type: array, items: {$ref: './order-schemas.yaml#/Summary'}}
+                meta:
+                  type: object
+                  properties: {page: {type: integer}, per_page: {type: integer}, total: {type: integer}}
+  post:
+    summary: Create a manual order idempotently
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: './order-schemas.yaml#/Entry'}
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Card'}}}
+Quote:
+  post:
+    summary: Price new order items from the catalog
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: './order-schemas.yaml#/Entry'}
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Quote'}}}
+Card:
+  parameters: [{name: id, in: path, required: true, schema: {type: string, format: uuid}}]
+  get:
+    summary: Read the order and its addresses
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Card'}}}
+  put:
+    summary: Save the current order revision before invoicing
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: './order-schemas.yaml#/Entry'}
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Card'}}}
+CardQuote:
+  parameters: [{name: id, in: path, required: true, schema: {type: string, format: uuid}}]
+  post:
+    summary: Price an order using its saved line prices
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: './order-schemas.yaml#/Entry'}
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Quote'}}}
+Payments:
+  parameters: [{name: id, in: path, required: true, schema: {type: string, format: uuid}}]
+  post:
+    summary: Register an already received payment idempotently
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {type: object, required: [request_id, amount], properties: {request_id: {type: string, format: uuid}, amount: {type: string}}}
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Card'}}}
+Formats:
+  get:
+    summary: List implemented invoice formats
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {type: array, items: {type: object, properties: {id: {type: string}, label: {type: string}}}}}}
+Issue:
+  parameters: [{name: id, in: path, required: true, schema: {type: string, format: uuid}}]
+  post:
+    summary: Create the immutable order invoice
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {type: object, required: [format, revision], properties: {format: {type: string}, revision: {type: integer}}}
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Invoice'}}}
+Seller:
+  get:
+    summary: Read the Polish seller profile and management permission
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {type: object, properties: {seller: {$ref: './order-schemas.yaml#/Seller'}, can_manage: {type: boolean}}}}}
+  put:
+    summary: Save seller identity and KSeF connection (owner only)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: './order-schemas.yaml#/Seller'}
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Seller'}}}
+Submission:
+  parameters: [{name: id, in: path, required: true, schema: {type: string, format: uuid}}]
+  get:
+    summary: Read the recorded KSeF submission state
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Delivery'}}}
+  post:
+    summary: Send the frozen invoice after explicit confirmation
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {type: object, required: [confirmed, environment], properties: {confirmed: {type: boolean, enum: [true]}, environment: {type: string, enum: [test, production]}}}
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Delivery'}}}
+Check:
+  parameters: [{name: id, in: path, required: true, schema: {type: string, format: uuid}}]
+  post:
+    summary: Reconcile the existing KSeF session and invoice reference
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: './order-schemas.yaml#/Delivery'}}}
