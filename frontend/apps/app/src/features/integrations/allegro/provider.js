@@ -1,3 +1,3 @@
 import { Store } from "lucide-react";
 
-export default { name: "Allegro", icon: Store, tone: "allegro" };
+export default { nameKey: "integrations.providers.allegro", icon: Store, tone: "allegro" };

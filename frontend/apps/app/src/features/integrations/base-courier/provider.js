@@ -1,3 +1,3 @@
 import { Boxes } from "lucide-react";
 
-export default { name: "Base Courier", icon: Boxes, tone: "base" };
+export default { nameKey: "integrations.providers.baseCourier", icon: Boxes, tone: "base" };

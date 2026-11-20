@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { translate } from "@smarterp/i18n/translate";
 
 import { applyStateChange } from "./tableState";
 import { readTableSearchDebounce } from "./filters/tableSearchFilter";
@@ -107,7 +108,7 @@ function finishRequest(controller, setLoading) {
 }
 
 function readErrorMessage(error) {
-  return error?.message || "Failed to load table data";
+  return error?.message || translate("dataTable.loadError");
 }
 
 function buildHookResult({ data, total, loading, error, retry, state, tableHandlers }) {

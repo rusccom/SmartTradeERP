@@ -4,7 +4,7 @@ import ProductTableCopyButton from "./ProductTableCopyButton";
 
 function ProductTableMetaList({ row, t }) {
   const [copied, setCopied] = useState(null);
-  const details = readDetails(row);
+  const details = readDetails(row, t);
   useEffect(() => clearCopied(copied, setCopied), [copied]);
   if (details.length === 0) {
     return null;
@@ -18,10 +18,10 @@ function ProductTableMetaList({ row, t }) {
   );
 }
 
-function readDetails(row) {
+function readDetails(row, t) {
   return [
-    row.sku_code ? { key: "sku", label: "SKU", value: row.sku_code } : null,
-    row.barcode ? { key: "barcode", label: "Barcode", value: row.barcode } : null,
+    row.sku_code ? { key: "sku", label: t("products.columns.sku"), value: row.sku_code } : null,
+    row.barcode ? { key: "barcode", label: t("products.columns.barcode"), value: row.barcode } : null,
   ].filter(Boolean);
 }
 

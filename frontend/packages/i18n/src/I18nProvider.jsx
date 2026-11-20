@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { DEFAULT_LOCALE, readLandingLocale, readSupportedLocales } from "./localeConfig";
 import { I18nContext } from "./i18nContext";
 import { messagesByLocale } from "./messages";
+import { translate } from "./translate";
 
 const STORAGE_KEY = "smarttrade.locale";
 const SUPPORTED_LOCALES = readSupportedLocales(messagesByLocale);
@@ -57,13 +58,11 @@ function syncLocale(locale) {
 }
 
 function createValue({ locale, setStoredLocale }) {
-  const current = messagesByLocale[locale] || messagesByLocale[DEFAULT_LOCALE];
-  const fallback = messagesByLocale[DEFAULT_LOCALE];
   return {
     availableLocales: SUPPORTED_LOCALES,
     locale,
     setLocale: (nextLocale) => handleLocaleChange(nextLocale, setStoredLocale),
-    t: (key, values) => formatMessage(current[key] || fallback[key] || key, values),
+    t: (key, values) => translate(key, values, locale),
   };
 }
 
@@ -73,16 +72,6 @@ function handleLocaleChange(nextLocale, setStoredLocale) {
     return;
   }
   setStoredLocale(locale);
-}
-
-function formatMessage(template, values) {
-  if (!values) {
-    return template;
-  }
-  return Object.entries(values).reduce(
-    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value)),
-    template,
-  );
 }
 
 export default I18nProvider;

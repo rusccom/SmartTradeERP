@@ -6,7 +6,7 @@ import StatusDraftOutlet from "./setting/StatusDraftOutlet";
 import "./order.css";
 
 const orderLayout = (
-  <div className="orders-workspace" lang="uk">
+  <div className="orders-workspace">
     <StatusDraftOutlet />
   </div>
 );

@@ -67,7 +67,7 @@ async function saveMultiVariantProduct(params) {
   try {
     await savePendingVariants(params, productId);
   } catch (error) {
-    throw markAsPartial(error);
+    throw markAsPartial(error, params.t);
   }
   finishMultiVariantSave(params);
 }
@@ -91,7 +91,7 @@ async function saveSingleVariantProduct(params) {
 async function ensureProductCreated(params) {
   if (params.createdProductId) return params.createdProductId;
   const data = await createProduct(toCreateProductPayload(params.form));
-  const productId = readCreatedProductId(data);
+  const productId = readCreatedProductId(data, params.t);
   params.setCreatedProductId(productId);
   params.setSavedVariantCount(1);
   params.onCreated?.();
@@ -104,16 +104,16 @@ function finishMultiVariantSave(params) {
   params.onClose();
 }
 
-function markAsPartial(error) {
-  const reason = error instanceof Error ? error : new Error("Failed to create variants");
+function markAsPartial(error, t) {
+  const reason = error instanceof Error ? error : new Error(t("products.form.partialError"));
   reason.partial = true;
   return reason;
 }
 
-function readCreatedProductId(data) {
+function readCreatedProductId(data, t) {
   const productId = data?.id;
   if (productId) return productId;
-  throw new Error("Product ID was not returned");
+  throw new Error(t("products.form.missingId"));
 }
 
 function resetForm(state) {

@@ -14,10 +14,10 @@ import {
   toVariantUpdatePayload,
 } from "./productEditForm";
 
-export function useProductEditForm({ open, onClose, onSaved, product }) {
+export function useProductEditForm({ open, onClose, onSaved, product, t }) {
   const state = useEditState(product);
   useProductFormLoad({ open, product, ...state });
-  return createEditApi({ onClose, onSaved, product, ...state });
+  return createEditApi({ onClose, onSaved, product, t, ...state });
 }
 
 function useEditState(product) {
@@ -82,7 +82,7 @@ async function submitProductEdit(params) {
 
 async function saveProductEdit(params) {
   const productId = params.product?.id;
-  if (!productId) throw new Error("Product is not selected");
+  if (!productId) throw new Error(params.t("products.form.noSelection"));
   await updateProduct(productId, toProductUpdatePayload(params.form));
   await saveVariantChanges({ productId, form: params.form, removedVariantIds: params.removedVariantIds });
 }

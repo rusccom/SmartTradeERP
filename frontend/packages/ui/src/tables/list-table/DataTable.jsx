@@ -17,7 +17,7 @@ import "./data-table-state.css";
 
 function DataTable(props) {
   const { t } = useI18n();
-  const table = useDataTableInstance(props);
+  const table = useDataTableInstance(props, t);
   const slots = readSlots(props);
   const emptyText = props.emptyText || t("dataTable.emptyText");
   const loadingClass = props.loading ? "dt-loading" : "";
@@ -36,8 +36,9 @@ function DataTable(props) {
   );
 }
 
-function useDataTableInstance(props) {
-  const mappedColumns = useMemo(() => readColumns(props), [props.columns, props.selectable, props.selectionLabels, props.onRowOpen]);
+function useDataTableInstance(props, t) {
+  const mappedColumns = useMemo(() => readColumns(props, t),
+    [props.columns, props.selectable, props.selectionLabels, props.onRowOpen, props.sortingConfig, t]);
   return useReactTable({
     data: props.data,
     columns: mappedColumns,
@@ -112,9 +113,9 @@ function readSlots(props) {
   };
 }
 
-function readColumns(props) {
+function readColumns(props, t) {
   const columns = props.columns.map((column) => mapColumn(column, props));
-  return props.selectable ? [createSelectionColumn(props.selectionLabels), ...columns] : columns;
+  return props.selectable ? [createSelectionColumn(t, props.selectionLabels), ...columns] : columns;
 }
 
 function mapColumn(column, props) {

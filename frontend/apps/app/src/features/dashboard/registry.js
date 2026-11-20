@@ -1,9 +1,9 @@
-import { ordersMenu } from "../order/menu";
+import { createOrdersMenu } from "../order/menu";
 
 export function createMenuSections(t) {
   return [
     menuGroup(t, "catalog", ["products", "customers", "warehouses"]),
-    ordersMenu,
+    createOrdersMenu(t),
     menuGroup(t, "documents", ["documents"]),
     menuGroup(t, "onlineStore", ["storefront", "integrations"]),
     menuGroup(t, "system", ["reports", "settings"]),

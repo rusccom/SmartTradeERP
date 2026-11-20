@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useI18n } from "@smarterp/i18n/useI18n";
 
 import { loadCurrencies } from "../api/loadCurrencies";
 import { setBaseCurrency } from "../api/setBaseCurrency";
@@ -6,11 +7,12 @@ import CurrencyContext from "./currencyContext";
 import { formatMoneyValue } from "./formatMoney";
 
 function CurrencyProvider({ children }) {
+  const { locale } = useI18n();
   const [currencies, setCurrencies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const defaultCurrency = useMemo(() => readDefaultCurrency(currencies), [currencies]);
-  const formatMoney = useCallback((value) => formatMoneyValue(value, defaultCurrency), [defaultCurrency]);
+  const formatMoney = useCallback((value) => formatMoneyValue(value, defaultCurrency, locale), [defaultCurrency, locale]);
   const refresh = useCallback(() => reloadCurrencies(setCurrencies, setError, setLoading), []);
   const changeBase = useCallback((payload) => setBaseAndReload(payload, refresh, setError), [refresh]);
   useInitialLoad(setCurrencies, setError, setLoading);

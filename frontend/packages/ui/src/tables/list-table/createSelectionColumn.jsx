@@ -1,16 +1,16 @@
 import DataTableSelectionCheckbox from "./DataTableSelectionCheckbox";
 
-export function createSelectionColumn(labels = {}) {
+export function createSelectionColumn(t, labels = {}) {
   return {
     id: "select",
     size: 42,
     enableSorting: false,
-    header: ({ table }) => pageCheckbox(table, labels.all),
-    cell: ({ row }) => rowCheckbox(row, labels.row),
+    header: ({ table }) => pageCheckbox(table, labels.all ?? t("dataTable.selectAllRows")),
+    cell: ({ row }) => rowCheckbox(row, labels.row?.(row.original) ?? t("dataTable.selectRow")),
   };
 }
 
-function pageCheckbox(table, label = "Select all rows") {
+function pageCheckbox(table, label) {
   return (
     <DataTableSelectionCheckbox
       checked={table.getIsAllPageRowsSelected()}
@@ -28,7 +28,7 @@ function rowCheckbox(row, label) {
       checked={row.getIsSelected()}
       disabled={!row.getCanSelect()}
       onChange={row.getToggleSelectedHandler()}
-      label={label ? label(row.original) : "Select row"}
+      label={label}
     />
   );
 }

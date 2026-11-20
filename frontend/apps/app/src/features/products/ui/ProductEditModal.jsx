@@ -9,7 +9,7 @@ const FORM_ID = "product-edit-form";
 
 function ProductEditModal({ onClose, onSaved, open, product }) {
   const { t } = useI18n();
-  const state = useProductEditForm({ open, onClose, onSaved, product });
+  const state = useProductEditForm({ open, onClose, onSaved, product, t });
   if (!open || !product) return null;
   return (
     <Modal open={open} onClose={state.handleClose} closeLabel={t("common.close")} title={t("products.editModal.title")} description={product.name} size="lg" bodyTone="muted" footer={<ProductEditorFooter formId={FORM_ID} state={state} t={t} />}>

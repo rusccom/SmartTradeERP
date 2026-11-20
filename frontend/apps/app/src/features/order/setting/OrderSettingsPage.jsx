@@ -1,11 +1,13 @@
 import { useRef } from "react";
+import { useI18n } from "@smarterp/i18n/useI18n";
 import { useStatusDraft } from "./useStatusDraft";
 import StatusDraftForm from "./StatusDraftForm";
 import StatusDraftTable from "./StatusDraftTable";
 import "./setting.css";
 
 export default function OrderSettingsPage() {
-  const draft = useStatusDraft();
+  const { t, locale } = useI18n();
+  const draft = useStatusDraft(locale);
   const input = useRef(null);
   function startEditing(status) {
     draft.edit(status);
@@ -13,11 +15,11 @@ export default function OrderSettingsPage() {
   }
   return (
     <section className="order-settings" aria-labelledby="order-settings-title">
-      <h1 id="order-settings-title">Налаштування замовлень</h1>
+      <h1 id="order-settings-title">{t("orders.settings.title")}</h1>
       <div className="order-status-panel">
-        <h2>Статуси замовлень</h2>
-        <p>Назви залишаються в чернетці до виходу з розділу або оновлення сторінки.</p>
-        <StatusDraftForm draft={draft} inputRef={input} />
+        <h2>{t("orders.statuses.title")}</h2>
+        <p>{t("orders.statuses.draftHint")}</p>
+        <StatusDraftForm draft={draft} inputRef={input} t={t} />
         <StatusDraftTable statuses={draft.statuses} onEdit={startEditing} />
       </div>
     </section>

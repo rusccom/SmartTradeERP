@@ -1,4 +1,4 @@
-import { slugify } from "../model/slugify";
+import { productPathSegment, slugify } from "../model/slugify";
 
 function ProductSeoPreview({ form, t }) {
   const title = pick(form.seoTitle, form.name) || t("products.form.seoPreviewTitle");
@@ -7,7 +7,7 @@ function ProductSeoPreview({ form, t }) {
   return (
     <div className="product-seo-preview">
       <span className="product-seo-preview-caption">{t("products.form.seoPreview")}</span>
-      <div className="product-seo-preview-url">{t("products.form.seoPreviewHost")} › products › {handle}</div>
+      <div className="product-seo-preview-url">{t("products.form.seoPreviewHost")} › {productPathSegment} › {handle}</div>
       <div className="product-seo-preview-title">{title}</div>
       <div className="product-seo-preview-desc">{description}</div>
     </div>

@@ -1,12 +1,13 @@
 export const orderPath = "/dashboard/orders";
 export const orderSettingsSegment = "settings";
 
-export const ordersMenu = {
-  label: "Замовлення",
-  lang: "uk",
-  collapsible: true,
-  items: [
-    { key: "orders", path: orderPath, title: "Моє замовлення", end: true },
-    { key: "orderSettings", path: `${orderPath}/${orderSettingsSegment}`, title: "Налаштування" },
-  ],
-};
+export function createOrdersMenu(t) {
+  return {
+    label: t("orders.menu"),
+    collapsible: true,
+    items: [
+      { key: "orders", path: orderPath, title: t("orders.list.title"), end: true },
+      { key: "orderSettings", path: `${orderPath}/${orderSettingsSegment}`, title: t("dashboard.menu.settings") },
+    ],
+  };
+}

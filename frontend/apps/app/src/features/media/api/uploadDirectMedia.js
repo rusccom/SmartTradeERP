@@ -1,3 +1,5 @@
+import { translate } from "@smarterp/i18n/translate";
+
 export async function uploadDirectMedia(upload, file) {
   const response = await fetch(upload.upload_url, {
     method: upload.method || "PUT",
@@ -5,6 +7,6 @@ export async function uploadDirectMedia(upload, file) {
     body: file,
   });
   if (!response.ok) {
-    throw new Error(`Upload failed with status ${response.status}`);
+    throw new Error(translate("media.uploadFailed", { status: response.status }));
   }
 }

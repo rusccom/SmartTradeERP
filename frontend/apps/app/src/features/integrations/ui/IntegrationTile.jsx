@@ -4,7 +4,8 @@ import { useI18n } from "@smarterp/i18n/useI18n";
 
 export default function IntegrationTile({ provider }) {
   const { t } = useI18n();
-  const { name, icon: Icon, tone, path } = provider;
+  const { nameKey, icon: Icon, tone, path } = provider;
+  const name = t(nameKey);
   const content = (
     <>
       <span className={`integration-icon integration-icon--${tone}`}><Icon aria-hidden="true" /></span>

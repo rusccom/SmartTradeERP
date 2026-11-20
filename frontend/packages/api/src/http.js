@@ -1,4 +1,5 @@
 import { getAdminToken, getClientToken } from "@smarterp/auth/session";
+import { translate } from "@smarterp/i18n/translate";
 import { assertPublicApiPath, isAdminApiPath, isClientApiPath } from "./publicApi";
 
 const API_BASE_URL = normalizeBaseURL(import.meta.env.VITE_API_URL);
@@ -26,7 +27,7 @@ export async function getJSON(path, params, signal) {
 function createURL(path) {
   assertPublicApiPath(path);
   if (API_BASE_URL === "") {
-    throw new Error("VITE_API_URL is required");
+    throw new Error(translate("api.missingAddress"));
   }
   return `${API_BASE_URL}${path}`;
 }
@@ -110,7 +111,7 @@ function getErrorMessage(body, statusCode) {
   if (message) {
     return message;
   }
-  return `Request failed with status ${statusCode}`;
+  return translate("api.requestFailed", { status: statusCode });
 }
 
 function normalizeBaseURL(value) {
