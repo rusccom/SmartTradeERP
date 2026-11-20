@@ -5,12 +5,12 @@ import { useI18n } from "@smarterp/i18n/useI18n";
 import { apiPaths } from "@smarterp/api/publicApi";
 import { invoiceRegions } from "../../regions/orderInvoices";
 import OrderField from "./OrderField";
-import useOrderResource from "./useOrderResource";
+import useApiResource from "@smarterp/api/useApiResource";
 
 export default function InvoiceActions({ editor, onIssue }) {
   const { t } = useI18n();
   const invoice = editor.card?.invoice;
-  const formats = useOrderResource(invoice ? "" : apiPaths.invoiceFormats);
+  const formats = useApiResource(invoice ? "" : apiPaths.invoiceFormats);
   const [selection, setSelection] = useState("");
   const region = invoiceRegions[invoice?.format || selection];
   const Delivery = region?.Delivery;

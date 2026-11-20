@@ -3,6 +3,7 @@ import { postJSON, putJSON } from "@smarterp/api/http";
 import { apiPaths } from "@smarterp/api/publicApi";
 import { entryFrom, entryPayload, patchEntry } from "./entryModel";
 import useOrderQuote from "./useOrderQuote";
+import { resetDestinationRates } from "./orderVat";
 
 export default function useOrderEditor(initial, onPersist) {
   const [card, setCard] = useState(initial);
@@ -13,7 +14,7 @@ export default function useOrderEditor(initial, onPersist) {
   const lock = useRef(false);
   const quote = useOrderQuote(form, card);
   function change(path, value) {
-    setForm((old) => patchEntry(old, path, value));
+    setForm((old) => resetDestinationRates(old, patchEntry(old, path, value)));
     setError("");
     setDirty(true);
   }

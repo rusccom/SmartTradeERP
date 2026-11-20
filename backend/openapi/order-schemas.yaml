@@ -13,6 +13,7 @@ Pickup:
   type: object
   nullable: true
   properties:
+    country: {$ref: './catalog-products.yaml#/CountryCode'}
     name: {type: string}
     point_id: {type: string}
     street: {type: string}
@@ -37,7 +38,9 @@ LineInput:
     id: {type: string, format: uuid, description: Existing order line when editing}
     variant_id: {type: string, format: uuid}
     qty: {type: string, description: Positive decimal quantity}
-    vat_rate: {type: string}
+    vat_rate: {type: string, description: Explicit percentage for manual mode or the saved/quoted percentage on a returned line. Empty means unconfigured.}
+    vat_country: {type: string, description: Country of this VAT snapshot or the destination bound to a manual override}
+    vat_mode: {type: string, enum: [catalog, manual], description: Catalog mode resolves the product rate on the server. An explicit rate without a mode is manual.}
 Line:
   allOf:
     - {$ref: '#/LineInput'}

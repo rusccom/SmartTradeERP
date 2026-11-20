@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { postJSON } from "@smarterp/api/http";
 import { apiPaths } from "@smarterp/api/publicApi";
 import { lineInputs } from "./entryModel";
+import { destination } from "./orderVat";
 
 export default function useOrderQuote(form, card) {
   const [result, setResult] = useState({});
@@ -23,5 +24,7 @@ export default function useOrderQuote(form, card) {
 
 function quoteRequest(order) {
   const delivery = order.delivery_cost === "" ? null : order.delivery_cost;
-  return JSON.stringify({ items: lineInputs(order.items), revision: order.revision, delivery_cost: delivery });
+  const pickup = order.details?.delivery_kind === "pickup";
+  const details = { delivery_kind: pickup ? "pickup" : "address", [pickup ? "pickup" : "shipping"]: { country: destination(order) } };
+  return JSON.stringify({ items: lineInputs(order.items), revision: order.revision, delivery_cost: delivery, details });
 }

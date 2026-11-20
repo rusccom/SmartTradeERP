@@ -5,14 +5,14 @@ import { CheckCircle2 } from "lucide-react";
 import { useI18n } from "@smarterp/i18n/useI18n";
 import { apiPaths } from "@smarterp/api/publicApi";
 import ConfirmKsef from "./ConfirmKsef";
-import useOrderResource from "../../order/create-order/useOrderResource";
+import useApiResource from "@smarterp/api/useApiResource";
 import useKsefDelivery from "./useKsefDelivery";
 
 export default function KsefDelivery({ invoice }) {
   const { t } = useI18n();
   const [confirm, setConfirm] = useState(false);
   const status = useKsefDelivery(invoice.id);
-  const profile = useOrderResource(apiPaths.polishSeller);
+  const profile = useApiResource(apiPaths.polishSeller);
   const d = status.data;
   const env = d?.environment || profile.data?.seller?.environment;
   const accepted = d?.state === "accepted" && Boolean(d.ksef_number);

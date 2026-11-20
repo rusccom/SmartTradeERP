@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"smarterp/backend/internal/erp/productvat"
 )
 
 type productVariantRow struct {
@@ -43,7 +44,7 @@ func (r *Repository) loadListItems(
 	tenantID string,
 	query ProductListQuery,
 ) ([]ProductListItem, error) {
-	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.slug, p.seo_title, p.seo_description, COALESCE(p.description_html,''), p.created_at::text, p.updated_at::text
+	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.slug, p.seo_title, p.seo_description, COALESCE(p.description_html,''), p.created_at::text, p.updated_at::text, ` + productvat.RatesColumn + `
         FROM catalog.products p`
 	args := []any{}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
@@ -60,7 +61,7 @@ func scanProductListItems(rows pgx.Rows) ([]ProductListItem, error) {
 	items := make([]ProductListItem, 0)
 	for rows.Next() {
 		item := ProductListItem{}
-		err := rows.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.DescriptionHTML, &item.CreatedAt, &item.UpdatedAt)
+		err := rows.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.DescriptionHTML, &item.CreatedAt, &item.UpdatedAt, &item.VATRates)
 		if err != nil {
 			return nil, err
 		}

@@ -76,6 +76,6 @@ func (h *Handler) SaveSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Formats(w http.ResponseWriter, r *http.Request) {
-	formats := []map[string]string{{"id": standardFormat, "label": "Polish standard VAT · PLN · FA(3)"}}
+	formats := []map[string]string{{"id": standardFormat, "label": "Polish domestic VAT · PLN · FA(3)"}}
 	respond(w, formats, nil)
 }

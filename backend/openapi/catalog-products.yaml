@@ -1,0 +1,111 @@
+CountryCode:
+  type: string
+  pattern: '^[A-Z]{2}$'
+  description: ISO 3166-1 alpha-2 code
+CountryList:
+  description: Country codes
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          data: {type: array, items: {$ref: '#/CountryCode'}}
+CountryOptions:
+  get:
+    summary: List all supported destination country codes
+    responses:
+      '200': {$ref: '#/CountryList'}
+Countries:
+  get:
+    summary: List VAT countries configured for the current organization
+    responses:
+      '200': {$ref: '#/CountryList'}
+Country:
+  parameters:
+    - {in: path, name: country, required: true, schema: {$ref: '#/CountryCode'}}
+  put:
+    summary: Enable a VAT country for the organization
+    responses:
+      '200': {description: Country enabled}
+      '422': {description: Unknown country}
+  delete:
+    summary: Remove an unused VAT country
+    responses:
+      '200': {description: Country removed}
+      '409': {description: Products still have a rate for this country}
+Rates:
+  type: object
+  description: Product percentages keyed by enabled country. Zero is a configured rate.
+  additionalProperties: {type: string}
+Changes:
+  type: object
+  properties:
+    vat_rates:
+      type: object
+      description: Supply changed countries only. A null entry removes the rate.
+      additionalProperties: {type: string, nullable: true, pattern: '^(100(\.0{1,2})?|[0-9]{1,2}(\.[0-9]{1,2})?)$'}
+ProductRecord:
+  type: object
+  properties:
+    id: {type: string, format: uuid}
+    name: {type: string}
+    vat_rates: {$ref: '#/Rates'}
+Products:
+  get:
+    summary: List regular products with optional variants, stock and warehouses
+    parameters:
+      - {in: query, name: include, schema: {type: string}, example: 'variants,stock,warehouses'}
+      - {in: query, name: search, schema: {type: string}}
+      - {in: query, name: warehouse_id, schema: {type: string}}
+      - {in: query, name: min_qty, schema: {type: string}}
+      - {in: query, name: max_qty, schema: {type: string}}
+      - {in: query, name: qty_state, schema: {type: string, enum: [positive, negative, zero, nonzero]}}
+    responses:
+      '200':
+        description: Products with VAT rates per country
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {type: array, items: {$ref: '#/ProductRecord'}}}}
+  post:
+    summary: Create a product with its default variant and optional VAT rates
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - {$ref: '#/Changes'}
+              - type: object
+                required: [name, unit]
+                properties: {name: {type: string}, unit: {type: string}, price: {type: number}}
+    responses:
+      '201': {description: Product created}
+Product:
+  parameters:
+    - {in: path, name: id, required: true, schema: {type: string, format: uuid}}
+  get:
+    summary: Read a product and its VAT rates
+    responses:
+      '200':
+        description: Product details
+        content:
+          application/json:
+            schema: {type: object, properties: {data: {$ref: '#/ProductRecord'}}}
+  put:
+    summary: Update a product and any supplied VAT rate changes atomically
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - {$ref: '#/Changes'}
+              - type: object
+                required: [name]
+                properties: {name: {type: string}}
+    responses:
+      '200': {description: Updated}
+  delete:
+    summary: Delete a product when no inventory movements and bundle links exist
+    responses:
+      '200': {description: Deleted}

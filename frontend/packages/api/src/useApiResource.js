@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { getJSON } from "@smarterp/api/http";
 
-export default function useOrderResource(path) {
+export default function useApiResource(path, refreshOnFocus = false) {
   const [result, setResult] = useState({});
   const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (!refreshOnFocus) return;
+    const reload = () => setAttempt((n) => n + 1);
+    window.addEventListener("focus", reload);
+    return () => window.removeEventListener("focus", reload);
+  }, [refreshOnFocus]);
   useEffect(() => {
     if (!path) return;
     const controller = new AbortController();

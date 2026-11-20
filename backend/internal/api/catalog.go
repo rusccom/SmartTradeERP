@@ -7,6 +7,7 @@ import (
 	"smarterp/backend/internal/erp/bundles"
 	"smarterp/backend/internal/erp/ledger"
 	"smarterp/backend/internal/erp/products"
+	"smarterp/backend/internal/erp/productvat"
 	"smarterp/backend/internal/erp/variants"
 	"smarterp/backend/internal/erp/warehouses"
 	mediafeature "smarterp/backend/internal/platform/media"
@@ -28,6 +29,10 @@ func registerCatalog(
 	mux *http.ServeMux,
 	deps catalogDeps,
 ) {
+	countries := productvat.Countries{Store: deps.store}
+	handleClient(mux, deps.tokens, "GET /api/client/catalog/vat-countries", countries.List)
+	handleClient(mux, deps.tokens, "PUT /api/client/catalog/vat-countries/{country}", countries.Change)
+	handleClient(mux, deps.tokens, "DELETE /api/client/catalog/vat-countries/{country}", countries.Change)
 	registerProducts(mux, deps)
 	registerVariants(mux, deps)
 	registerBundles(mux, deps)

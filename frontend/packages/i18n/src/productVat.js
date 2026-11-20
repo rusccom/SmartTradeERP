@@ -1,0 +1,15 @@
+export const productVatMessages = {
+  "vat.title": "VAT by country",
+  "vat.select": "Select a country",
+  "vat.addCountry": "Add country",
+  "vat.removeCountry": "Remove {country}",
+  "vat.addRate": "Add VAT rate",
+  "vat.removeRate": "Remove VAT for {country}",
+  "vat.rateLabel": "VAT rate for {country} (%)",
+  "vat.noCountries": "No VAT countries are configured.",
+  "vat.settingsHint": "Choose the countries available for VAT rates on your products.",
+  "vat.manage": "Manage VAT countries",
+  "vat.notSet": "VAT not set",
+  "vat.manual": "Manual",
+  "vat.restore": "Use catalog rate",
+};

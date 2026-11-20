@@ -2,11 +2,11 @@ package orders
 
 import (
 	"errors"
-	"regexp"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/shopspring/decimal"
+	"smarterp/backend/internal/shared/countries"
 	"smarterp/backend/internal/shared/validation"
 )
 
@@ -16,11 +16,10 @@ var (
 	ErrIssued    = errors.New("this order already has an invoice")
 	ErrCurrency  = errors.New("configure the organization's base currency")
 	ErrSelection = errors.New("a selected catalog variant is unavailable or has no price")
-	countryCode  = regexp.MustCompile(`^[A-Z]{2}$`)
 )
 
 func validAddress(a Address) bool {
-	return (a.Country == "" || countryCode.MatchString(a.Country)) &&
+	return (a.Country == "" || countries.Valid(a.Country)) &&
 		within(255, a.Name, a.Company, a.City, a.Region) && within(512, a.Street) && within(32, a.PostalCode, a.TaxID)
 }
 
@@ -44,7 +43,7 @@ func validDetails(d Details) bool {
 		return false
 	}
 	p := d.Pickup
-	return strings.TrimSpace(p.PointID) != "" && within(255, p.Name, p.PointID, p.City) && within(512, p.Street) && within(32, p.PostalCode)
+	return (p.Country == "" || countries.Valid(p.Country)) && strings.TrimSpace(p.PointID) != "" && within(255, p.Name, p.PointID, p.City) && within(512, p.Street) && within(32, p.PostalCode)
 }
 
 func validAmount(v decimal.Decimal, digits int32, ceiling int64) bool {
@@ -73,7 +72,7 @@ func (e Entry) validateLines() error {
 	}
 	seen := make(map[string]bool)
 	for _, line := range e.Items {
-		if !validation.UUID(line.VariantID) || !validAmount(line.Qty, 3, 100001) || !line.Qty.IsPositive() || !within(12, line.VAT) {
+		if !validation.UUID(line.VariantID) || !validAmount(line.Qty, 3, 100001) || !line.Qty.IsPositive() || !line.validVAT() {
 			return ErrInvalid
 		}
 		if line.ID != "" && (!validation.UUID(line.ID) || seen[line.ID]) {

@@ -49,7 +49,11 @@ func (w operation) quote(e Entry) (*Quote, error) {
 	if e.DeliveryCost != nil && !e.DeliveryCost.Equal(e.DeliveryCost.Round(m.places)) {
 		return nil, ErrInvalid
 	}
-	return w.priceCart(e, m)
+	q, err := w.priceCart(e, m)
+	if err != nil {
+		return nil, err
+	}
+	return q, w.applyVAT(e.Details, q.Items)
 }
 
 func (w operation) priceCart(e Entry, m money) (*Quote, error) {

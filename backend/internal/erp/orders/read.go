@@ -45,7 +45,8 @@ func loadContents(ctx context.Context, tx db.DBTX, tenantID string, c *Card) (*C
 }
 
 func loadLines(ctx context.Context, tx db.DBTX, tenantID, id string) ([]Line, error) {
-	const q = `SELECT i.id::text,i.variant_id::text,v.product_id::text,i.qty,COALESCE(i.vat_rate,''),i.product_name,i.variant_name,
+	const q = `SELECT i.id::text,i.variant_id::text,v.product_id::text,i.qty,COALESCE(i.vat_rate,''),CASE WHEN i.vat_rate IS NULL THEN 'catalog' ELSE i.vat_mode END,
+        COALESCE(i.vat_country,''),i.product_name,i.variant_name,
         COALESCE(i.sku_code,v.sku_code,''),COALESCE(i.unit,v.unit,''),i.unit_price,i.total_amount FROM storefront.order_items i
         JOIN catalog.product_variants v ON (v.tenant_id,v.id)=(i.tenant_id,i.variant_id)
         WHERE i.tenant_id=$1 AND i.order_id=$2 ORDER BY i.position NULLS LAST,i.id`
@@ -55,7 +56,7 @@ func loadLines(ctx context.Context, tx db.DBTX, tenantID, id string) ([]Line, er
 	}
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (Line, error) {
 		var l Line
-		err := row.Scan(&l.ID, &l.VariantID, &l.ProductID, &l.Qty, &l.VAT, &l.ProductName, &l.VariantName, &l.SKU, &l.Unit, &l.Price, &l.Total)
+		err := row.Scan(&l.ID, &l.VariantID, &l.ProductID, &l.Qty, &l.VAT, &l.VATMode, &l.VATCountry, &l.ProductName, &l.VariantName, &l.SKU, &l.Unit, &l.Price, &l.Total)
 		return l, err
 	})
 }

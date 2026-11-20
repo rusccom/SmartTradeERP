@@ -3,6 +3,7 @@ import ProductDescriptionSection from "./ProductDescriptionSection";
 import ProductInventorySection from "./ProductInventorySection";
 import ProductMediaSection from "./ProductMediaSection";
 import ProductPriceSection from "./ProductPriceSection";
+import ProductVatRates from "../vat/ProductVatRates";
 import ProductSeoSection from "./ProductSeoSection";
 import ProductVariantsSection from "./ProductVariantsSection";
 import ProductVariantsBuilder from "./ProductVariantsBuilder";
@@ -19,6 +20,7 @@ function ProductCreateForm({ formId, state, t }) {
       <ProductDescriptionSection form={state.form} onChange={state.handleChange} productId={state.productId} t={t} />
       <ProductMediaSection productId={state.productId} t={t} />
       <ProductPriceSection form={state.form} hasVariants={hasVariants} onChange={state.handleChange} priceStep={priceStep} t={t} />
+      <ProductVatRates rates={state.form.vatRates} onChange={state.handleVatRates} disabled={state.isSaving || state.hasPendingProduct} />
       {!hasVariants && <ProductInventorySection form={state.form} onChange={state.handleChange} t={t} />}
       <ProductVariantsSection hasVariants={hasVariants} onAddVariant={state.handleAddVariant} disabled={state.hasPendingProduct} t={t}>
         {readBottomSlot(state, t, priceStep)}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/shopspring/decimal"
 
+	"smarterp/backend/internal/erp/productvat"
 	"smarterp/backend/internal/platform/storefront/catalog"
 	"smarterp/backend/internal/shared/db"
 )
@@ -17,6 +18,7 @@ type orderRecord struct {
 	CustomerName  string
 	CustomerEmail string
 	CustomerPhone string
+	Country       string
 	Address       string
 	Note          string
 	CurrencyCode  string
@@ -24,6 +26,7 @@ type orderRecord struct {
 }
 
 type orderItemRecord struct {
+	VAT         string
 	Components  []catalog.Component
 	ID          string
 	VariantID   string
@@ -35,18 +38,28 @@ type orderItemRecord struct {
 }
 
 const insertOrderSQL = `INSERT INTO storefront.orders
-        (id, tenant_id, number, status, customer_name, customer_email, customer_phone, shipping_address, currency_code, total_amount, note)
-    VALUES ($1, $2, $3, 'new', $4, $5, $6, $7, $8, $9, $10)`
+        (id, tenant_id, number, status, customer_name, customer_email, customer_phone, shipping_address, currency_code, total_amount, note, details)
+    VALUES ($1, $2, $3, 'new', $4, $5, $6, $7, $8, $9, $10,
+        jsonb_build_object('delivery_kind','address','shipping',jsonb_build_object('street',$7::text,'country',$11::text)))`
 
 const insertOrderItemSQL = `INSERT INTO storefront.order_items
-        (id, order_id, variant_id, product_name, variant_name, unit_price, qty, total_amount, tenant_id, bundle_components)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+        (id, order_id, variant_id, product_name, variant_name, unit_price, qty, total_amount, tenant_id, bundle_components, vat_rate, vat_country, vat_mode)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULLIF($11,''), $12, 'catalog')`
 
 func (r *Repository) InsertOrder(ctx context.Context, tx db.DBTX, order orderRecord, items []orderItemRecord) error {
 	if err := insertOrderRow(ctx, tx, order); err != nil {
 		return err
 	}
+	ids := make([]string, 0, len(items))
 	for _, item := range items {
+		ids = append(ids, item.VariantID)
+	}
+	rates, err := productvat.ForVariants(ctx, tx, order.TenantID, order.Country, ids)
+	if err != nil {
+		return err
+	}
+	for _, item := range items {
+		item.VAT = rates[item.VariantID]
 		if err := insertOrderItem(ctx, tx, order, item); err != nil {
 			return err
 		}
@@ -56,7 +69,7 @@ func (r *Repository) InsertOrder(ctx context.Context, tx db.DBTX, order orderRec
 
 func insertOrderRow(ctx context.Context, tx db.DBTX, o orderRecord) error {
 	_, err := tx.Exec(ctx, insertOrderSQL, o.ID, o.TenantID, o.Number, o.CustomerName,
-		o.CustomerEmail, o.CustomerPhone, o.Address, o.CurrencyCode, o.Total, o.Note)
+		o.CustomerEmail, o.CustomerPhone, o.Address, o.CurrencyCode, o.Total, o.Note, o.Country)
 	return err
 }
 
@@ -69,6 +82,6 @@ func insertOrderItem(ctx context.Context, tx db.DBTX, order orderRecord, item or
 		return err
 	}
 	_, err = tx.Exec(ctx, insertOrderItemSQL, item.ID, order.ID, item.VariantID,
-		item.ProductName, item.VariantName, item.UnitPrice, item.Qty, item.Total, order.TenantID, components)
+		item.ProductName, item.VariantName, item.UnitPrice, item.Qty, item.Total, order.TenantID, components, item.VAT, order.Country)
 	return err
 }

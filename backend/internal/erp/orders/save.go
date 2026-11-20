@@ -142,11 +142,12 @@ func (w operation) writeLines(lines []Line) error {
 }
 
 func (w operation) writeLine(l Line, position int) error {
-	const q = `INSERT INTO storefront.order_items (tenant_id,order_id,id,variant_id,product_name,variant_name,unit_price,qty,total_amount,vat_rate,sku_code,unit,position)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NULLIF($10,''),$11,$12,$13)
-      ON CONFLICT(id) DO UPDATE SET qty=excluded.qty,total_amount=excluded.total_amount,vat_rate=excluded.vat_rate,position=excluded.position
+	const q = `INSERT INTO storefront.order_items (tenant_id,order_id,id,variant_id,product_name,variant_name,unit_price,qty,total_amount,vat_rate,sku_code,unit,position,vat_mode,vat_country)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NULLIF($10,''),$11,$12,$13,$14,NULLIF($15,''))
+      ON CONFLICT(id) DO UPDATE SET qty=excluded.qty,total_amount=excluded.total_amount,vat_rate=excluded.vat_rate,
+        vat_country=excluded.vat_country,vat_mode=excluded.vat_mode,position=excluded.position
       WHERE storefront.order_items.tenant_id=excluded.tenant_id AND storefront.order_items.order_id=excluded.order_id`
-	result, err := w.tx.Exec(w.ctx, q, w.tenant, w.id, l.ID, l.VariantID, l.ProductName, l.VariantName, l.Price, l.Qty, l.Total, l.VAT, l.SKU, l.Unit, position)
+	result, err := w.tx.Exec(w.ctx, q, w.tenant, w.id, l.ID, l.VariantID, l.ProductName, l.VariantName, l.Price, l.Qty, l.Total, l.VAT, l.SKU, l.Unit, position, l.VATMode, l.VATCountry)
 	if err == nil && result.RowsAffected() != 1 {
 		return ErrConflict
 	}

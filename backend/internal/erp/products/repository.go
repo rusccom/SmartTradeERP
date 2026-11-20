@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	productsearch "smarterp/backend/internal/erp/products/search"
+	"smarterp/backend/internal/erp/productvat"
 	"smarterp/backend/internal/shared/db"
 	"smarterp/backend/internal/shared/httpx"
 )
@@ -42,7 +43,7 @@ func (r *Repository) count(ctx context.Context, tenantID string, query ProductLi
 }
 
 func (r *Repository) load(ctx context.Context, tenantID string, query ProductListQuery) ([]Product, error) {
-	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.slug, p.seo_title, p.seo_description, p.created_at::text, p.updated_at::text
+	sqlQuery := `SELECT p.id::text, p.name, p.is_composite, p.slug, p.seo_title, p.seo_description, p.created_at::text, p.updated_at::text, ` + productvat.RatesColumn + `
         FROM catalog.products p`
 	args := []any{}
 	sqlQuery, args = appendListFilters(sqlQuery, args, query)
@@ -63,7 +64,7 @@ func appendListFilters(query string, args []any, productQuery ProductListQuery) 
 }
 
 func addProductScopeFilter(query string) string {
-	return query + ` WHERE p.is_composite=false`
+	return query + ` WHERE p.tenant_id=platform.current_tenant() AND p.is_composite=false`
 }
 
 func appendSortAndPaging(query string, args []any, productQuery ProductListQuery) (string, []any) {
@@ -96,7 +97,7 @@ func scanProducts(rows pgx.Rows) ([]Product, error) {
 	items := make([]Product, 0)
 	for rows.Next() {
 		item := Product{}
-		err := rows.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.CreatedAt, &item.UpdatedAt)
+		err := rows.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.CreatedAt, &item.UpdatedAt, &item.VATRates)
 		if err != nil {
 			return nil, err
 		}
@@ -130,12 +131,12 @@ func readDefaultVariantName(req CreateRequest) string {
 }
 
 func (r *Repository) GetByID(ctx context.Context, tenantID, id string) (Product, error) {
-    query := `SELECT id::text, name, is_composite, slug, seo_title, seo_description, COALESCE(description_html,''), created_at::text, updated_at::text
-        FROM catalog.products
-        WHERE id=$1`
+    query := `SELECT id::text, name, is_composite, slug, seo_title, seo_description, COALESCE(description_html,''), created_at::text, updated_at::text, ` + productvat.RatesColumn + `
+        FROM catalog.products p
+        WHERE id=$1 AND p.tenant_id=platform.current_tenant()`
     row := r.store.QueryRow(ctx, tenantID, query, id)
     item := Product{}
-    err := row.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.DescriptionHTML, &item.CreatedAt, &item.UpdatedAt)
+    err := row.Scan(&item.ID, &item.Name, &item.IsComposite, &item.Slug, &item.SEOTitle, &item.SEODescription, &item.DescriptionHTML, &item.CreatedAt, &item.UpdatedAt, &item.VATRates)
     return item, err
 }
 
@@ -158,12 +159,17 @@ func (r *Repository) SlugExists(ctx context.Context, tenantID, slug, excludeID s
 func (r *Repository) Update(ctx context.Context, tenantID, id string, req UpdateRequest) error {
     query := `UPDATE catalog.products
         SET name=$2, is_composite=$3, slug=$4, seo_title=$5, seo_description=$6, description_html=$7, updated_at=now()
-        WHERE id=$1`
-    tag, err := r.store.Exec(ctx, tenantID, query, id, req.Name, req.IsComposite, req.Slug, req.SEOTitle, req.SEODescription, req.DescriptionHTML)
-    if err == nil && tag.RowsAffected() == 0 {
-        return pgx.ErrNoRows
-    }
-    return err
+        WHERE id=$1 AND tenant_id=platform.current_tenant()`
+    return r.store.WithTenantTx(ctx, tenantID, func(tx pgx.Tx) error {
+        tag, err := tx.Exec(ctx, query, id, req.Name, req.IsComposite, req.Slug, req.SEOTitle, req.SEODescription, req.DescriptionHTML)
+        if err != nil {
+            return err
+        }
+        if tag.RowsAffected() == 0 {
+            return pgx.ErrNoRows
+        }
+        return req.VATRates.Apply(ctx, tx, tenantID, id)
+    })
 }
 
 func (r *Repository) Delete(ctx context.Context, tenantID, id string) error {

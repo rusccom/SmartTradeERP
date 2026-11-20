@@ -9,6 +9,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"smarterp/backend/internal/platform/storefront/catalog"
+	"smarterp/backend/internal/shared/countries"
 	"smarterp/backend/internal/shared/validation"
 )
 
@@ -197,14 +198,14 @@ func (sh *shop) order(req checkoutRequest, total decimal.Decimal) orderRecord {
 	return orderRecord{
 		ID: uuid.NewString(), TenantID: sh.tenantID, Number: "SF-" + strings.ToUpper(uuid.NewString()[:8]),
 		CustomerName: strings.TrimSpace(req.Customer.Name), CustomerEmail: strings.TrimSpace(req.Customer.Email),
-		CustomerPhone: strings.TrimSpace(req.Customer.Phone), Address: strings.TrimSpace(req.Customer.Address),
+		CustomerPhone: strings.TrimSpace(req.Customer.Phone), Address: strings.TrimSpace(req.Customer.Address), Country: req.Customer.Country,
 		Note: strings.TrimSpace(req.Note), CurrencyCode: sh.brand.Currency.code, Total: total,
 	}
 }
 
 func validateCustomer(c checkoutCustomer) error {
 	name := strings.TrimSpace(c.Name)
-	if name == "" || len([]rune(name)) > 160 || !validation.Email(strings.TrimSpace(c.Email)) {
+	if !countries.Valid(c.Country) || name == "" || len([]rune(name)) > 160 || !validation.Email(strings.TrimSpace(c.Email)) {
 		return ErrCheckoutInvalid
 	}
 	return nil

@@ -75,7 +75,8 @@ func (h *Handler) product(w http.ResponseWriter, r *http.Request, sh *shop) {
 
 func (h *Handler) cart(w http.ResponseWriter, r *http.Request, sh *shop) {
 	w.Header().Set("Cache-Control", "no-store")
-	vm := CartVM{Layout: sh.layout(r, seoCart(r, sh.brand))}
+	layout := sh.layout(r, seoCart(r, sh.brand))
+	vm := CartVM{Layout: layout, Countries: checkoutCountries(layout.Language)}
 	h.page(w, vm.Layout, "cart", vm, nil)
 }
 

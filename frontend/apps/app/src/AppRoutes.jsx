@@ -18,6 +18,9 @@ import SettingsPage from "./features/settings/SettingsPage";
 import WarehousesPage from "./features/warehouses/WarehousesPage";
 import ProductCatalogPage from "./features/products/pages/ProductCatalogPage";
 import ProductsPage from "./features/products/pages/ProductsPage";
+import CatalogSettingsPage from "./features/products/settings/CatalogSettingsPage";
+import ProductVatSettings from "./features/products/settings/ProductVatSettings";
+import { catalogSettingsPath } from "./features/products/settings/menu";
 import BundlesPage from "./features/bundles/pages/BundlesPage";
 import StorefrontPage from "./features/storefront/pages/StorefrontPage";
 import IntegrationsPage from "./features/integrations/pages/IntegrationsPage";
@@ -30,6 +33,10 @@ const clientRoutes = (
     <Route path="/dashboard/products" element={<ProductCatalogPage />}>
       <Route index element={<ProductsPage />} />
       <Route path="bundles" element={<BundlesPage />} />
+    </Route>
+    <Route path={catalogSettingsPath} element={<CatalogSettingsPage />}>
+      <Route index element={<Navigate to="products" replace />} />
+      <Route path="products" element={<ProductVatSettings />} />
     </Route>
     <Route path="/dashboard/customers" element={<CustomersPage />} />
     {orderRoutes}

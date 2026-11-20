@@ -4,7 +4,7 @@ import { createVariant } from "../api/createVariant";
 import { deleteVariant } from "../api/deleteVariant";
 import { updateProduct } from "../api/updateProduct";
 import { updateVariant } from "../api/updateVariant";
-import { addProductVariant, patchProductForm, patchProductVariant, removeProductVariant } from "./productForm";
+import { addProductVariant, productFormHandlers, removeProductVariant } from "./productForm";
 import {
   createProductEditForm,
   isDraftVariant,
@@ -40,11 +40,10 @@ function createEditApi(params) {
     submitLabelKey: "products.form.saveEdit",
     savingLabelKey: "products.form.savingEdit",
     handleAddVariant: () => setForm(addProductVariant),
-    handleChange: (event) => setForm((prev) => patchProductForm(prev, event)),
+    ...productFormHandlers(setForm),
     handleClose: onClose,
     handleRemoveVariant: (id) => removeVariant({ id, setForm, setRemovedVariantIds: params.setRemovedVariantIds }),
     handleSubmit: createSubmitHandler(params),
-    handleVariantChange: (id, event) => setForm((prev) => patchProductVariant(prev, id, event)),
   };
 }
 

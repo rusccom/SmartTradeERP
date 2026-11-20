@@ -35,6 +35,7 @@ type cartResult struct {
 }
 
 type checkoutCustomer struct {
+	Country string `json:"country"`
 	Name    string `json:"name"`
 	Email   string `json:"email"`
 	Phone   string `json:"phone"`

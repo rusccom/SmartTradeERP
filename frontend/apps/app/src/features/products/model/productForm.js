@@ -1,4 +1,5 @@
 import { slugify } from "./slugify";
+import { rateChanges } from "../vat/productRates";
 
 const defaultForm = {
   name: "",
@@ -32,10 +33,18 @@ export function addProductVariant(form) {
 }
 
 export function createProductFormState() {
-  return { ...defaultForm, variants: [] };
+  return { ...defaultForm, variants: [], vatRates: {} };
 }
 
-export function patchProductForm(form, event) {
+export function productFormHandlers(setForm) {
+  return {
+    handleChange: (event) => setForm((form) => patchProductForm(form, event)),
+    handleVatRates: (vatRates) => setForm((form) => ({ ...form, vatRates })),
+    handleVariantChange: (id, event) => setForm((form) => patchProductVariant(form, id, event)),
+  };
+}
+
+function patchProductForm(form, event) {
   const { checked, name, type, value } = event.target;
   const next = { ...form, [name]: type === "checkbox" ? checked : value };
   return syncCommonVariantFields(syncSlugFromName(next, name, value), name);
@@ -47,7 +56,7 @@ function syncSlugFromName(form, name, value) {
   return form;
 }
 
-export function patchProductVariant(form, variantId, event) {
+function patchProductVariant(form, variantId, event) {
   return { ...form, variants: mapVariants(form.variants, variantId, event) };
 }
 
@@ -70,6 +79,7 @@ export function toCreateProductPayload(form) {
     name: form.name.trim(),
     description_html: form.descriptionHtml,
     variant_name: readPrimaryVariantName(form),
+    vat_rates: rateChanges(form.vatRates),
     unit: variant.unit.trim(),
     price: Number(variant.price) || 0,
     sku_code: variant.skuCode.trim(),

@@ -1,10 +1,11 @@
+import { rateChanges } from "../vat/productRates";
+
 export function createProductEditForm(product) {
   const variants = readVariants(product).map(toFormVariant);
   const first = variants[0] || createEmptyVariant();
-  if (variants.length > 1) {
-    return createMultiForm(product, variants);
-  }
-  return createSingleForm(product, first, variants);
+  const form = variants.length > 1 ? createMultiForm(product, variants) : createSingleForm(product, first, variants);
+  const initialRates = product?.vat_rates ?? {};
+  return { ...form, vatRates: { ...initialRates }, initialRates };
 }
 
 export function isDraftVariant(variant) {
@@ -15,6 +16,7 @@ export function toProductUpdatePayload(form) {
   return {
     name: form.name.trim(),
     description_html: form.descriptionHtml,
+    vat_rates: rateChanges(form.vatRates, form.initialRates),
     slug: form.slug.trim(),
     seo_title: form.seoTitle.trim(),
     seo_description: form.seoDescription.trim(),

@@ -64,6 +64,9 @@ func claimProfile(s scope, d *delivery, environment string) error {
 	if p.Environment != environment {
 		return problem("The KSeF environment changed. Reload and confirm the destination.")
 	}
+	if err := checkStoredVAT(s, d.ID); err != nil {
+		return err
+	}
 	return d.claim(s, *p)
 }
 

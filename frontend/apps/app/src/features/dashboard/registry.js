@@ -1,8 +1,11 @@
 import { createOrdersMenu } from "../order/menu";
+import { catalogSettingsMenu } from "../products/settings/menu";
 
 export function createMenuSections(t) {
+  const catalog = menuGroup(t, "catalog", ["products", "customers", "warehouses"]);
+  catalog.items.push(catalogSettingsMenu(t));
   return [
-    menuGroup(t, "catalog", ["products", "customers", "warehouses"]),
+    catalog,
     createOrdersMenu(t),
     menuGroup(t, "documents", ["documents"]),
     menuGroup(t, "onlineStore", ["storefront", "integrations"]),

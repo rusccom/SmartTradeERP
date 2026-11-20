@@ -1,5 +1,5 @@
 const emptyAddress = { name: "", company: "", street: "", postal_code: "", city: "", region: "", country: "", tax_id: "" };
-const emptyPickup = { name: "", point_id: "", street: "", postal_code: "", city: "" };
+const emptyPickup = { name: "", point_id: "", street: "", postal_code: "", city: "", country: "" };
 
 export function entryFrom(card) {
   const d = card?.details ?? {};
@@ -15,7 +15,8 @@ export function entryFrom(card) {
 }
 
 export function lineInputs(items) {
-  return items.map(({ id, variant_id, qty, vat_rate }) => ({ id, variant_id, qty, vat_rate }));
+  return items.map(({ id, variant_id, qty, vat_rate, vat_mode, vat_country }) => ({ id, variant_id, qty,
+    vat_mode, ...(vat_mode === "manual" ? { vat_rate, vat_country } : {}) }));
 }
 
 export function entryPayload(form) {
@@ -32,7 +33,7 @@ export function patchEntry(source, path, value) {
 
 export function catalogLine(product, variant) {
   return { key: crypto.randomUUID(), variant_id: variant.id, sku_code: variant.sku_code, unit: variant.unit,
-    product_name: product.name, variant_name: variant.name, unit_price: variant.price, qty: "1", vat_rate: "",
+    product_name: product.name, variant_name: variant.name, unit_price: variant.price, qty: "1", vat_rate: "", vat_mode: "catalog", vat_country: "",
     image_thumb_url: variant.image_thumb_url || product.image_thumb_url };
 }
 

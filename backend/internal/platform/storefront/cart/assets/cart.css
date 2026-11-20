@@ -15,14 +15,14 @@ h2 { font-size:1.28rem; margin-bottom:20px; } h3 { font-size:1rem; }
 .line ul:empty { display:none; } .issue { font-size:.85rem; color:#843f27; }
 .controls,.total { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .stepper { display:inline-flex; align-items:center; gap:8px; border:1px solid #ccd6ce; border-radius:6px; }
-button,input,textarea { font:inherit; } button { cursor:pointer; } .stepper button,.remove { color:inherit; background:none; border:0; padding:5px 10px; }
+button,input,textarea,select { font:inherit; } button { cursor:pointer; } .stepper button,.remove { color:inherit; background:none; border:0; padding:5px 10px; }
 .remove { text-decoration:underline; font-size:.85rem; } .stepper button { min-width:34px; }
 .total { border-top:1px solid #dce2db; padding-top:20px; font-size:1.25rem; }
-label { display:grid; gap:4px; margin-bottom:12px; font-size:.88rem; } input,textarea { width:100%; padding:9px 12px; border:1px solid #c7d0c9; border-radius:6px; }
+label { display:grid; gap:4px; margin-bottom:12px; font-size:.88rem; } input,textarea,select { width:100%; padding:9px 12px; border:1px solid #c7d0c9; border-radius:6px; }
 .submit { width:100%; color:white; background:#31594c; border:0; border-radius:8px; padding:12px; margin-top:8px; font-weight:650; }
 button:disabled { opacity:.5; cursor:default; } :focus-visible { outline:3px solid #a74f39; outline-offset:2px; }
 @media(max-width:720px) { .checkout-grid { grid-template-columns:1fr; } main { padding-top:28px; } header { padding:16px 20px; } }
 @media(max-width:520px) {
   header,.controls { flex-wrap:wrap; gap:8px; } .brand,.line,.total { overflow-wrap:anywhere; }
-  .stepper button,.remove { min-height:44px; min-width:44px; } label input,label textarea { min-width:0; font-size:16px; }
+  .stepper button,.remove { min-height:44px; min-width:44px; } label input,label textarea,label select { min-width:0; font-size:16px; }
 }

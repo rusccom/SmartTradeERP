@@ -65,51 +65,35 @@ paths:
   /client/currency-options:
     get:
       summary: List global currency options
-  /client/products:
-    get:
-      summary: List regular products with optional variants, stock and warehouses includes
-      parameters:
-        - in: query
-          name: include
-          schema:
-            type: string
-          example: variants,stock,warehouses
-        - in: query
-          name: search
-          schema:
-            type: string
-        - in: query
-          name: warehouse_id
-          schema:
-            type: string
-        - in: query
-          name: min_qty
-          schema:
-            type: string
-        - in: query
-          name: max_qty
-          schema:
-            type: string
-        - in: query
-          name: qty_state
-          schema:
-            type: string
-            enum: [positive, negative, zero, nonzero]
+  /client/country-options: {$ref: './catalog-products.yaml#/CountryOptions'}
+  /client/catalog/vat-countries: {$ref: './catalog-products.yaml#/Countries'}
+  /client/catalog/vat-countries/{country}: {$ref: './catalog-products.yaml#/Country'}
+  /client/products: {$ref: './catalog-products.yaml#/Products'}
+  /client/products/{id}: {$ref: './catalog-products.yaml#/Product'}
+  /storefront/checkout:
     post:
-      summary: Create product with default variant
-  /client/products/{id}:
-    get:
-      summary: Product details
-      parameters:
-        - $ref: '#/components/parameters/PathID'
-    put:
-      summary: Update product
-      parameters:
-        - $ref: '#/components/parameters/PathID'
-    delete:
-      summary: Delete product when no inventory movements and bundle links exist
-      parameters:
-        - $ref: '#/components/parameters/PathID'
+      summary: Place an order on the shop host using its cart session and destination VAT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version, customer]
+              properties:
+                version: {type: integer}
+                note: {type: string}
+                customer:
+                  type: object
+                  required: [name, email, country]
+                  properties:
+                    name: {type: string}
+                    email: {type: string}
+                    address: {type: string}
+                    phone: {type: string}
+                    country: {$ref: './catalog-products.yaml#/CountryCode'}
+      responses:
+        '200': {description: Order number and gross total or preview confirmation}
   /client/products/{id}/media:
     get:
       summary: List product media objects

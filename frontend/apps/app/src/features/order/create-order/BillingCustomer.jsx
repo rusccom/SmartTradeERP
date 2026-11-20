@@ -2,13 +2,13 @@ import { useState } from "react";
 import { useI18n } from "@smarterp/i18n/useI18n";
 import { apiPaths } from "@smarterp/api/publicApi";
 import CustomerPicker from "./CustomerPicker";
-import useOrderResource from "./useOrderResource";
+import useApiResource from "@smarterp/api/useApiResource";
 
 export default function BillingCustomer({ editor }) {
   const { t } = useI18n();
   const [mode, setMode] = useState("");
   const id = editor.form.billing_customer_id;
-  const customer = useOrderResource(id ? apiPaths.customerById(id) : "");
+  const customer = useApiResource(id ? apiPaths.customerById(id) : "");
   const locked = Boolean(editor.card?.invoice) || editor.busy;
   function pick(row) {
     editor.change("billing_customer_id", row.id);

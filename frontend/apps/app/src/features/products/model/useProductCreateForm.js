@@ -5,8 +5,7 @@ import { createVariant } from "../api/createVariant";
 import {
   addProductVariant,
   createProductFormState,
-  patchProductForm,
-  patchProductVariant,
+  productFormHandlers,
   readPendingVariantPayloads,
   removeProductVariant,
   toCreateProductPayload,
@@ -27,11 +26,10 @@ export function useProductCreateForm({ open, onClose, onCreated, t }) {
     lockedVariantCount: savedVariantCount,
     hasPendingProduct: createdProductId !== "",
     handleAddVariant: () => setForm(addProductVariant),
-    handleChange: (event) => setForm((prev) => patchProductForm(prev, event)),
+    ...productFormHandlers(setForm),
     handleClose: onClose,
     handleRemoveVariant: (variantId) => setForm((prev) => createdProductId ? prev : removeProductVariant(prev, variantId)),
     handleSubmit: createSubmitHandler({ createdProductId, form, onClose, onCreated, savedVariantCount, setCreatedProductId, setError, setSavedVariantCount, setSaving, t }),
-    handleVariantChange: (variantId, event) => setForm((prev) => patchProductVariant(prev, variantId, event)),
   };
 }
 

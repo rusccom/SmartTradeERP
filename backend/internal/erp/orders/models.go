@@ -18,6 +18,7 @@ type Address struct {
 }
 
 type Pickup struct {
+	Country    string `json:"country"`
 	Name       string `json:"name"`
 	PointID    string `json:"point_id"`
 	Street     string `json:"street"`
@@ -38,10 +39,12 @@ type Details struct {
 }
 
 type LineInput struct {
-	ID        string          `json:"id,omitempty"`
-	VariantID string          `json:"variant_id"`
-	Qty       decimal.Decimal `json:"qty"`
-	VAT       string          `json:"vat_rate"`
+	ID         string          `json:"id,omitempty"`
+	VariantID  string          `json:"variant_id"`
+	Qty        decimal.Decimal `json:"qty"`
+	VAT        string          `json:"vat_rate"`
+	VATMode    string          `json:"vat_mode,omitempty"`
+	VATCountry string          `json:"vat_country,omitempty"`
 }
 
 type Line struct {

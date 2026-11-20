@@ -13,11 +13,8 @@ import (
 
 func renderFA(r invoiceRecord) ([]byte, error) {
 	o := r.Order
-	if o.Currency != "PLN" {
-		return nil, problem("The Polish standard VAT format currently supports PLN invoices.")
-	}
-	if o.Grand == nil {
-		return nil, problem("Enter the delivery cost before creating an invoice, including zero for free delivery.")
+	if err := validateDomesticInvoice(o); err != nil {
+		return nil, err
 	}
 	buyer, err := buyerParty(o.Details.Billing)
 	if err != nil {

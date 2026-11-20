@@ -104,7 +104,10 @@ func (s *Service) createWithDefaultVariant(
 	if err := s.repo.Create(ctx, tx, input.tenantID, input.productID, input.req); err != nil {
 		return err
 	}
-	return s.repo.CreateDefaultVariant(ctx, tx, input)
+	if err := s.repo.CreateDefaultVariant(ctx, tx, input); err != nil {
+		return err
+	}
+	return input.req.VATRates.Apply(ctx, tx, input.tenantID, input.productID)
 }
 
 func (s *Service) ByID(ctx context.Context, tenantID, id string) (Product, error) {
@@ -246,6 +249,9 @@ func validateSEO(slug, title, description string) bool {
 
 func mapProductWriteError(err error) error {
 	pgErr := &pgconn.PgError{}
+	if errors.As(err, &pgErr) && pgErr.Code == "23503" && pgErr.TableName == "product_vat_rates" {
+		return validation.ErrInvalidData
+	}
 	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 		return ErrSlugTaken
 	}

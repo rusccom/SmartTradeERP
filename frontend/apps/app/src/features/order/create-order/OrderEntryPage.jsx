@@ -3,7 +3,7 @@ import { useI18n } from "@smarterp/i18n/useI18n";
 import { apiPaths } from "@smarterp/api/publicApi";
 import { orderPath } from "../menu";
 import OrderEntryForm from "./OrderEntryForm";
-import useOrderResource from "./useOrderResource";
+import useApiResource from "@smarterp/api/useApiResource";
 import "./order-entry.css";
 
 export default function OrderEntryPage() {
@@ -11,7 +11,7 @@ export default function OrderEntryPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
-  const result = useOrderResource(id ? apiPaths.order(id) : "");
+  const result = useApiResource(id ? apiPaths.order(id) : "");
   const saved = (card, error) => {
     if (!id) navigate(`${orderPath}/${card.id}`, { replace: true, state: { error } });
   };

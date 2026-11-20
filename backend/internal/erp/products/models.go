@@ -4,9 +4,11 @@ import (
 	"github.com/shopspring/decimal"
 
 	"smarterp/backend/internal/shared/httpx"
+	"smarterp/backend/internal/erp/productvat"
 )
 
 type Product struct {
+    VATRates map[string]string `json:"vat_rates"`
     ID              string `json:"id"`
     Name            string `json:"name"`
     IsComposite     bool   `json:"is_composite"`
@@ -19,6 +21,7 @@ type Product struct {
 }
 
 type ProductListItem struct {
+	VATRates map[string]string `json:"vat_rates"`
 	ID             string               `json:"id"`
 	Name           string               `json:"name"`
 	IsComposite    bool                 `json:"is_composite"`
@@ -76,6 +79,7 @@ type ProductStockFilter struct {
 }
 
 type CreateRequest struct {
+    VATRates productvat.Changes `json:"vat_rates"`
     Name            string          `json:"name"`
     IsComposite     bool            `json:"is_composite"`
     Unit            string          `json:"unit"`
@@ -90,6 +94,7 @@ type CreateRequest struct {
 }
 
 type UpdateRequest struct {
+    VATRates productvat.Changes `json:"vat_rates"`
     Name            string `json:"name"`
     IsComposite     bool   `json:"is_composite"`
     Slug            string `json:"slug"`

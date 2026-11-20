@@ -1,7 +1,8 @@
 import ProductTableThumb from "../../products/ui/ProductTableThumb";
 import { displayMoney } from "./entryModel";
+import OrderLineVat from "./OrderLineVat";
 
-export function lineColumns({ t, locale, code, quote, edit, locked }) {
+export function lineColumns({ t, locale, code, quote, loading, edit, locked }) {
   const cell = (id, render) => ({ id, label: t(`entry.${id}`), cell: render });
   const money = (amount) => displayMoney(amount, code, locale);
   return [
@@ -10,7 +11,7 @@ export function lineColumns({ t, locale, code, quote, edit, locked }) {
     cell("product", (l) => <span className="orders-cell"><strong>{l.product_name}</strong>{l.variant_name !== l.product_name && <small>{l.variant_name}</small>}</span>),
     cell("price", (l, i) => money(quote?.items[i]?.unit_price ?? l.unit_price)),
     cell("qty", (l) => numericInput(l, "qty", { edit, locked, label: t("entry.qty"), min: quantityStepBase(l.qty), step: "1", max: "100000" })),
-    cell("vat", (l) => numericInput(l, "vat_rate", { edit, locked, label: t("entry.vat"), min: "0", step: "0.01", max: "100" })),
+    cell("vat", (l, i) => <OrderLineVat line={l} quote={quote?.items[i]} pending={loading} disabled={locked} onChange={(value) => edit(l.key, "vat_rate", value)} />),
     cell("lineTotal", (_, i) => money(quote?.items[i]?.total_amount)),
   ];
 }

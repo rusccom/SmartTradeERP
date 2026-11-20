@@ -49,7 +49,8 @@ type NavItemVM struct {
 }
 
 type CartVM struct {
-	Layout LayoutVM
+	Countries []checkoutCountry
+	Layout    LayoutVM
 }
 
 type HomeVM struct {
