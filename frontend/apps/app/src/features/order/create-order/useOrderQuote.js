@@ -5,9 +5,10 @@ import { lineInputs } from "./entryModel";
 
 export default function useOrderQuote(form, card) {
   const [result, setResult] = useState({});
-  const body = JSON.stringify({ items: lineInputs(form.items), revision: form.revision, delivery_cost: form.delivery_cost || null });
+  const body = quoteRequest(form);
+  const saved = card && body === quoteRequest(card);
   const path = apiPaths.orderQuote(form.id);
-  const enabled = !card?.invoice && form.items.length > 0 && form.items.every((l) => Number(l.qty) > 0);
+  const enabled = !saved && !card?.invoice && form.items.length > 0 && form.items.every((l) => Number(l.qty) > 0);
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
@@ -16,6 +17,11 @@ export default function useOrderQuote(form, card) {
       .then((data) => publish({ data })).catch((e) => publish({ error: e.message })), 180);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [enabled, body, path]);
-  if (card?.invoice) return { data: card };
+  if (saved || card?.invoice) return { data: card };
   return enabled && result.body === body && result.path === path ? result : { loading: enabled };
+}
+
+function quoteRequest(order) {
+  const delivery = order.delivery_cost === "" ? null : order.delivery_cost;
+  return JSON.stringify({ items: lineInputs(order.items), revision: order.revision, delivery_cost: delivery });
 }
