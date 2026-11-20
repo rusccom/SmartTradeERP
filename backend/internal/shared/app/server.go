@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"smarterp/backend/internal/api"
+	"smarterp/backend/internal/integrations/allegro/connection"
+	"smarterp/backend/internal/integrations/allegro/personal"
 	"smarterp/backend/internal/integrations/smartbundle"
 	"smarterp/backend/internal/shared/auth"
 	"smarterp/backend/internal/shared/config"
@@ -17,12 +19,21 @@ func Build(ctx context.Context, cfg config.Config) (*http.Server, func(), error)
 	if err != nil {
 		return nil, nil, err
 	}
-	handler, err := apiRouter(db.NewStore(pool), cfg)
+	store := db.NewStore(pool)
+	handler, err := apiRouter(store, cfg)
 	if err != nil {
 		pool.Close()
 		return nil, nil, err
 	}
-	return &http.Server{Addr: cfg.HTTPAddr, Handler: handler}, pool.Close, nil
+	cancel := startPrivateRenewal(ctx, store, cfg.Allegro)
+	return &http.Server{Addr: cfg.HTTPAddr, Handler: handler}, func() { cancel(); pool.Close() }, nil
+}
+
+func startPrivateRenewal(parent context.Context, store *db.Store, cfg config.Allegro) context.CancelFunc {
+	ctx, cancel := context.WithCancel(parent)
+	worker := personal.New(connection.NewService(store, cfg.EncryptionKey), cfg.Private)
+	go worker.Run(ctx)
+	return cancel
 }
 
 func apiRouter(store *db.Store, cfg config.Config) (http.Handler, error) {

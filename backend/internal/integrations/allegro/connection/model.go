@@ -21,6 +21,8 @@ type Account struct {
 	VerifiedAt     time.Time  `json:"verified_at"`
 	ExpiresAt      *time.Time `json:"expires_at"`
 	NeedsReconnect bool       `json:"needs_reconnect"`
+	AutoRenew      bool       `json:"auto_renew"`
+	RefreshedAt    *time.Time `json:"refreshed_at"`
 }
 
 type Tokens struct {
@@ -30,20 +32,23 @@ type Tokens struct {
 
 type Credential struct {
 	Tokens
-	ExpiresAt *time.Time
+	ExpiresAt   *time.Time
+	RefreshedAt *time.Time
 }
 
 type Grant struct {
 	Seller
 	Credential
-	Method  Method
-	Version string
+	Method        Method
+	Version       string
+	PrivateClient string
 }
 
 type stored struct {
 	Account
-	tenant    string
-	encrypted []byte
+	tenant        string
+	encrypted     []byte
+	privateClient string
 }
 
 func binding(tenant string, method Method, id string) string {

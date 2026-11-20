@@ -1,0 +1,80 @@
+Import:
+  put:
+    summary: Verify an existing refresh token for the configured private application and seller
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [refresh_token]
+            properties:
+              version: {type: string, description: Current connection version or an empty string for a new connection}
+              refresh_token: {type: string, minLength: 1, maxLength: 16384, writeOnly: true}
+    responses:
+      '200': {description: New token pair verified and saved for automatic renewal}
+      '400': {description: Invalid input}
+      '401': {description: Sign-in required}
+      '403': {description: Configured organization and current owner required}
+      '409': {description: Seller or connection version changed}
+      '422': {description: Access or permissions rejected}
+      '429': {description: Allegro rate limit}
+      '502': {description: Allegro unavailable}
+Start:
+  post:
+    summary: Start private application authorization with profile and order read permissions
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              version: {type: string, description: Current connection version or an empty string}
+    responses:
+      '200':
+        description: Short-lived authorization request
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  required: [id, verification_url, interval, expires_at]
+                  properties:
+                    id: {type: string, format: uuid}
+                    verification_url: {type: string, format: uri}
+                    interval: {type: integer, minimum: 1}
+                    expires_at: {type: string, format: date-time}
+      '401': {description: Sign-in required}
+      '403': {description: Configured organization and current owner required}
+      '409': {description: Connection changed}
+      '502': {description: Allegro unavailable}
+Poll:
+  post:
+    summary: Complete private seller authorization after consent on Allegro
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {type: object, required: [id], properties: {id: {type: string, format: uuid}}}
+    responses:
+      '200':
+        description: Connection saved or the time to wait before polling again
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  required: [connected]
+                  properties:
+                    connected: {type: boolean}
+                    retry_after: {type: integer, minimum: 1}
+      '400': {description: Invalid request}
+      '401': {description: Sign-in required}
+      '403': {description: Configured organization and current owner required}
+      '409': {description: Authorization expired or connection changed}
+      '422': {description: Access or permissions rejected}

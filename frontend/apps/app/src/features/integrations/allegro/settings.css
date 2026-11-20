@@ -26,6 +26,11 @@
 .allegro-settings .allegro-error { color: #a42828; }
 .allegro-actions, .allegro-notice { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .allegro-actions { margin-top: 20px; }
+.allegro-refresh-form { margin-top: 16px; }
+.allegro-refresh-form summary { cursor: pointer; width: fit-content; padding: 8px 0; }
+.allegro-confirm { display: inline-flex; align-items: center; justify-content: center; padding: 8px 14px;
+  box-sizing: border-box; min-height: 44px; border-radius: 8px; background: #4338ca; color: #fff; font-weight: 600; }
+.allegro-confirm:focus-visible { outline: 3px solid #4f46e5; outline-offset: 2px; }
 .allegro-notice { margin-bottom: 12px; justify-content: space-between; }
 .allegro-settings button {
   min-height: 44px; padding: 8px 14px; border: 1px solid #a5afbc; border-radius: 8px;

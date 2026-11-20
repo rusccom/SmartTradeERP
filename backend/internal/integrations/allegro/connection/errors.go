@@ -26,6 +26,9 @@ var (
 	Missing      = &Problem{"missing", 404, "No Allegro account is connected."}
 	Remote       = &Problem{"unavailable", 502, "Allegro could not verify the connection. Please try again."}
 	Limit        = &Problem{"rate_limit", 429, "Allegro has limited requests. Please try again later."}
+	Pending      = &Problem{"pending", 409, "Confirm this seller on Allegro to finish authorization."}
+	Slow         = &Problem{"slow_down", 429, "Wait before checking the Allegro authorization again."}
+	ReadOnly     = &Problem{"scope_mismatch", 422, "Authorize this application for seller profile and order read access only."}
 	Stored       = &Problem{"storage", 500, "The saved credential cannot be opened."}
 	Invalid      = &Problem{"invalid", 400, "Enter an Allegro seller access token."}
 	internal     = &Problem{"failed", 500, "Could not update the Allegro connection."}

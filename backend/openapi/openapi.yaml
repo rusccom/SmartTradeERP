@@ -16,12 +16,14 @@ paths:
       summary: Tenant details
       parameters: [{$ref: './plugins.yaml#/TenantID'}]
   /admin/tenants/{id}/plugins: {$ref: './plugins.yaml#/AdminList'}
-  /admin/tenants/{id}/plugins/{key}:
-    $ref: './plugins.yaml#/Grant'
+  /admin/tenants/{id}/plugins/{key}: {$ref: './plugins.yaml#/Grant'}
   /client/plugins: {$ref: './plugins.yaml#/ClientList'}
   /client/integrations/inpost: {$ref: './inpost.yaml#/Settings'}
   /client/integrations/allegro: {$ref: './allegro.yaml#/Settings'}
   /client/integrations/allegro/token: {$ref: './allegro.yaml#/Token'}
+  /client/integrations/allegro/private/refresh-token: {$ref: './allegro-private.yaml#/Import'}
+  /client/integrations/allegro/private/device: {$ref: './allegro-private.yaml#/Start'}
+  /client/integrations/allegro/private/device/check: {$ref: './allegro-private.yaml#/Poll'}
   /client/integrations/allegro/check: {$ref: './allegro.yaml#/Check'}
   /client/integrations/allegro/connections/{version}: {$ref: './allegro.yaml#/Disconnect'}
   /client/integrations/allegro/oauth/connect: {$ref: './allegro.yaml#/Start'}
@@ -37,8 +39,7 @@ paths:
   /client/regions/pl/settings: {$ref: './orders.yaml#/Seller'}
   /client/regions/pl/invoices/{id}/ksef: {$ref: './orders.yaml#/Submission'}
   /client/regions/pl/invoices/{id}/ksef/check: {$ref: './orders.yaml#/Check'}
-  /client/plugins/{key}:
-    $ref: './plugins.yaml#/Enable'
+  /client/plugins/{key}: {$ref: './plugins.yaml#/Enable'}
   /admin/stats:
     get:
       summary: Platform stats
@@ -185,8 +186,7 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/BundleComponent'
-  /client/bundles/{id}/storefront:
-    $ref: './smartbundle.yaml'
+  /client/bundles/{id}/storefront: {$ref: './smartbundle.yaml'}
   /client/warehouses:
     get:
       summary: List warehouses

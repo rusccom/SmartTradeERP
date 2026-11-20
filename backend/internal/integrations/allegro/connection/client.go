@@ -42,20 +42,24 @@ func providerError(status int, body io.Reader) error {
 		Error string `json:"error"`
 	}
 	_ = json.NewDecoder(body).Decode(&response)
-	switch {
-	case response.Error == "invalid_client":
-		return Setup
-	case response.Error == "invalid_grant", status == 401:
+	if problem := grantProblems[response.Error]; problem != nil {
+		return problem
+	}
+	switch status {
+	case http.StatusUnauthorized:
 		return Unauthorized
-	case response.Error == "access_denied":
-		return Denied
-	case response.Error == "invalid_scope", status == 403:
+	case http.StatusForbidden:
 		return Scope
-	case status == 429:
+	case http.StatusTooManyRequests:
 		return Limit
 	default:
 		return Remote
 	}
+}
+
+var grantProblems = map[string]*Problem{
+	"authorization_pending": Pending, "slow_down": Slow, "expired_token": State, "Invalid device code": State,
+	"invalid_client": Setup, "invalid_grant": Unauthorized, "access_denied": Denied, "invalid_scope": Scope,
 }
 
 func (c Client) read(ctx context.Context, path, token string, dest any) error {

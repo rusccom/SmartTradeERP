@@ -14,6 +14,6 @@ export default function AllegroSettings() {
     {error && <p role="alert" className="allegro-error">{error} <button onClick={retry}>{t("allegro.retry")}</button></p>}
     {action.error && <p role="alert" className="allegro-notice allegro-error">{action.error}</p>}
     {data?.connection && <AllegroAccount account={data.connection} canManage={data.can_manage} action={action} />}
-    {data && <AllegroMethods data={data} action={action} />}
+    {data && <AllegroMethods data={data} action={action} reload={retry} />}
   </>;
 }

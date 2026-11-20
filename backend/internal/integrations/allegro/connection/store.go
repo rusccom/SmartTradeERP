@@ -20,10 +20,12 @@ func NewService(store *db.Store, key string) *Service {
 }
 
 func (s *Service) Status(ctx context.Context, tenant string) (*Account, error) {
-	const query = `SELECT seller_id,login,method,version,verified_at,expires_at,needs_reconnect
+	const query = `SELECT seller_id,login,method,version,verified_at,expires_at,needs_reconnect,
+		(method='oauth' OR private_client_id IS NOT NULL),refreshed_at
 		FROM platform.allegro_connections WHERE tenant_id=$1`
 	var a Account
-	err := s.DB.QueryRow(ctx, tenant, query, tenant).Scan(&a.ID, &a.Login, &a.Method, &a.Version, &a.VerifiedAt, &a.ExpiresAt, &a.NeedsReconnect)
+	err := s.DB.QueryRow(ctx, tenant, query, tenant).Scan(&a.ID, &a.Login, &a.Method, &a.Version,
+		&a.VerifiedAt, &a.ExpiresAt, &a.NeedsReconnect, &a.AutoRenew, &a.RefreshedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
@@ -39,18 +41,23 @@ func (s *Service) SaveTx(ctx context.Context, tx pgx.Tx, tenant string, g Grant)
 	if err != nil {
 		return err
 	}
-	const query = `INSERT INTO platform.allegro_connections AS c
-		(tenant_id,seller_id,login,method,encrypted_tokens,expires_at,version) SELECT $1,$2,$3,$4,$5,$6,$7
-		WHERE $8='' OR EXISTS (SELECT FROM platform.allegro_connections WHERE tenant_id=$1 AND version::text=$8)
-		ON CONFLICT (tenant_id) DO UPDATE SET login=EXCLUDED.login,encrypted_tokens=EXCLUDED.encrypted_tokens,
-		expires_at=EXCLUDED.expires_at,version=EXCLUDED.version,verified_at=now(),needs_reconnect=false
-		WHERE c.version::text=$8 AND c.seller_id=EXCLUDED.seller_id AND c.method=EXCLUDED.method`
-	tag, err := tx.Exec(ctx, query, tenant, g.ID, g.Login, g.Method, encrypted, g.ExpiresAt, uuid.NewString(), g.Version)
+	tag, err := tx.Exec(ctx, saveAccount, tenant, g.ID, g.Login, g.Method, encrypted, g.ExpiresAt,
+		uuid.NewString(), g.Version, g.PrivateClient, g.RefreshedAt)
 	if err == nil && tag.RowsAffected() != 1 {
 		return conflict(ctx, tx, tenant, g)
 	}
 	return err
 }
+
+const saveAccount = `INSERT INTO platform.allegro_connections AS c
+	(tenant_id,seller_id,login,method,encrypted_tokens,expires_at,version,private_client_id,refreshed_at)
+	SELECT $1,$2,$3,$4,$5,$6,$7,NULLIF($9,''),$10
+	WHERE $8='' OR EXISTS (SELECT FROM platform.allegro_connections WHERE tenant_id=$1 AND version::text=$8)
+	ON CONFLICT (tenant_id) DO UPDATE SET login=EXCLUDED.login,encrypted_tokens=EXCLUDED.encrypted_tokens,
+	expires_at=EXCLUDED.expires_at,version=EXCLUDED.version,verified_at=now(),needs_reconnect=false,
+	private_client_id=EXCLUDED.private_client_id,refreshed_at=EXCLUDED.refreshed_at
+	WHERE c.version::text=$8 AND c.seller_id=EXCLUDED.seller_id AND c.method=EXCLUDED.method
+	AND (c.private_client_id IS NULL OR EXCLUDED.private_client_id=c.private_client_id)`
 
 func conflict(ctx context.Context, tx pgx.Tx, tenant string, g Grant) error {
 	var other bool

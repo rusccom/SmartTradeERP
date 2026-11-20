@@ -1,6 +1,6 @@
 Account:
   type: object
-  required: [id, login, method, version, verified_at, expires_at, needs_reconnect]
+  required: [id, login, method, version, verified_at, expires_at, needs_reconnect, auto_renew, refreshed_at]
   properties:
     id: {type: string}
     login: {type: string}
@@ -9,6 +9,8 @@ Account:
     verified_at: {type: string, format: date-time}
     expires_at: {type: string, format: date-time, nullable: true}
     needs_reconnect: {type: boolean}
+    auto_renew: {type: boolean}
+    refreshed_at: {type: string, format: date-time, nullable: true}
 Settings:
   get:
     summary: Read the organization's Allegro connection and available methods
@@ -22,13 +24,14 @@ Settings:
               properties:
                 data:
                   type: object
-                  required: [connection, can_manage, token_available, oauth_available]
+                  required: [connection, can_manage, token_available, oauth_available, private_renewal_available]
                   properties:
                     connection:
                       oneOf: [{$ref: '#/Account'}, {type: object, nullable: true, enum: [null]}]
                     can_manage: {type: boolean}
                     token_available: {type: boolean}
                     oauth_available: {type: boolean}
+                    private_renewal_available: {type: boolean}
       '401': {description: Sign-in required}
 Token:
   put:
