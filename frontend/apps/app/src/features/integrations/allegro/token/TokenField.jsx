@@ -1,5 +1,7 @@
 import { useI18n } from "@smarterp/i18n/useI18n";
 
+const tokenGuide = "https://developer.allegro.pl/tutorials/uwierzytelnianie-i-autoryzacja-zlq9e75GdIR";
+
 export default function TokenField({ disabled }) {
   const { t } = useI18n();
   return <div className="allegro-field">
@@ -8,5 +10,6 @@ export default function TokenField({ disabled }) {
       autoCapitalize="none" spellCheck={false} required maxLength={16384} disabled={disabled}
       aria-describedby="allegro-token-hint" />
     <p id="allegro-token-hint">{t("allegro.tokenHint")}</p>
+    <p><a href={tokenGuide} target="_blank" rel="noopener noreferrer">{t("allegro.tokenGuide")}</a></p>
   </div>;
 }
