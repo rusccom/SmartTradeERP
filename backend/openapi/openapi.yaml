@@ -19,6 +19,9 @@ paths:
   /admin/tenants/{id}/plugins/{key}: {$ref: './plugins.yaml#/Grant'}
   /client/plugins: {$ref: './plugins.yaml#/ClientList'}
   /client/integrations/inpost: {$ref: './inpost.yaml#/Settings'}
+  /client/integrations/base-courier: {$ref: './base-courier.yaml#/Settings'}
+  /client/integrations/base-courier/connections/{version}/check: {$ref: './base-courier.yaml#/Check'}
+  /client/integrations/base-courier/connections/{version}: {$ref: './base-courier.yaml#/Disconnect'}
   /client/integrations/allegro: {$ref: './allegro.yaml#/Settings'}
   /client/integrations/allegro/token: {$ref: './allegro.yaml#/Token'}
   /client/integrations/allegro/private/refresh-token: {$ref: './allegro-private.yaml#/Import'}

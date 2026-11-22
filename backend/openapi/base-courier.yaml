@@ -1,0 +1,88 @@
+Connection:
+  type: object
+  required: [email, version, verified_at]
+  properties:
+    email: {type: string, format: email}
+    version: {type: string, format: uuid}
+    verified_at: {type: string, format: date-time}
+Version:
+  name: version
+  in: path
+  required: true
+  schema: {type: string, format: uuid}
+Verified:
+  description: Account verified with Base Courier
+  content:
+    application/json:
+      schema:
+        type: object
+        required: [data]
+        properties: {data: {$ref: '#/Connection'}}
+Settings:
+  get:
+    summary: Read the Base Courier connection for the signed-in organization
+    responses:
+      '200':
+        description: Permissions and current connection
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [data]
+              properties:
+                data:
+                  type: object
+                  required: [can_manage, connection]
+                  properties:
+                    can_manage: {type: boolean}
+                    connection:
+                      oneOf: [{$ref: '#/Connection'}, {type: object, nullable: true, enum: [null]}]
+      '401': {description: Client sign-in required}
+  put:
+    summary: Verify an existing Base Courier account and save its credentials for the organization
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [email, api_key]
+            properties:
+              email: {type: string, format: email, maxLength: 254}
+              api_key: {type: string, writeOnly: true, minLength: 1, maxLength: 4096}
+              version: {type: string, format: uuid, description: Supply the current version to replace a connection. Omit it to create one.}
+    responses:
+      '200': {$ref: '#/Verified'}
+      '400': {description: Invalid account details}
+      '401': {description: Client sign-in required}
+      '403': {description: Organization owner required}
+      '409': {description: Connection changed}
+      '422': {description: Base Courier rejected the credentials}
+      '429': {description: Base Courier rate limit}
+      '502': {description: Verification unavailable}
+      '503': {description: Credential storage unavailable}
+Check:
+  parameters: [{$ref: '#/Version'}]
+  post:
+    summary: Verify the organization's stored key by reading the Base Courier profile
+    responses:
+      '200': {$ref: '#/Verified'}
+      '400': {description: Invalid version}
+      '401': {description: Client sign-in required}
+      '403': {description: Organization owner required}
+      '409': {description: Connection changed}
+      '422': {description: Base Courier rejected the credentials}
+      '429': {description: Base Courier rate limit}
+      '502': {description: Verification unavailable}
+      '503': {description: Credential storage unavailable}
+Disconnect:
+  parameters: [{$ref: '#/Version'}]
+  delete:
+    summary: Remove this version of the organization's Base Courier connection
+    responses:
+      '204': {description: Connection removed}
+      '400': {description: Invalid version}
+      '401': {description: Client sign-in required}
+      '403': {description: Organization owner required}
+      '409': {description: Connection changed}

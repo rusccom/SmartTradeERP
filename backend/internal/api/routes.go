@@ -18,25 +18,21 @@ import (
 const healthDBTimeout = 2 * time.Second
 
 func Register(mux *http.ServeMux, store *db.Store, tokens *auth.TokenService, mediaStore storage.ObjectStore, cfg config.Config) error {
-	mux.HandleFunc("GET /health", health(store))
-	ledgerService := ledger.NewService(store)
-	bundleService := newBundleService(store)
-	registerPlugins(mux, store, tokens)
-	registerInPost(mux, store, tokens, cfg.InPostEncryptionKey)
-	registerAllegro(mux, store, tokens, cfg.Allegro)
-	images := newMediaService(store, mediaStore)
-	registerOrders(mux, store, tokens, cfg.KSeFEncryptionKey, images)
-	registerAdmin(mux, store, tokens)
-	registerClientAuth(mux, store, tokens)
-	registerCatalog(mux, catalogDeps{
+	catalog := catalogDeps{
 		store:    store,
 		tokens:   tokens,
-		ledger:   ledgerService,
-		bundles:  bundleService,
-		media:    images,
+		ledger:   ledger.NewService(store),
+		bundles:  newBundleService(store),
+		media:    newMediaService(store, mediaStore),
 		mediaURL: cfg.R2.PublicBaseURL,
-	})
-	registerOperations(mux, store, tokens, ledgerService, bundleService)
+	}
+	mux.HandleFunc("GET /health", health(store))
+	registerIntegrations(mux, store, tokens, cfg)
+	registerOrders(mux, store, tokens, cfg.KSeFEncryptionKey, catalog.media)
+	registerAdmin(mux, store, tokens)
+	registerClientAuth(mux, store, tokens)
+	registerCatalog(mux, catalog)
+	registerOperations(mux, store, tokens, catalog.ledger, catalog.bundles)
 	registerSettings(mux, store, tokens)
 	return registerStorefrontAdmin(mux, store, tokens, cfg.ShopsBaseDomain)
 }

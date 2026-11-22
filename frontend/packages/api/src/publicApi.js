@@ -3,6 +3,9 @@ const apiScopes = Object.freeze({
   client: "/api/client",
 });
 
+const baseCourierSettings = `${apiScopes.client}/integrations/base-courier`;
+const baseCourierConnection = (version) => `${baseCourierSettings}/connections/${encodeURIComponent(version)}`;
+
 export const apiPaths = Object.freeze({
   adminLogin: `${apiScopes.admin}/auth/login`,
   adminTenants: `${apiScopes.admin}/tenants`,
@@ -25,6 +28,9 @@ export const apiPaths = Object.freeze({
   currencyOptions: `${apiScopes.client}/currency-options`,
   clientPlugins: `${apiScopes.client}/plugins`,
   inpostSettings: `${apiScopes.client}/integrations/inpost`,
+  baseCourierSettings,
+  baseCourierConnection,
+  baseCourierCheck: (version) => `${baseCourierConnection(version)}/check`,
   allegro: `${apiScopes.client}/integrations/allegro`,
   allegroToken: `${apiScopes.client}/integrations/allegro/token`,
   allegroPrivateToken: `${apiScopes.client}/integrations/allegro/private/refresh-token`,
