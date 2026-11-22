@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/shopspring/decimal"
 
+	"smarterp/backend/internal/erp/orders"
 	"smarterp/backend/internal/platform/storefront/catalog"
 	"smarterp/backend/internal/shared/countries"
 	"smarterp/backend/internal/shared/validation"
@@ -148,7 +149,8 @@ func availableUnits(components []catalog.Component) decimal.Decimal {
 var errStock = errors.New("cart contains unavailable items")
 
 func (sh *shop) place(id string, req checkoutRequest) (orderResult, error) {
-	if err := validateCustomer(req.Customer); err != nil {
+	delivery, err := req.deliveryDetails()
+	if err != nil {
 		return orderResult{}, err
 	}
 	saved, err := sh.readCart(id)
@@ -162,7 +164,7 @@ func (sh *shop) place(id string, req checkoutRequest) (orderResult, error) {
 	if err != nil {
 		return orderResult{}, err
 	}
-	return sh.finishOrder(id, req, cart)
+	return sh.finishOrder(id, req, delivery, cart)
 }
 
 func (sh *shop) checkoutCart(items []cartItemInput) (pricedCart, error) {
@@ -176,7 +178,7 @@ func (sh *shop) checkoutCart(items []cartItemInput) (pricedCart, error) {
 	return cart, err
 }
 
-func (sh *shop) finishOrder(id string, req checkoutRequest, cart pricedCart) (orderResult, error) {
+func (sh *shop) finishOrder(id string, req checkoutRequest, delivery orders.Details, cart pricedCart) (orderResult, error) {
 	cur := sh.brand.Currency
 	result := orderResult{Total: formatMoney(cart.total, cur).Display, Currency: cur.code, Status: "preview"}
 	err := sh.service.repo.store.WithTenantTx(sh.ctx, sh.tenantID, func(tx pgx.Tx) error {
@@ -187,18 +189,18 @@ func (sh *shop) finishOrder(id string, req checkoutRequest, cart pricedCart) (or
 		if err != nil || sh.preview {
 			return err
 		}
-		order := sh.order(req, cart.total)
+		order := sh.order(req, delivery, cart.total)
 		result.Number, result.Status = order.Number, "new"
 		return sh.service.repo.InsertOrder(sh.ctx, tx, order, cart.items)
 	})
 	return result, err
 }
 
-func (sh *shop) order(req checkoutRequest, total decimal.Decimal) orderRecord {
+func (sh *shop) order(req checkoutRequest, delivery orders.Details, total decimal.Decimal) orderRecord {
 	return orderRecord{
 		ID: uuid.NewString(), TenantID: sh.tenantID, Number: "SF-" + strings.ToUpper(uuid.NewString()[:8]),
 		CustomerName: strings.TrimSpace(req.Customer.Name), CustomerEmail: strings.TrimSpace(req.Customer.Email),
-		CustomerPhone: strings.TrimSpace(req.Customer.Phone), Address: strings.TrimSpace(req.Customer.Address), Country: req.Customer.Country,
+		CustomerPhone: strings.TrimSpace(req.Customer.Phone), Delivery: delivery,
 		Note: strings.TrimSpace(req.Note), CurrencyCode: sh.brand.Currency.code, Total: total,
 	}
 }

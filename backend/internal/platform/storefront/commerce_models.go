@@ -35,16 +35,18 @@ type cartResult struct {
 }
 
 type checkoutCustomer struct {
-	Country string `json:"country"`
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Phone   string `json:"phone"`
-	Address string `json:"address"`
+	Country    string `json:"country"`
+	Name       string `json:"name"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
+	Address    string `json:"address"`
+	PostalCode string `json:"postal_code"`
 }
 
 type checkoutRequest struct {
 	Version  int64            `json:"version"`
 	Customer checkoutCustomer `json:"customer"`
+	Pickup   *checkoutPickup  `json:"pickup,omitempty"`
 	Note     string           `json:"note"`
 }
 

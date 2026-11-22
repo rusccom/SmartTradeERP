@@ -77,30 +77,7 @@ paths:
   /client/catalog/vat-countries/{country}: {$ref: './catalog-products.yaml#/Country'}
   /client/products: {$ref: './catalog-products.yaml#/Products'}
   /client/products/{id}: {$ref: './catalog-products.yaml#/Product'}
-  /storefront/checkout:
-    post:
-      summary: Place an order on the shop host using its cart session and destination VAT
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [version, customer]
-              properties:
-                version: {type: integer}
-                note: {type: string}
-                customer:
-                  type: object
-                  required: [name, email, country]
-                  properties:
-                    name: {type: string}
-                    email: {type: string}
-                    address: {type: string}
-                    phone: {type: string}
-                    country: {$ref: './catalog-products.yaml#/CountryCode'}
-      responses:
-        '200': {description: Order number and gross total or preview confirmation}
+  /storefront/checkout: {$ref: './storefront-checkout.yaml#/Checkout'}
   /client/products/{id}/media:
     get:
       summary: List product media objects

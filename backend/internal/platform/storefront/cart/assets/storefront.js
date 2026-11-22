@@ -1,5 +1,4 @@
-import { cart, changeQuantity, feedback } from "./cart-store.js";
-import { startCart } from "./cart-page.js";
+import { cart, changeQuantity, feedback, reportCartError } from "./cart-store.js";
 
 function updateBadges() {
   if (!cart) return;
@@ -17,4 +16,4 @@ document.addEventListener("click", event => {
 window.addEventListener("cartchange", updateBadges);
 updateBadges();
 const root = document.querySelector("[data-sf-cart]");
-if (root) startCart(root);
+if (root) import("./cart-page.js").then(({ startCart }) => startCart(root)).catch(reportCartError);

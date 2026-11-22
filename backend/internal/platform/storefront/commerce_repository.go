@@ -6,6 +6,7 @@ import (
 
 	"github.com/shopspring/decimal"
 
+	"smarterp/backend/internal/erp/orders"
 	"smarterp/backend/internal/erp/productvat"
 	"smarterp/backend/internal/platform/storefront/catalog"
 	"smarterp/backend/internal/shared/db"
@@ -18,8 +19,7 @@ type orderRecord struct {
 	CustomerName  string
 	CustomerEmail string
 	CustomerPhone string
-	Country       string
-	Address       string
+	Delivery      orders.Details
 	Note          string
 	CurrencyCode  string
 	Total         decimal.Decimal
@@ -39,8 +39,7 @@ type orderItemRecord struct {
 
 const insertOrderSQL = `INSERT INTO storefront.orders
         (id, tenant_id, number, status, customer_name, customer_email, customer_phone, shipping_address, currency_code, total_amount, note, details)
-    VALUES ($1, $2, $3, 'new', $4, $5, $6, $7, $8, $9, $10,
-        jsonb_build_object('delivery_kind','address','shipping',jsonb_build_object('street',$7::text,'country',$11::text)))`
+    VALUES ($1, $2, $3, 'new', $4, $5, $6, $7, $8, $9, $10, $11)`
 
 const insertOrderItemSQL = `INSERT INTO storefront.order_items
         (id, order_id, variant_id, product_name, variant_name, unit_price, qty, total_amount, tenant_id, bundle_components, vat_rate, vat_country, vat_mode)
@@ -54,7 +53,7 @@ func (r *Repository) InsertOrder(ctx context.Context, tx db.DBTX, order orderRec
 	for _, item := range items {
 		ids = append(ids, item.VariantID)
 	}
-	rates, err := productvat.ForVariants(ctx, tx, order.TenantID, order.Country, ids)
+	rates, err := productvat.ForVariants(ctx, tx, order.TenantID, order.Delivery.Destination(), ids)
 	if err != nil {
 		return err
 	}
@@ -69,7 +68,7 @@ func (r *Repository) InsertOrder(ctx context.Context, tx db.DBTX, order orderRec
 
 func insertOrderRow(ctx context.Context, tx db.DBTX, o orderRecord) error {
 	_, err := tx.Exec(ctx, insertOrderSQL, o.ID, o.TenantID, o.Number, o.CustomerName,
-		o.CustomerEmail, o.CustomerPhone, o.Address, o.CurrencyCode, o.Total, o.Note, o.Country)
+		o.CustomerEmail, o.CustomerPhone, o.Delivery.Shipping.Street, o.CurrencyCode, o.Total, o.Note, o.Delivery)
 	return err
 }
 
@@ -82,6 +81,6 @@ func insertOrderItem(ctx context.Context, tx db.DBTX, order orderRecord, item or
 		return err
 	}
 	_, err = tx.Exec(ctx, insertOrderItemSQL, item.ID, order.ID, item.VariantID,
-		item.ProductName, item.VariantName, item.UnitPrice, item.Qty, item.Total, order.TenantID, components, item.VAT, order.Country)
+		item.ProductName, item.VariantName, item.UnitPrice, item.Qty, item.Total, order.TenantID, components, item.VAT, order.Delivery.Destination())
 	return err
 }

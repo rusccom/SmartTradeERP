@@ -16,12 +16,36 @@
 <label>Email<input name="email" autocomplete="email" maxlength="255" type="email" required></label>
 <label>{{if $pl}}Telefon{{else}}Phone{{end}}<input name="phone" type="tel" autocomplete="tel" maxlength="40"></label>
 <label>{{if $pl}}Kraj dostawy{{else}}Delivery country{{end}}<select name="country" autocomplete="country" required><option value="">{{if $pl}}Wybierz kraj{{else}}Select a country{{end}}</option>{{range .Countries}}<option value="{{.Code}}">{{.Name}}</option>{{end}}</select></label>
-<label>{{if $pl}}Adres dostawy{{else}}Shipping address{{end}}<textarea name="address" autocomplete="street-address" rows="2"></textarea></label>
+<label>{{if $pl}}Kod pocztowy{{else}}Postal code{{end}}<input name="postal_code" autocomplete="postal-code" maxlength="32"></label>
+<fieldset class="delivery-methods"><legend>{{if $pl}}Sposób dostawy{{else}}Delivery method{{end}}</legend>
+<label><input type="radio" name="delivery" value="address" checked>{{if $pl}}Kurier na adres{{else}}Courier to your address{{end}}</label>
+<label data-pickup-option><input type="radio" name="delivery" value="pickup">{{if $pl}}Automat paczkowy lub punkt odbioru w Polsce{{else}}Parcel locker or pickup point in Poland{{end}}</label>
+</fieldset>
+<label data-address>{{if $pl}}Adres dostawy{{else}}Shipping address{{end}}<textarea name="address" autocomplete="street-address" rows="2" maxlength="512" required></textarea></label>
+<div class="pickup-selection" data-pickup-selection hidden>
+<div id="selected-point" aria-live="polite"><strong data-point-name></strong><p data-point-address></p></div>
+<button class="secondary" type="button" data-open-map aria-haspopup="dialog" aria-controls="pickup-map" aria-describedby="selected-point"
+ data-choose="{{if $pl}}Wybierz punkt na mapie{{else}}Choose a point on the map{{end}}"
+ data-change="{{if $pl}}Zmień punkt odbioru{{else}}Change pickup point{{end}}">{{if $pl}}Wybierz punkt na mapie{{else}}Choose a point on the map{{end}}</button></div>
 <label>{{if $pl}}Uwagi (opcjonalnie){{else}}Order note (optional){{end}}<textarea name="note" rows="2"></textarea></label>
 <button class="submit" disabled>{{if .Layout.Preview}}{{if $pl}}Sprawdź zamówienie próbne{{else}}Try preview checkout{{end}}{{else}}{{if $pl}}Złóż zamówienie{{else}}Place order{{end}}{{end}}</button>
 </form></div>
+{{template "pickup-map" $pl}}
 <template id="cart-line"><article class="line"><div><h3 data-name></h3><small data-variant></small><ul data-components></ul><p class="issue" data-unavailable hidden>{{if $pl}}Ta ilość lub konfiguracja jest niedostępna.{{else}}This quantity or configuration is unavailable.{{end}}</p></div>
 <div class="controls"><div class="stepper"><button type="button" data-action="dec" aria-label="{{if $pl}}Zmniejsz ilość{{else}}Decrease quantity{{end}}">−</button><span data-qty></span><button type="button" data-action="inc" aria-label="{{if $pl}}Zwiększ ilość{{else}}Increase quantity{{end}}">+</button></div>
 <b data-price></b><button type="button" class="remove" data-action="remove">{{if $pl}}Usuń{{else}}Remove{{end}}</button></div></article></template>
 <noscript>{{if $pl}}Włącz JavaScript, aby korzystać z koszyka.{{else}}Enable JavaScript to use the cart.{{end}}</noscript>
 </main></body></html>{{end}}
+
+{{define "pickup-map"}}<dialog id="pickup-map" class="pickup-map" aria-labelledby="pickup-heading">
+<div class="map-header"><h2 id="pickup-heading">{{if .}}Wybierz punkt odbioru{{else}}Choose a pickup point{{end}}</h2>
+<button class="secondary" type="button" data-close-map>{{if .}}Zamknij{{else}}Close{{end}}</button></div>
+<div class="map-search"><label>{{if .}}Kod pocztowy w Polsce{{else}}Polish postal code{{end}}
+<input data-map-postal inputmode="numeric" autocomplete="off" maxlength="6" placeholder="00-000" aria-describedby="map-help"></label>
+<label>{{if .}}Przewoźnik{{else}}Carrier{{end}}<select data-map-carrier>
+<option value="inpost">InPost</option><option value="orlen">ORLEN Paczka</option><option value="dhl">DHL</option><option value="dpd">DPD Pickup</option></select></label></div>
+<p id="map-help" class="map-help" data-map-hint>{{if .}}Wpisz pięciocyfrowy kod pocztowy, aby zobaczyć punkty w okolicy.{{else}}Enter a five-digit postal code to see points nearby.{{end}}</p>
+<p class="map-help" data-map-error role="alert" hidden>{{if .}}Otwórz punkt na mapie i potwierdź wybór w jego oknie.{{else}}Open a point on the map and confirm it in the popup.{{end}}</p>
+<div data-map-frame data-title="{{if .}}Mapa automatów paczkowych i punktów odbioru{{else}}Map of parcel lockers and pickup points{{end}}"></div>
+<button class="map-retry" type="button" data-map-retry hidden>{{if .}}Wczytaj mapę ponownie{{else}}Reload map{{end}}</button>
+</dialog>{{end}}

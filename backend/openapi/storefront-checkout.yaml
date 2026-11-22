@@ -1,0 +1,38 @@
+Checkout:
+  post:
+    summary: Place an order on the shop host using its cart session and delivery destination
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [version, customer]
+            properties:
+              version: {type: integer}
+              note: {type: string}
+              customer:
+                type: object
+                required: [name, email, country]
+                properties:
+                  name: {type: string, maxLength: 160}
+                  email: {type: string, format: email}
+                  phone: {type: string}
+                  country: {$ref: './catalog-products.yaml#/CountryCode'}
+                  address: {type: string, maxLength: 512, description: Street address required for courier delivery.}
+                  postal_code: {type: string, maxLength: 32, description: Required for Poland. Used to center the pickup map.}
+              pickup:
+                description: Confirmed pickup point for a Polish delivery. Omit for delivery to the customer address.
+                allOf:
+                  - {$ref: './order-schemas.yaml#/Pickup'}
+                  - type: object
+                    required: [carrier, country, name, point_id, street, postal_code, city]
+                    properties:
+                      carrier: {type: string, enum: [inpost, orlen, dhl, dpd]}
+                      country: {type: string, enum: [PL]}
+                      postal_code: {type: string, pattern: '^[0-9]{2}-?[0-9]{3}$'}
+    responses:
+      '200': {description: Preview confirmation and order total}
+      '201': {description: Created order number and total}
+      '400': {description: Invalid checkout data or empty cart}
+      '409': {description: The cart changed or contains unavailable items}

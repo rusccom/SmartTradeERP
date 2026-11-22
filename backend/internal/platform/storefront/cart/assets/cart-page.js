@@ -1,4 +1,5 @@
 import { cart, changeQuantity, lineKey, placeOrder, refreshCart, reportCartError } from "./cart-store.js";
+import { CheckoutDelivery } from "./checkout-delivery.js";
 
 const polish = document.documentElement.lang === "pl";
 const message = (pl, en) => polish ? pl : en;
@@ -44,14 +45,15 @@ function render(root) {
   paint(root, cart);
 }
 
-async function checkout(root, event) {
+async function checkout(root, delivery, event) {
   event.preventDefault();
   const form = event.currentTarget;
-  if (form.inert || form.querySelector("button").disabled) return;
-  const { note, ...customer } = Object.fromEntries(new FormData(form));
+  if (form.inert || form.querySelector(".submit").disabled) return;
+  const details = delivery.orderDetails();
+  if (!details) return;
   form.inert = true;
   try {
-    const order = await placeOrder({ customer, note });
+    const order = await placeOrder(details);
     form.reset();
     root.querySelector("[data-message]").textContent = confirmation(order);
   } catch (error) { reportCartError(error); await refreshCart().catch(reportCartError); }
@@ -64,8 +66,10 @@ function confirmation(order) {
 }
 
 export function startCart(root) {
+  const form = root.querySelector("[data-checkout]");
+  const delivery = new CheckoutDelivery(form, root.querySelector("#pickup-map"));
   root.addEventListener("click", changeLine);
-  root.querySelector("form").addEventListener("submit", event => checkout(root, event));
+  form.addEventListener("submit", event => checkout(root, delivery, event));
   window.addEventListener("cartchange", () => render(root));
   render(root);
 }
