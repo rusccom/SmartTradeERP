@@ -25,6 +25,7 @@ import BundlesPage from "./features/bundles/pages/BundlesPage";
 import StorefrontPage from "./features/storefront/pages/StorefrontPage";
 import IntegrationsPage from "./features/integrations/pages/IntegrationsPage";
 import InPostPage from "./features/integrations/inpost/InPostPage";
+import BaseCourierPage from "./features/integrations/base-courier/BaseCourierPage";
 import AllegroPage from "./features/integrations/allegro/AllegroPage";
 import { orderRoutes } from "./features/order/routes";
 
@@ -48,6 +49,7 @@ const clientRoutes = (
     <Route path="/dashboard/integrations">
       <Route index element={<IntegrationsPage />} />
       <Route path="inpost" element={<InPostPage />} />
+      <Route path="base-courier" element={<BaseCourierPage />} />
       <Route path="allegro" element={<AllegroPage />} />
     </Route>
     <Route path="/dashboard/reports" element={<ReportsPage />} />

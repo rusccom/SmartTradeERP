@@ -1,0 +1,32 @@
+.base-courier-settings { max-width: 800px; }
+
+.base-courier-account {
+  padding: clamp(16px, 3vw, 24px);
+  border: 1px solid #dbe1e9;
+  border-radius: 12px;
+  background: white;
+  overflow-wrap: anywhere;
+}
+
+.base-courier-account p { margin: 0; max-width: 60ch; line-height: 1.5; color: #475569; }
+.base-courier-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+.base-courier-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid #a5afbc;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+.base-courier-actions .base-courier-register { background: #4338ca; border-color: #4338ca; color: white; }
+.base-courier-actions .base-courier-register:hover { background: #3730a3; }
+.base-courier-account summary { width: fit-content; padding: 12px 0; cursor: pointer; color: #4338ca; }
+.base-courier-account summary:focus-visible { outline: 3px solid #4f46e5; outline-offset: 2px; }
+
+@media (max-width: 540px) {
+  .base-courier-actions { flex-direction: column; }
+}

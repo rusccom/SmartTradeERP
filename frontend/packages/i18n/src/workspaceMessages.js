@@ -1,6 +1,7 @@
 import { bundleEditorMessages } from "./bundleEditor";
 import { inpostMessages } from "./integrations/inpost";
 import { allegroMessages } from "./integrations/allegro";
+import { baseCourierMessages } from "./integrations/baseCourier";
 import { orderMessages } from "./orders";
 import { orderEntryMessages } from "./orderEntry";
 import { productVatMessages } from "./productVat";
@@ -9,6 +10,7 @@ export const workspaceMessages = {
   ...bundleEditorMessages,
   ...inpostMessages,
   ...allegroMessages,
+  ...baseCourierMessages,
   ...orderMessages,
   ...orderEntryMessages,
   ...productVatMessages,
